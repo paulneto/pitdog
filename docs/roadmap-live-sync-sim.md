@@ -33,12 +33,12 @@ PitDog is already **event-sourced**: the race is a list of events (green, pit in
 Supabase pieces:
 - `teams` (id, name, join_code), `members` (team_id, user_id, role)
 - `races` (id, team_id, settings jsonb, updated_at), `events` (id uuid, race_id, t, type, payload jsonb, device)
-- **Anonymous sign-in plus a team join code.** Row-level security limits each device to its own team's rows. Realtime subscriptions on `events` and `races`.
+- **OAuth sign-in (Google first) plus a team join code** (anonymous sign-in was dropped: accounts and logins use OAuth only). Row-level security limits each device to its own team's rows. Realtime subscriptions on `events` and `races`.
 - Roles: **pit wall** (iPad: full control), **crew** (can tap PIT IN/OUT), **viewer** (drivers and family: read-only).
 
 Vercel: host the app (it can move off GitHub Pages), plus **one serverless function as the Race Monitor relay** if we get a key. That keeps the token secret and avoids browser cross-site (CORS) restrictions. GitHub Pages is fine until then.
 
-**From Paul:** the Supabase project URL and the *anon/publishable* key (this one is designed to be public in the app; never the service-role key), and confirmation that the Vercel account is personal.
+**Status 27 Nov 2026:** Supabase project `pitdog` is live with the schema, row-level security (25 checks passing) and OAuth-only auth; see `supabase/README.md`. Still needed: a Google OAuth client, then the app-side sync.
 
 ## 3. Simulator (end-to-end testing)
 
