@@ -6,6 +6,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"; HERE="$ROOT/tests/e2e"; OUT="$HERE/.out"; mkdir -p "$OUT"
 CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 fail=0; n=0
+TO=""; command -v timeout >/dev/null && TO="timeout 180"
 for sc in "$HERE"/scenarios/*.js; do
   name="$(basename "$sc" .js)"; [[ -n "${1:-}" && "$name" != *"$1"* ]] && continue
   win="$(grep -m1 '^// @window' "$sc" | awk '{print $3}')"; win="${win:-500,900}"
@@ -18,7 +19,8 @@ i=s.rindex('</body>'); open(out,'w').write(s[:i]+inj+s[i:])
 PY
   rm -rf "$OUT/profile-$name"
   # shellcheck disable=SC2086  (CHROME_FLAGS is a list, e.g. --no-sandbox on CI)
-  "$CHROME" --headless=new --disable-gpu --no-first-run ${CHROME_FLAGS:-} --user-data-dir="$OUT/profile-$name" --window-size="$win" \
+  # a stalled network request freezes Chrome's virtual clock; cap each scenario so one hang can't hold the suite
+  $TO "$CHROME" --headless=new --disable-gpu --no-first-run ${CHROME_FLAGS:-} --user-data-dir="$OUT/profile-$name" --window-size="$win" \
     --virtual-time-budget="$budget" --dump-dom "file://$OUT/$name.html" 2>/dev/null > "$OUT/$name.dom.html"
   res="$(python3 -I -c "
 import re,html,json,sys

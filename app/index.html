@@ -63,6 +63,9 @@
   .big.green{background:var(--green);color:var(--go-ink)}
   .big.red{background:var(--red)}
   .big.amber{background:color-mix(in srgb,var(--amber) 14%,var(--bg));color:var(--amber);border:2px solid var(--amber)}
+  .big.racenow{display:block;width:100%;height:auto;padding:22px 16px;margin:0 0 14px}
+  #tab-race.fin #upNextCard,#tab-race.fin #fuelCard,.action.fin .side{display:none}
+  body.nodb main,body.nodb .action,body.nodb .tabbar,body.nodb #statusPill,body.nodb .aclock{visibility:hidden}
   .big.grey{background:var(--btn);color:var(--muted)}
   .side{width:92px;display:flex;flex-direction:column;gap:6px}
   .side button{flex:2;border-radius:14px;border:1px solid var(--line);background:var(--btn);color:var(--text);font:inherit;font-weight:800;font-size:12px;cursor:pointer;letter-spacing:.5px}
@@ -641,7 +644,7 @@
     <div class="sub" id="raceSub" style="margin-top:2px"></div>
     <div class="bar" style="margin-top:10px"><i id="raceBar" style="width:0;background:var(--blue)"></i></div>
   </div>
-  <div class="card">
+  <div class="card" id="upNextCard">
     <h2>Up next</h2>
     <div id="upNextBody" class="sub" style="margin:0"></div>
   </div>
@@ -649,7 +652,7 @@
     <h2><span>Crew today</span><span id="teamShare"></span></h2>
     <div id="teamList"></div>
   </div>
-  <div class="card">
+  <div class="card" id="fuelCard">
     <h2>Fuel</h2>
     <div class="row">
       <div class="stat"><div class="v" id="fuelUsed">–</div><div class="l">Added so far</div></div>
@@ -682,7 +685,7 @@
   </div>
   <div class="card">
     <h2>Simulator</h2>
-    <div class="sub" style="margin:0 0 8px">Run a whole race at up to 60× speed with your team, car and rules. Race control throws yellows and reds, and an auto-crew can run the stops. Nothing is saved to your real races.</div>
+    <div class="sub" style="margin:0 0 8px">Run a whole race at up to 200× speed with your team, car and rules. Race control throws yellows and reds, and an auto-crew can run the stops. Nothing is saved to your real races.</div>
     <button class="btn full sim" id="simOpen"><span data-ic="play"></span> Start a simulated race</button>
   </div>
 </section>
@@ -1218,11 +1221,12 @@ function mandCount(R,L){ return R.mandPer?Math.max(0,Math.ceil(L/R.mandPer-1-1e-
 function glanceHTML(g){ return g?`<div class="kpis" style="margin:0 0 10px">${[['Max stint',g.stint],['Driver rest',g.rest],['Min stop',g.stop],['Mandatory stops',g.mand],['Under FCY',g.fcy],['Race clock',g.clock]].map(([l,v])=>`<div class="stat"><div class="v" style="font-size:13px;white-space:normal;line-height:1.25">${v}</div><div class="l">${l}</div></div>`).join('')}</div>`:''; }
 function renderRace(){
   const lv=live(); const R=S.race, C=S.car; const pill=$('statusPill'), big=$('bigBtn');
+  $('tab-race').classList.toggle('fin',lv.finished); $('actionBar').classList.toggle('fin',lv.finished);
   $('clockWall').textContent=new Date(nowMs()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const L=lv.L;
   if(!lv.started){
     $('clockLabel').textContent='Race clock';
-    if(sched()){ const until=(schedStartMs()-nowMs())/60000; $('raceClock').textContent=until>0?hms(until):'0:00:00'; $('raceSub').textContent=`${R.name||'Race'}: ${R.start}–${R.end} (${fmt(L)}). ${until>0?'Countdown to scheduled start.':'Scheduled start has passed.'} Tap GREEN FLAG when the race goes green.`; }
+    if(sched()){ const until=(schedStartMs()-nowMs())/60000; $('raceClock').textContent=until>0?hms(until):'0:00:00'; $('raceSub').textContent=`${R.name||'Race'}: ${R.start}–${R.end} (${fmt(L)}). ${until>0?'Countdown to the scheduled start.':''} Tap GREEN FLAG when the race goes green.`; }
     else { $('raceClock').textContent='0:00:00'; $('raceSub').textContent=`${fmt(L)} race. Tap GREEN FLAG at the start.`; }
     $('raceBar').style.width='0';
   } else {
@@ -1237,7 +1241,7 @@ function renderRace(){
   const st=P.stints, ci=curIdx(P), cur=st[ci];
   $('trackCard').style.display=lv.inPit||lv.finished?'none':'block'; $('pitCard').style.display=lv.inPit&&!lv.finished?'block':'none';
   const ds=driverStatus(lv,P);
-  if(lv.finished){ pill.className='pill done'; pill.textContent='FINISHED'; big.className='big grey'; big.innerHTML='RACE COMPLETE<small>'+((activeRace()||{}).status==='done'?'Open the debrief':'Finish &amp; see the debrief')+'</small>'; }
+  if(lv.finished){ pill.className='pill done'; pill.textContent='FINISHED'; if((activeRace()||{}).status==='done'&&!SIM.on){ big.className='big green'; big.innerHTML='RACE NOW<small>Start the next race</small>'; } else { big.className='big grey'; big.innerHTML='RACE COMPLETE<small>Finish &amp; see the debrief</small>'; } }
   else if(!lv.started){ pill.className='pill'; pill.textContent='PRE-RACE'; big.className='big green'; big.innerHTML='GREEN FLAG<small>Race is green</small>';
     const s=st[0]; renderTrack(s,lv,ds); }
   else if(lv.inPit){
@@ -1281,12 +1285,10 @@ function renderRaceSwitch(lv){
   const box=$('raceSwitch'), r=activeRace(); if(!box) return;
   const show=DB&&r&&!SIM.on&&(!lv.started||lv.finished); box.style.display=show?'':'none'; if(!show) return;
   const others=DB.races.filter(x=>!x.sim&&x.id!==r.id&&x.status!=='done').length, done=r.status==='done';
-  box.innerHTML=`<div class="row" style="align-items:center;gap:10px"><div style="flex:1;min-width:0"><div class="sub" style="margin:0">${done?'Finished':lv.finished?'Race over':'This race'}</div><b style="font-size:17px">${esc(r.rules.name||'Race')}</b> <span class="sub" style="margin:0">· ${esc(dayLabel(r.rules.date))}</span></div>
-    ${others?`<button class="btn" id="rsSwitch">Switch</button>`:''}<button class="btn pri2" id="rsNew">+ New race</button></div>
-    ${lv.finished?`<div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="rsDay2" style="flex:1">Same team, new day</button><button class="btn" id="rsDebrief" style="flex:1">Debrief</button></div>`:''}`;
-  $('rsNew').onclick=()=>DB&&newRaceSheet(null);
+  box.innerHTML=`<div class="row" style="align-items:center;gap:10px"><div style="flex:1;min-width:0"><div class="sub" style="margin:0">${done?'Finished':lv.finished?'Race over':esc(dayLabel(r.rules.date))+' · '+fmt(lv.L)}</div><b style="font-size:17px">${esc(r.rules.name||'Race')}</b>${lv.finished?'':` <span class="sub" style="margin:0">· ${S.drivers.map(d=>esc(d.name)).join(' → ')}</span>`}</div>
+    ${others?`<button class="btn" id="rsSwitch">Switch</button>`:''}${lv.finished?`<button class="btn pri2" id="rsDebrief">Debrief</button>`:`<button class="btn" id="rsNew">Change</button>`}</div>`;
+  const rn=$('rsNew'); if(rn) rn.onclick=()=>raceNow();
   const sw=$('rsSwitch'); if(sw) sw.onclick=()=>pickRaceSheet();
-  const d2=$('rsDay2'); if(d2) d2.onclick=()=>newRaceSheet(r);
   const db=$('rsDebrief'); if(db) db.onclick=()=>{ if(r.status!=='done') finishRace(); else openDebrief(r.id); };
 }
 function pickRaceSheet(){ const list=DB.races.filter(x=>!x.sim&&x.status!=='done').sort((a,b)=>((a.rules.date||'9999')<(b.rules.date||'9999')?-1:1));
@@ -1326,7 +1328,8 @@ function renderTeam(lv){
   const ds=driverStatus(lv,P); const R=S.race; const total=ds.reduce((a,o)=>a+o.seat,0);
   $('teamShare').textContent=lv.started?`${fmt(total)} driven`:'';
   $('teamList').innerHTML=ds.map(o=>{ let tag;
-    if(o.driving) tag='<span class="tag drv">DRIVING</span>';
+    if(lv.finished) tag='';
+    else if(o.driving) tag='<span class="tag drv">DRIVING</span>';
     else if(o.lastEnd!=null&&R.rest&&lv.now-o.lastEnd<R.rest) tag=`<span class="tag rest">RESTING ${fmt(R.rest-(lv.now-o.lastEnd))}</span>`;
     else tag='<span class="tag ready">READY</span>';
     const planned=P.stints.filter(s=>s.driver===o.i).reduce((a,s)=>a+s.dur,0);
@@ -1353,7 +1356,7 @@ $('bigBtn').onclick=()=>{
   // a gloved double-tap must not log PIT OUT and then PIT IN: ignore repeat taps for 1.5 s
   const nowT=Date.now(); if(nowT-TAP_AT<1500&&nowT>=TAP_AT) return; TAP_AT=nowT;
   const lv=live();
-  if(lv.finished){ const r=activeRace(); if(SIM.on){ show('log'); return; } if(r&&r.status!=='done') finishRace(); else if(r) openDebrief(r.id); return; }
+  if(lv.finished){ const r=activeRace(); if(SIM.on){ show('log'); return; } if(r&&r.status!=='done') finishRace(); else raceNow(); return; }
   if(!lv.started){ const r=activeRace();
     if(r&&r.copy&&!SIM.on){ if(!confirm('This plan came from a teammate\'s link. The pit wall logs the race on its own device, and this copy doesn\'t sync. Log the race on THIS device anyway?')) return; r.copy=false; }
     if(r&&P&&!P.err&&!SIM.on) r.planAtGreen=P.stints.map(x=>({d:x.driver,s:r1(x.start),e:r1(x.end)}));   // for the debrief's plan vs actual
@@ -1415,7 +1418,7 @@ function show(tab){ document.querySelectorAll('.tab').forEach(t=>t.classList.tog
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); show(b.dataset.tab); if(b.dataset.tab==='lab') renderLab(); if(b.dataset.tab==='home') renderHome(); });
 
 /* ================= loop ================= */
-function update(){
+function update(){ document.body.classList.toggle('nodb',!DB&&!SIM.on);
   try{ save(); if(teamOnline()&&canPlan()&&SYNC.user) pushSoon(); const lv=live(); P=plan(lv); renderPlan(P,lv); renderRace(); renderTeam(lv); renderLog(); if(typeof renderTeamTab==='function') renderTeamTab(); if(typeof renderCC==='function') renderCC(); }
   catch(e){ console.error(e); $('banners').innerHTML=`<div class="banner box">Something went wrong: ${e.message}</div>`; }
 }
@@ -1720,7 +1723,7 @@ let ONB=null;
 function startOnboarding(){
   SHEET_LOCK=true;
   openSheet('Welcome to PitDog',`<div class="sub" style="margin:0 0 14px">The pit wall for endurance race teams: stints, fuel, drivers and race-day pit stops, on your phone and an iPad command center.</div>`,
-   [{label:'Try a simulated race',fn:()=>{ SHEET_LOCK=false; closeSheet(); startSim({demo:true}); }},{label:'+ Create a team',cls:'pri',fn:()=>{ ONB={step:1,name:'',series:'luckydog',car:{name:'',unit:'gal',cap:16.4,burn:0.38,lap:'2:20'},people:[]}; onbStep(); }}]);
+   [{label:'Try a simulated race',fn:()=>{ SHEET_LOCK=false; closeSheet(); startSim({demo:true}); }},{label:'Full team setup',fn:()=>{ ONB={step:1,name:'',series:'luckydog',car:{name:'',unit:'gal',cap:16.4,burn:0.38,lap:'2:20'},people:[]}; onbStep(); }},{label:'RACE NOW',cls:'pri',id:'wNow',fn:()=>raceNow()}]);
 }
 function onbStep(){
   SHEET_LOCK=true; const st=`<div class="steps"><i class="on"></i><i class="${ONB.step>=2?'on':''}"></i><i class="${ONB.step>=3?'on':''}"></i></div>`;
@@ -1815,6 +1818,70 @@ function newRaceSheet(base){
   $('rSeries').onchange=()=>{ const sc=!!(SERIES[val('rSeries')]||{}).sched; $('rGlance').innerHTML=glanceHTML((SERIES[val('rSeries')]||{}).glance); $('rSched').style.display=sc?'block':'none'; $('rLenBox').style.display=sc?'none':'block'; };
   draw();
 }
+/* ================= RACE NOW ================= */
+// One sheet from nothing to a race on screen: who's driving, how long, which car. It asks for the team name and the
+// car's numbers only when they're missing. Everything else comes from the series defaults and the last race.
+const carReady=c=>!!(c&&c.cap>0&&c.burn>0&&lapMin(c.lap)>0);
+const lenOfRace=r=>{ if((SERIES[r.series]||{}).sched){ let d=hm(r.rules.end)-hm(r.rules.start); if(d<=0) d+=1440; return d; } return r.rules.len||120; };
+const raceIsLive=()=>{ const r=activeRace(); if(!r||r.sim||r.status==='done') return false; const lv=live(); return lv.started&&!lv.finished; };
+function raceNow(){
+  if(SIM.on) return; if(DB&&raceIsLive()){ show('race'); return; }
+  if(DB) dbSave();
+  const T=DB&&DB.team, cur0=DB&&activeRace(), untouched=!!(cur0&&!cur0.sim&&cur0.status!=='done'&&!cur0.events.length), last=untouched?cur0:DB?[...DB.races].filter(r=>!r.sim&&(r.status==='done'||r.events.length)).sort((a,b)=>(b.date||b.created||0)-(a.date||a.created||0))[0]:null;
+  const st={series:last?last.series:(T?T.series:'luckydog'), carId:T?((last&&carById(last.carId))||T.cars[0]).id:null, names:[], sel:[], hours:null};
+  const people=()=>T?T.members.filter(m=>isDriverRole(m.role)):[];
+  st.sel=(last?last.drivers.map(d=>d.mid).filter(id=>member(id)):[]); if(!st.sel.length) st.sel=people().map(m=>m.id);
+  st.hours=last?Math.round(lenOfRace(last)/30)/2:Math.round(lenOfRace({series:st.series,rules:Object.assign(clone(DEFAULT.race),SERIES[st.series].race||{})})/30)/2;
+  const car0=()=>T?carById(st.carId):null, needCar=!carReady(car0());
+  const C0=car0()||clone(DEFAULT.car);
+  const HOURS=[1,2,3,4,6,7,8,12,24];
+  const inp=x=>`style="background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;font-size:16px;min-width:0;${x||''}"`;
+  SHEET_LOCK=!DB;
+  openSheet('Race now',
+    (DB?'':fld('Team name',`<input id="nTeam" type="text" placeholder="My team">`))+
+    `<div class="sub" style="margin:0 0 8px">Who’s driving? Tap in order.</div><div class="pick" id="nPick"></div>
+     <div class="row" style="gap:8px;margin-top:8px"><input id="nName" type="text" placeholder="Add a driver" ${inp('flex:1')}><button class="btn" id="nAdd" style="flex:0 0 auto">Add</button></div>
+     <div class="sub" style="margin:16px 0 8px">How long?</div><div class="chips" id="nHours" style="margin-bottom:0"></div>
+     <div class="row" style="gap:8px;margin-top:8px;align-items:center"><input id="nHrs" type="number" inputmode="decimal" step="0.5" min="0.5" ${inp('width:90px;flex:0 0 auto')}><span class="sub" style="margin:0">hours</span></div>
+     <div class="sub" style="margin:16px 0 8px">Car</div><div id="nCar"></div>
+     <details class="nmore" style="margin-top:14px"><summary class="sub" style="cursor:pointer">Series: <b id="nSerLbl">${esc(SERIES[st.series].label)}</b></summary>${fld('Series',`<select id="nSeries">${seriesOpts(st.series)}</select>`)}</details>`,
+    [...(DB?[{label:'Cancel',fn:closeSheet}]:[{label:'← Back',fn:()=>{ SHEET_LOCK=false; startOnboarding(); }}]),{label:'RACE NOW',cls:'pri',id:'nGo',fn:go}]);
+  function drawPick(){
+    const ps=[...people().map(m=>({id:m.id,name:m.name,color:m.color})),...st.names.map((n,i)=>({id:'new'+i,name:n,color:COLORS[(people().length+i)%COLORS.length]}))];
+    $('nPick').innerHTML=ps.map(p=>{ const k=st.sel.indexOf(p.id); return `<button class="${k>=0?'sel':''}" style="--c:${p.color}" data-m="${p.id}">${esc(p.name)}${k>=0?`<span class="n">${k+1}</span>`:''}</button>`; }).join('')||'<span class="hint" style="margin:0">Add at least one driver.</span>';
+    $('nPick').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const id=b.dataset.m; st.sel=st.sel.includes(id)?st.sel.filter(x=>x!==id):[...st.sel,id]; drawPick(); }); }
+  function drawHours(){ $('nHours').innerHTML=HOURS.map(h=>`<button class="chipbtn ${h===st.hours?'sel':''}" style="flex:0 0 auto;min-width:58px" data-h="${h}">${h} h</button>`).join(''); $('nHrs').value=st.hours;
+    $('nHours').querySelectorAll('button').forEach(b=>b.onclick=()=>{ st.hours=+b.dataset.h; drawHours(); }); }
+  function drawCar(){ const c=car0();
+    if(!needCar&&c){ $('nCar').innerHTML=`${T.cars.length>1?`<select id="nCarSel" ${inp('width:100%')}>${T.cars.map(x=>`<option value="${x.id}" ${x.id===st.carId?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:''}<div class="hint" style="margin-top:6px">${esc(c.name)} · ${c.cap} ${esc(c.unit)} tank · ${c.burn} ${esc(c.unit)}/lap · ${esc(c.lap)} laps. Change it in Team → Cars.</div>`;
+      const s=$('nCarSel'); if(s) s.onchange=()=>{ st.carId=s.value; drawCar(); }; return; }
+    $('nCar').innerHTML=fld('Car name',`<input id="nCarName" type="text" placeholder="Car 1" value="${esc(c&&c.name||'')}">`)+fld('Fuel unit',`<select id="nUnit"><option value="gal">US gal</option><option value="L" ${C0.unit==='L'?'selected':''}>litres</option></select>`)+fld('Usable fuel (tank)',`<input id="nCap" type="number" inputmode="decimal" step="0.1" value="${C0.cap}">`)+fld('Burn per lap',`<input id="nBurn" type="number" inputmode="decimal" step="0.01" value="${C0.burn}">`)+fld('Race lap time (m:ss)',`<input id="nLap" type="text" value="${esc(C0.lap)}">`)+'<div class="hint">Best guesses are fine: PitDog measures the real burn from your fuel stops.</div>'; }
+  const addName=()=>{ const n=val('nName').trim(); if(!n) return; st.names.push(n); st.sel.push('new'+(st.names.length-1)); $('nName').value=''; drawPick(); $('nName').focus(); };
+  $('nAdd').onclick=addName; $('nName').onkeydown=e=>{ if(e.key==='Enter') addName(); };
+  $('nHrs').oninput=()=>{ const v=parseFloat($('nHrs').value); if(v>0){ st.hours=v; $('nHours').querySelectorAll('button').forEach(b=>b.classList.toggle('sel',+b.dataset.h===v)); } };
+  $('nSeries').onchange=()=>{ st.series=val('nSeries'); $('nSerLbl').textContent=SERIES[st.series].label; };
+  drawPick(); drawHours(); drawCar();
+  function go(){
+    if(val('nName').trim()) addName();
+    if(!st.sel.length){ alert('Pick at least one driver.'); return; }
+    if(!(st.hours>0)){ alert('How many hours is the race?'); return; }
+    let carPatch=null;
+    if(needCar){ carPatch={name:val('nCarName').trim()||'Car 1',unit:val('nUnit'),cap:parseFloat(val('nCap')),burn:parseFloat(val('nBurn')),lap:val('nLap').trim()};
+      if(!carReady(carPatch)){ alert('The car needs a tank size, burn per lap and a lap time (like 2:20).'); return; } }
+    const ser=SERIES[st.series], maxS=(ser.race||{}).maxStint||120;
+    if(!DB){ DB={v:2,team:{id:uid(),name:val('nTeam').trim()||'My team',series:st.series,members:[],cars:[]},races:[],activeRaceId:null}; }
+    const TM=DB.team, idMap={};
+    st.names.forEach((n,i)=>{ const ex=TM.members.find(m=>m.name.toLowerCase()===n.toLowerCase()); const m=ex||{id:uid(),name:n,role:TM.members.length?'driver':'owner',maxStint:maxS,color:COLORS[TM.members.length%COLORS.length]}; if(!ex) TM.members.push(m); idMap['new'+i]=m.id; });
+    let car=carById(st.carId); if(carPatch){ if(car) Object.assign(car,carPatch); else { car=Object.assign({id:uid(),measured:{}},clone(DEFAULT.car),carPatch); TM.cars.push(car); } }
+    const t=new Date(nowMs()), pad=x=>String(x).padStart(2,'0'), start=pad(t.getHours())+':'+pad(t.getMinutes()), mins=Math.round(st.hours*60), e=new Date(t.getTime()+mins*60000);
+    const rules=Object.assign(clone(DEFAULT.race),ser.race||{},{name:t.toLocaleDateString([], {weekday:'long'})+' race',date:todayISO(),track:last&&last.series===st.series?last.rules.track:'none',start,end:pad(e.getHours())+':'+pad(e.getMinutes()),len:mins});
+    if(last&&last.rules.track===rules.track){ rules.lat=last.rules.lat; rules.lon=last.rules.lon; }
+    const ids=[...new Set(st.sel.map(id=>idMap[id]||id))].filter(id=>member(id));
+    const r=newRaceObj({series:st.series,rules,carId:car.id,drivers:ids.map(id=>({mid:id,max:Math.min(member(id).maxStint||120,rules.maxStint||999)}))});
+    // an untouched placeholder race (never started, nothing logged, not shared) makes way for this one
+    const cur=activeRace(); if(cur&&!cur.sim&&cur.status!=='done'&&!cur.events.length&&!cur.sid&&(!cur.rules.date||cur.rules.date<=todayISO())) DB.races=DB.races.filter(x=>x!==cur);
+    DB.races.push(r); DB.activeRaceId=r.id; SHEET_LOCK=false; closeSheet(); reloadActive(); if(typeof applyView==='function') applyView(); show('race'); }
+}
 function raceSheet(id){
   const r=DB.races.find(x=>x.id===id); if(!r) return; const isAct=id===DB.activeRaceId; const car=carById(r.carId);
   const sum=r.summary?`<div class="sub">${r.summary.stops} stops · ${Math.round(r.summary.fuel)} ${car?car.unit:''} added · ~${r.summary.laps} laps${r.summary.meas?' · measured '+Math.round(r.summary.meas*1000)/1000+'/lap':''}</div><div style="margin-top:8px">${Object.entries(r.summary.seat||{}).map(([mid,t])=>`<div class="lrow" style="cursor:default;padding:8px 2px"><span class="dot" style="background:${(member(mid)||{}).color||'var(--muted)'}"></span><div class="lmain"><b style="font-size:14px">${esc((member(mid)||{}).name||'?')}</b></div><span class="sub" style="margin:0">${fmt(t)}</span></div>`).join('')}</div>`:'';
@@ -1866,7 +1933,9 @@ async function fetchForecast(r){   // race-day forecast (Open-Meteo, no key); ca
 function renderHome(){
   const box=$('homeBody'); if(!box) return;
   if(!DB){ box.innerHTML='<div class="card"><div class="sub">Create a team to get started.</div></div>'; return; }
-  const nr=nextRace(), lr=lastRace(), T=DB.team; let h='';
+  const nr=nextRace(), lr=lastRace(), T=DB.team, liveR=raceIsLive(); let h='';
+  const ar=activeRace(), ready=!liveR&&ar&&!ar.sim&&ar.status!=='done'&&!ar.events.length&&(!ar.rules.date||ar.rules.date===todayISO())&&ar.drivers.length;
+  h+=`<button class="big green racenow" id="hNow">${liveR?'BACK TO THE RACE':'RACE NOW'}<small>${liveR?esc(ar.rules.name||'Race')+' is running':ready?esc(ar.rules.name||'Race')+' · '+withRace(ar,()=>fmt(raceLen()))+' · '+ar.drivers.map(d=>esc((member(d.mid)||{}).name||'')).join(', '):'Drivers, hours, go'}</small></button>`;
   if(nr){ const car=carById(nr.carId), today=nr.rules.date===todayISO(), ser=SERIES[nr.series]||{}, pr=prepList(nr), f=FC[nr.rules.track+'|'+nr.rules.date];
     nr.prep=nr.prep||{};
     h+=`<div class="card" data-help="home_next"><h2><span>${today?'Race day':'Next race'}</span><span>${esc(dayLabel(nr.rules.date))}</span></h2>
@@ -1875,10 +1944,10 @@ function renderHome(){
       ${f?`<div class="fcast">${ic(f.rain>=50?'rain':'sun')}<b>${Math.round(f.hi)}° / ${Math.round(f.lo)}°${f.imp?'F':'C'}</b><span>${WMO[f.code]||''} · rain ${f.rain??'–'}% · wind ${Math.round(f.wind)} ${f.imp?'mph':'km/h'}</span>${today&&radarOn()?`<button class="rdbtn" data-radar="1" style="margin-left:auto">${ic('radar')} Radar</button>`:''}</div>`:''}
       <div class="pick" style="margin:6px 0 12px">${nr.drivers.map((d,i)=>{ const m=member(d.mid); return m?`<span class="hdrv" style="--c:${safeColor(m.color,i)}">${i+1}. ${esc(m.name)}</span>`:''; }).join('')}</div>
       ${glanceHTML(ser.glance)}
-      <div class="row" style="gap:8px"><button class="btn full" id="hOpen" style="margin:0;font-weight:800;flex:2">${today?ic('race')+' Open the race screen':ic('plan')+' Plan this race'}</button><button class="btn" id="hNew3" style="margin:0;flex:1">+ New race</button></div></div>`;
+      <div class="row" style="gap:8px"><button class="btn full" id="hOpen" style="margin:0;font-weight:800;flex:2">${today?ic('race')+' Open the race screen':ic('plan')+' Plan this race'}</button><button class="btn" id="hNew3" style="margin:0;flex:1">Plan a race</button></div></div>`;
     h+=`<div class="card" data-help="home_prep"><h2><span>Prep checklist</span><span>${pr.err?'':`${Object.values(nr.prep).filter(Boolean).length}/${pr.items.length}`}</span></h2>${pr.err?`<div class="w w-bad">${esc(pr.err)}</div>`:pr.items.map(([k,t])=>`<label class="chk"><input type="checkbox" data-prep="${k}" ${nr.prep[k]?'checked':''}><span>${t}</span></label>`).join('')}</div>`;
     fetchForecast(nr);
-  } else h+=`<div class="card"><h2>Next race</h2><div class="sub" style="margin:0 0 10px">No race planned.</div><button class="btn full" id="hNew" style="font-weight:800">+ New race</button></div>`;
+  } else h+=`<div class="card"><h2>Next race</h2><div class="sub" style="margin:0 0 10px">No race planned.</div><button class="btn full" id="hNew">Plan a future race</button></div>`;
   if(lr){ const sm=lr.summary||{}, car=carById(lr.carId);
     h+=`<div class="card" data-help="home_last"><h2><span>Last race</span><span>${lr.date?new Date(lr.date).toLocaleDateString([], {month:'short',day:'numeric'}):''}</span></h2><div class="hname" style="font-size:19px">${esc(lr.rules.name||'Race')}</div>
       <div class="kpis" style="margin:10px 0"><div class="stat"><div class="v">~${sm.laps??'–'}</div><div class="l">laps</div></div><div class="stat"><div class="v">${sm.stops??'–'}</div><div class="l">stops</div></div><div class="stat"><div class="v">${sm.meas?Math.round(sm.meas*100)/100:'–'}</div><div class="l">${esc(car?car.unit:'')}/lap measured</div></div></div>
@@ -1888,11 +1957,11 @@ function renderHome(){
   h+=`<div class="card" data-help="home_team"><h2><span>${esc(T.name)}</span><span>${(n=>n+' race'+(n===1?'':'s')+' done')(DB.races.filter(r=>r.status==='done'&&!r.sim).length)}</span></h2>
     ${drv.map((m,i)=>`<div class="hseat"><span>${esc(m.name)}</span><i><b style="width:${(seat[m.id]||0)/maxSeat*100}%;background:${safeColor(m.color,i)}"></b></i><em>${fmt(seat[m.id]||0)}</em></div>`).join('')||'<div class="sub">No drivers yet.</div>'}
     <div class="hint">${meas.length?'Measured fuel burn · '+meas.join(' · '):'Measured fuel burn per track appears after your first finished race.'}</div></div>`;
-  h+=`<div class="card"><h2>Quick actions</h2><div class="row" style="flex-wrap:wrap"><button class="btn" id="hNew2">+ New race</button><button class="btn" id="hSim">${ic('play')} Practise</button><button class="btn" id="hLab">${ic('lab')} Strategy Lab</button></div></div>`;
+  h+=`<div class="card"><h2>Quick actions</h2><div class="row" style="flex-wrap:wrap"><button class="btn" id="hNew2">Plan a race</button><button class="btn" id="hSim">${ic('play')} Practise</button><button class="btn" id="hLab">${ic('lab')} Strategy Lab</button></div></div>`;
   box.innerHTML=h;
   const on=(id,fn)=>{ const e=$(id); if(e) e.onclick=fn; };
   on('hOpen',()=>{ if(nr.id!==DB.activeRaceId){ dbSave(); DB.activeRaceId=nr.id; reloadActive(); } show(nr.rules.date===todayISO()?'race':'plan'); });
-  on('hNew',()=>newRaceSheet(null)); on('hNew2',()=>newRaceSheet(null)); on('hNew3',()=>newRaceSheet(null)); on('hSim',()=>startSim({})); on('hLab',()=>{ show('lab'); renderLab(); });
+  on('hNow',()=>{ if(liveR||ready){ show('race'); update(); } else raceNow(); }); on('hNew',()=>newRaceSheet(null)); on('hNew2',()=>newRaceSheet(null)); on('hNew3',()=>newRaceSheet(null)); on('hSim',()=>startSim({})); on('hLab',()=>{ show('lab'); renderLab(); });
   on('hDebrief',()=>openDebrief(lr.id));
   box.querySelectorAll('[data-prep]').forEach(c=>c.onchange=()=>{ nr.prep[c.dataset.prep]=c.checked; dbSave(); renderHome(); });
 }
@@ -1980,9 +2049,9 @@ function renderDebrief(){
     <div class="hint">* The saving from a yellow stop is an estimate (${Math.round(YELLOW_STOP_SAVING*100)}% of your pit-lane loss).</div></div>
   ${d.rules.length?`<div class="card"><h2>Rule checks</h2>${d.rules.map(([k,m])=>`<div class="w w-${k}">${m}</div>`).join('')}</div>`:''}
   <div class="card" data-help="debrief_notes"><h2>Notes</h2><textarea id="dbNotes" rows="4" placeholder="What went well, what to change next time…" style="width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit">${esc(r.notes||'')}</textarea></div>
-  <div class="card"><div class="row" style="flex-wrap:wrap"><button class="btn" id="dbCopy">Copy summary</button><button class="btn" id="dbNext">Same team, new day</button><button class="btn" id="dbHome">${ic('race')} Home</button></div></div>`;
+  <div class="card"><div class="row" style="flex-wrap:wrap"><button class="btn" id="dbCopy">Copy summary</button><button class="btn pri2" id="dbNext">Race now</button><button class="btn" id="dbHome">${ic('race')} Home</button></div></div>`;
   $('dbNotes').oninput=()=>{ r.notes=$('dbNotes').value.slice(0,4000); dbSave(); };
-  $('dbNext').onclick=()=>newRaceSheet(r); $('dbHome').onclick=()=>{ show('home'); renderHome(); };
+  $('dbNext').onclick=()=>raceNow(); $('dbHome').onclick=()=>{ show('home'); renderHome(); };
   $('dbCopy').onclick=()=>{ const t=[`PitDog debrief: ${r.rules.name||'Race'} (${d.seriesLabel})`,`~${d.laps} laps · ${d.stops.length} stops · ${fmt(d.pitTime)} in the pits · ${d.overMin>0.5?sec(d.overMin)+' over minimums':'no time over minimums'}`,...lessons.map(l=>'• '+l[1].replace(/<[^>]+>/g,'')),...d.drivers.map(o=>`${d.names[o.i]}: ${fmt(o.seat)} in ${o.stints} stint${o.stints===1?'':'s'}`),r.notes?'Notes: '+r.notes:''].filter(Boolean).join('\n');
     try{ navigator.clipboard.writeText(t).then(()=>{ $('dbCopy').textContent='Copied ✓'; },()=>prompt('Copy:',t)); }catch(e){ prompt('Copy:',t); } };
 }
@@ -2105,7 +2174,7 @@ function endSim(quiet){
   pend={driver:null,kind:null,jugs:null,full:null};
   if(!quiet){ bind(); update(); if(typeof applyView==='function') applyView(); if(!DB) startOnboarding(); else show('team'); }
 }
-const SIM_SPEEDS=[1,10,30,60];
+const SIM_SPEEDS=[30,60,120,200];
 $('simPlay').onclick=()=>{ if(SIM.speed===0) SIM.speed=SIM.resume||30; else { SIM.resume=SIM.speed; SIM.speed=0; } SIM.last=Date.now(); simHud(); };
 $('simSpeed').onclick=()=>{ const cur=SIM.speed||SIM.resume||30; const nx=SIM_SPEEDS[(SIM_SPEEDS.indexOf(cur)+1)%SIM_SPEEDS.length]; SIM.speed=nx; SIM.resume=nx; SIM.last=Date.now(); simHud(); };
 $('simAutoBtn').onclick=()=>{ SIM.auto=!SIM.auto; simHud(); };
