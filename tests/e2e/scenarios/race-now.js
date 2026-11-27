@@ -17,16 +17,22 @@ __run(() => {
   expect(/GREEN FLAG/.test(txt('bigBtn')) && !document.body.classList.contains('nodb'), 'ready for the green flag');
   expect(/Change/.test(txt('raceSwitch')) && !/Race now/i.test(txt('raceSwitch')), 'pre-race: “Change”, not another Race now');
   // Change re-opens the sheet on this race: 6 h instead, same drivers, no team/car questions
+  S.race.minStop = 7; S.race.name = 'Sprint Saturday'; save();                    // a custom rule set on this race
   click('rsNew');
   expect(!$('nTeam') && !$('nCap') && document.querySelector('#nHours .sel').dataset.h === '4', 'Change: only drivers/hours, prefilled 4 h');
   document.querySelector('#nHours [data-h="6"]').click(); btn('RACE NOW');
   expect(raceLen() === 360 && DB.races.length === 1, 'changed to 6 h without leaving a stray race');
+  expect(S.race.minStop === 7 && S.race.name === 'Sprint Saturday', 'Change keeps the race’s custom rules and name (edits in place)');
   // race it to the flag
-  adv(1); click('bigBtn'); adv(361);
+  adv(150); click('bigBtn');                                                       // green 2.5 h after setting it up
+  expect(live().now < 1.01 && raceLen() === 360, 'the 6 h clock starts at the green flag, not at setup: ' + hms(live().now) + ' elapsed');
+  adv(361);
   expect(/RACE COMPLETE/.test(txt('bigBtn')) && getComputedStyle($('upNextCard')).display === 'none', 'at the flag: one clear action, no empty “Up next”');
   expect(getComputedStyle(document.querySelector('#actionBar .side')).display === 'none', 'flag buttons hidden after the flag');
   TAP_AT = 0; click('bigBtn');
   expect($('tab-debrief').classList.contains('on') && activeRace().status === 'done', 'finish → debrief');
+  const nEv = S.events.length; click('undoBtn');
+  expect(S.events.length === nEv, 'UNDO can’t reopen a finished, saved race');
   // back on the race tab: not stuck
   show('race'); update();
   expect(/RACE NOW/.test(txt('bigBtn')), 'race tab after a saved race offers RACE NOW: ' + txt('bigBtn'));

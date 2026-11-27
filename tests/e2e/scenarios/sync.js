@@ -192,14 +192,39 @@ setTimeout(async () => {
     const sel = document.querySelector('#syncMembers [data-role]'); sel.value = 'pitwall'; await sel.onchange(); await wait(30);
     expect(mB().role === 'pitwall', 'the owner promotes B to pit wall from the Team tab');
     await document.querySelector('#syncMembers [data-rmm]').onclick(); await wait(30);
-    expect(!mB() && /Removed/.test(txt('syncMembers')) && document.querySelector('#syncMembers [data-back]'), 'the owner removes B, who is listed under Removed');
-    await document.querySelector('#syncMembers [data-back]').onclick(); await wait(30);
+    expect(!mB() && /Removed/.test(txt('syncMembers')) && document.querySelector('#syncMembers [data-rejoin]'), 'the owner removes B, who is listed under Removed');
+    await document.querySelector('#syncMembers [data-rejoin]').onclick(); await wait(30);
     expect(SRV.history.filter(h => h.team_id === tid && h.user_id === U.B.id).every(h => !h.removed) && !/Removed/.test(txt('syncMembers')), '“Let back in” clears the mark');
     park('A'); become('B'); SYNC.user = U.B; await joinTeam('K7QM3XPA');
     expect(mB() && mB().role === 'pitwall' && DB.team.role === 'pitwall', 'B re-joins with the code and gets the pit wall role back');
     SYNC.membersAt = 0; show('team'); renderTeamTab(); await wait(30);
     expect(!document.querySelector('#syncMembers [data-role]') && !/paul@neto\.me/.test(txt('syncMembers')), 'non-owners see names and roles, no controls, no one else’s email');
     park('B'); become('A');
+
+    // --- review fixes: Race now on a shared team syncs; crew can't make private races; abandon is shared and hidden
+    const sheetBtn = l => [...document.querySelectorAll('#sheetF button')].find(x => x.textContent.includes(l)).click();
+    if (raceIsLive()) { addEvent({ type: 'end' }); finishRace(true); }
+    await pushAll(); const nR = SRV.races.length;
+    raceNow(); sheetBtn('RACE NOW'); await wait(20);
+    adv(1); TAP_AT = 0; click('bigBtn'); await pushAll();
+    const newSid = activeRace().sid;
+    expect(newSid && SRV.races.length === nR + 1 && SRV.events.some(e => e.race_id === newSid && e.type === 'green'), 'a race made with Race now on a shared team reaches the server with its log');
+    park('A'); become('B'); await pull(false);
+    expect(DB.races.some(r => r.sid === newSid), 'the crew phone gets that race');
+    SRV.memberships.find(m => m.team_id === tid && m.user_id === U.B.id).role = 'crew'; await pull(false);
+    const nRaces = DB.races.length; raceNow();
+    expect(DB.races.length === nRaces && !(/Race now/.test(txt('sheetT')) && $('sheetBg').classList.contains('on')), 'crew can’t create a private race with Race now');
+    closeSheet(); click('menuBtn'); const its = [...document.querySelectorAll('#sheetB .mrow b')].map(x => x.textContent);
+    expect(!its.includes('End the race now') && !its.includes('Abandon this race') && !its.includes('Race now'), 'crew menu: no end / abandon / race now: ' + its.join(', '));
+    closeSheet(); park('B'); become('A'); await pull(false);
+    DB.activeRaceId = DB.races.find(r => r.sid === newSid).id; reloadActive();
+    abandonRace(); closeSheet(); await pushAll();
+    expect(SRV.races.find(r => r.id === newSid).settings.abandoned === true, 'abandoning a shared race closes it for everyone');
+    park('A'); become('B'); await pull(false);
+    const ab = DB.races.find(r => r.sid === newSid);
+    expect(ab && ab.abandoned && (!lastRace() || lastRace().sid !== newSid) && !computeRecords(null).races.some(x => x.r.sid === newSid), 'the crew phone hides the abandoned race from history');
+    park('B'); become('A');
+    closeSheet(); raceNow(); sheetBtn('RACE NOW'); adv(1); TAP_AT = 0; click('bigBtn'); await pushAll();     // A back on a live shared race
 
     // --- session died elsewhere: keep everything, say signed out (finding #2)
     SRV.dead = true; click('yBtn'); await pull(false);
