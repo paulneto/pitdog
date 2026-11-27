@@ -474,7 +474,7 @@
     <label class="f">5-min stop required every (min) <input id="mandEvery" type="number" inputmode="numeric" min="0"></label>
     <label class="f mandper">Mandatory stops = race min ÷ X − 1 <input id="mandPer" type="number" inputmode="numeric" min="0"></label>
     <label class="f pcaonly">Mandatory stops <input id="mandatory" type="number" inputmode="numeric" min="0"></label>
-    <label class="f custonly">Minimum stop applies to <select id="minApplies"><option value="fuel">Fuel stops</option><option value="all">All stops</option></select></label>
+    <label class="f custonly">Minimum stop applies to <select id="minApplies"><option value="fuel">Fuel stops</option><option value="mand">Mandatory stops only</option><option value="mandfuel">Mandatory + fuel stops</option><option value="all">All stops</option></select></label>
     <label class="f pcaonly">No stops before (min) <input id="earliest" type="number" inputmode="numeric" min="0"></label>
     <label class="f pcaonly">Stops start before last (min) <input id="latest" type="number" inputmode="numeric" min="0"></label>
     <label class="f">Pits open under yellow <select id="pitsUnderYellow"><option value="1">Yes</option><option value="0">No</option></select></label>
@@ -554,7 +554,8 @@
 /* ================= rules & defaults ================= */
 const COLORS=['#ff3b30','#0a84ff','#30d158','#bf5af2','#ff9f0a','#64d2ff','#ff375f','#ac8e68'];
 /* Series presets. Every preset sets EVERY rule key so switching series resets cleanly.
-   minApplies: 'fuel' = minimum stop time only for fuel stops; 'all' = every stop (except black flag).
+   minApplies: 'fuel' = only fuel stops; 'mand' = only until the mandatory stops are done (shorter stops are legal
+   but don't count, e.g. AER); 'mandfuel' = mandatory stops and every fuel stop (PCA); 'all' = every stop except black flag.
    mandPer: AER-style mandatory stop count = ceil(race minutes / mandPer - 1). fuelMax: onboard fuel limit (0 = none). */
 const RULEKEYS={maxStint:0,rest:0,minStop:0,minApplies:'fuel',mandEvery:0,mandatory:0,mandPer:0,earliest:0,latest:0,pitsUnderYellow:1,yellowWindow:15,onDeck:15,fuelMax:0,refuelOver:0};
 const SERIES={
@@ -573,7 +574,7 @@ const SERIES={
     rules:['Driving stints <b>4 hours max</b>, with a minimum <b>1 hour break</b> between stints. Officials watch for fatigue.','Fuelling on pit road during hot track only; engine off before fuelling; driver change allowed during fuelling.','Max <b>5 team members over the wall</b>; <b>one fuel jug over the wall at a time</b>, no staging; no pressurised systems; drip pan or absorbent mat required.','Non-compliant fuel jugs: 1-lap penalty per fuel stop. Fuelling/pit-road violations: 1 lap.','Checkered flag when time expires.','<i>*Only the 2022 rulebook is public: no minimum stop time is stated, and FCY pit rules aren\'t covered. Check the current WRL event info.</i>'],
     pit:'Engine off before fuelling · max 5 over the wall · one jug at a time · drip pan/mat · no work while the fuel port is open',
     src:'<a href="https://static1.squarespace.com/static/611fe48f61d6702c42301722/t/624778f387bf2c0dcdff5442/1648851187807/WRL-RULES-2022.2.1.docx.pdf" target="_blank">WRL Rules 2022.2.1</a> (latest public)'},
-  aer:{label:'AER',sched:true,race:Object.assign({},RULEKEYS,{minStop:3,minApplies:'all',mandPer:80,latest:10,yellowWindow:15}),
+  aer:{label:'AER',sched:true,race:Object.assign({},RULEKEYS,{minStop:3,minApplies:'mand',mandPer:80,latest:10,yellowWindow:15}),
     glance:{stint:'no limit in rulebook',rest:'—',stop:'3:00 (mandatory stops)',mand:'race min ÷ 80 − 1',fcy:'pit in OK, pit-out held',clock:'scheduled times'},
     rules:['Mandatory stops = <b>race minutes ÷ 80 − 1</b>, rounded up (8 h → 5 stops; 14 h → 10).','Each mandatory stop is at least <b>3:00</b> from the pit-in to the pit-out RFID antenna. Shorter stops don\'t count; you can\'t combine stop time.','Stops that begin in the <b>last 10 minutes</b> of the scheduled race don\'t count.','Missed stops cost 10 min ÷ your fastest lap, in laps, per stop.','Under FCY <b>pit-out is closed</b> until the tail of the pack passes; stops of 3:00+ under FCY still count. Races start under FCY.','Pit lane 35 mph. Any fuel cell size allowed (FT-3).','<i>No driver stint limit appears in the current rulebook. Older coverage mentions one, so check with AER.</i>'],
     pit:'3:00 minimum pit-in → pit-out antenna for it to count · pit lane 35 mph · under FCY you may pit, but pit-out is held for the pack',
@@ -583,7 +584,7 @@ const SERIES={
     rules:['Fuel in the <b>hot pits or at the track pumps</b> only, never in the paddock during the race.','While fuelling: kill switch off, <b>nobody in the car</b>, drip pan, a dedicated extinguisher person, and full safety gear for everyone in the fuelling area.','Hot pit is for fuelling, driver changes and cool-suit ice only; no staging fuel or gear there.','<i>*No official max stint or minimum stop time found. Lemons has recommended shorter stints (about 1 h). Set your own max stint here and check the race page.</i>'],
     pit:'Kill switch off and nobody in the car while fuelling · drip pan · extinguisher person · fuel only in hot pits or at track pumps',
     src:'<a href="https://24hoursoflemons.com/race-2/?id=451" target="_blank">Lemons race page fuelling rules</a> (no full public rulebook found)'},
-  pca:{label:'PCA Club Racing',sched:false,race:Object.assign({},RULEKEYS,{minStop:5,minApplies:'all',mandatory:1,earliest:15,latest:10,pitsUnderYellow:0,yellowWindow:0,onDeck:10,refuelOver:60}),
+  pca:{label:'PCA Club Racing',sched:false,race:Object.assign({},RULEKEYS,{minStop:5,minApplies:'mandfuel',mandatory:1,earliest:15,latest:10,pitsUnderYellow:0,yellowWindow:0,onDeck:10,refuelOver:60}),
     glance:{stint:'no limit',rest:'—',stop:'5:00 all stops',mand:'1 (in window)',fcy:'pits CLOSED',clock:'from green'},
     rules:['At least one mandatory stop (more if the supplementals say so), <b>5:00 min</b> check-in to check-out.','No mandatory stops in the first 15 min; they must start before the last 10 min.','Refuelling only in races over 1 hour. Every refuelling stop is 5:00 minimum (no splash and go).','Max 3 over the wall. Plastic jugs ≤5 gal over the wall. Fireman required.','<b>Pits closed under full-course yellow.</b>'],
     pit:'Max 3 over the wall · engine off, driver out while fuelling · fireman with the pin pulled',
@@ -666,7 +667,7 @@ function plan(lv){
     t = a.out!=null ? a.out : Math.max(lv.now, a.in+(a.kind==='fuel'?stopCost:C.pitLoss/60+1));
     di = a.next!=null ? a.next : (di+1)%nd;
   });
-  const remMand=Math.max(0,mandCount(R,L)-lv.stops.length);
+  const remMand=Math.max(0,mandCount(R,L)-(['mand','mandfuel'].includes(R.minApplies)?countedStops(lv):lv.stops.length));
   const Rm=L-t;
   if(Rm>0){
     let n=remMand+1; while(n<80 && (Rm-(n-1)*stopCost)/n > cap+1e-9) n++;
@@ -719,7 +720,10 @@ function plan(lv){
     if(R.maxStint&&s.dur>R.maxStint+1e-6) W.push([s.locked?'bad':'warn',`Stint ${i+1} is ${fmt(s.dur)}, over the ${R.maxStint}-min series limit.`]);
     if(R.rest){ for(let j=i-1;j>=0;j--){ if(stints[j].driver===s.driver){ const gap=s.start-stints[j].end; if(gap<R.rest-1e-6) W.push(['bad',`${d?d.name:'Driver'} gets only ${fmt(gap)} rest before stint ${i+1}. ${R.rest} min required.`]); break; } } }
   });
-  lv.stops.forEach((a,i)=>{ if(a.out!=null&&a.kind==='fuel'&&a.out-a.in<R.minStop-1e-6) W.push(['bad',`Stop ${i+1} (fuel) was only ${fmt(a.out-a.in)}, under the ${R.minStop}:00 minimum.`]); });
+  lv.stops.forEach((a,i)=>{ if(a.out==null||a.kind==='black'||!R.minStop) return; const len=a.out-a.in; if(len>=R.minStop-1e-6) return;
+    const ap=R.minApplies||'fuel'; const required=ap==='all'||(a.kind==='fuel'&&ap!=='mand');
+    if(required) W.push(['bad',`Stop ${i+1} (${a.kind}) was only ${fmt(len)}, under the ${fmt(R.minStop)} minimum.`]);
+    else if(ap==='mand'||ap==='mandfuel') W.push(['warn',`Stop ${i+1} was ${fmt(len)}, under ${fmt(R.minStop)}: legal, but it doesn't count toward the mandatory stops.`]); });
   if(R.refuelOver&&!refuel) W.push(['warn',`This race is ${R.refuelOver} min or shorter, so refuelling isn't allowed.`]);
   if(R.fuelMax&&C.cap>R.fuelMax) W.push(['bad',`${(SERIES[S.series]||{}).label} limits total onboard fuel to ${R.fuelMax} ${C.unit}.`]);
   if(R.mandPer) W.push(['ok',`${mandCount(R,L)} mandatory stops for a ${fmt(L)} race (race minutes ÷ ${R.mandPer} − 1).`]);
@@ -837,7 +841,11 @@ function computeAlerts(lv,P){
 // half-jug logging: the last jug is usually only partly poured
 const jugSteps=C=>{ const out=[]; const mx=Math.min(6,Math.ceil(C.cap/C.jug)); for(let j=0;j<=mx+1e-9;j+=0.5) out.push(j); return out; };
 const jugLbl=j=>j===0?'0':(Math.floor(j)||'')+(j%1?'½':'');
-function minFor(kind){ const R=S.race; if(kind==='black') return 0; return (kind==='fuel'||R.minApplies==='all')?(R.minStop||0):0; }
+function minFor(kind){ const R=S.race, m=R.minStop||0, ap=R.minApplies||'fuel'; if(kind==='black'||!m) return 0;
+  if(ap==='all') return m; if(kind==='fuel'&&ap!=='mand') return m;
+  if(ap==='mand'||ap==='mandfuel'){ const lv=live(); return countedStops(lv)<mandCount(R,lv.L)?m:0; } return 0; }
+// stops that count toward the mandatory total (long enough, or still in progress)
+function countedStops(lv){ const m=S.race.minStop||0; return lv.stops.filter(s=>s.out==null||s.out-s.in>=m-1e-6).length; }
 function mandCount(R,L){ return R.mandPer?Math.max(0,Math.ceil(L/R.mandPer-1-1e-9)):(R.mandatory||0); }
 function glanceHTML(g){ return g?`<div class="kpis" style="margin:0 0 10px">${[['Max stint',g.stint],['Driver rest',g.rest],['Min stop',g.stop],['Mandatory stops',g.mand],['Under FCY',g.fcy],['Race clock',g.clock]].map(([l,v])=>`<div class="stat"><div class="v" style="font-size:13px;white-space:normal;line-height:1.25">${v}</div><div class="l">${l}</div></div>`).join('')}</div>`:''; }
 function renderRace(){
@@ -1385,10 +1393,10 @@ function simHud(){
 }
 function simReport(){
   const lv=live(); const P2=plan(lv); const bad=P2.W.filter(w=>w[0]==='bad').map(w=>w[1]);
-  const shortStops=lv.stops.filter(s=>s.out!=null&&s.kind==='fuel'&&s.out-s.in<S.race.minStop).length;
+  const shortStops=P2.W.filter(w=>w[0]==='bad'&&/under the .* minimum/.test(w[1])).length; const counted=countedStops(lv);
   const over=P2.stints.filter(s=>S.race.maxStint&&s.dur>S.race.maxStint+1e-6).length;
   const measErr=P2.meas?(P2.meas/SIM.t.burn-1):null;
-  return {finished:lv.finished,laps:Math.floor(SIM.t.laps),stops:lv.stops.length,oof:SIM.t.oof,shortStops,overStints:over,bad,trueBurn:SIM.t.burn,meas:P2.meas,measErr,yellows:SIM.flags.filter(f=>f.type==='yellow'&&f.on).length,reds:SIM.flags.filter(f=>f.type==='red'&&f.on).length};
+  return {finished:lv.finished,laps:Math.floor(SIM.t.laps),stops:lv.stops.length,counted,oof:SIM.t.oof,shortStops,overStints:over,bad,trueBurn:SIM.t.burn,meas:P2.meas,measErr,yellows:SIM.flags.filter(f=>f.type==='yellow'&&f.on).length,reds:SIM.flags.filter(f=>f.type==='red'&&f.on).length};
 }
 function simSummary(){
   const x=simReport(); const ok=!x.oof&&!x.shortStops&&!x.overStints&&!x.bad.length;

@@ -3,7 +3,7 @@ Source: *2026 PCA Club Racing Enduro Protocols*. **Always check the race supplem
 
 | Rule | In PitDog |
 |---|---|
-| At least one mandatory stop (more if specified), **min 5:00** check-in to check-out | `mandatory 1`, `minStop 5` |
+| At least one mandatory stop (more if specified), **min 5:00** check-in to check-out | `mandatory 1`, `minStop 5`, `minApplies mandfuel` (mandatory stops and every fuel stop; a driver-change-only stop afterwards has no minimum) |
 | Mandatory stops **not in the first 15 min**; must start **before the last 10 min** | `earliest 15`, `latest 10`: plan check and banners |
 | Refuelling only in races **over 1 hour**; **every refuelling stop min 5:00** (no splash-and-go) | auto refuel rule |
 | Pits **closed under full-course yellow** | `pitsUnderYellow 0`: confirm on PIT IN |
