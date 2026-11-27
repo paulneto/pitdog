@@ -17,8 +17,11 @@ __run(() => {
   // add a person via the sheet
   click('addMember'); setv('mName', 'Jo'); btn('Save');
   expect(DB.team.members.some(m => m.name === 'Jo'), 'added Jo');
+  // starting a new race is obvious from the race screen before the green flag
+  show('race'); update();
+  expect(getComputedStyle($('raceSwitch')).display !== 'none' && document.getElementById('rsNew'), 'race screen shows “+ New race” before the green flag');
   // new race: only Luc then Paul (tap order), at Watkins Glen
-  click('newRaceBtn');
+  click('rsNew');
   document.querySelectorAll('#rPick button').forEach(b => b.click());           // toggle everyone off
   const pick = n => [...document.querySelectorAll('#rPick button')].find(b => b.textContent.startsWith(n)).click();
   pick('Luc'); pick('Paul'); setv('rName', 'Saturday'); setv('rTrack', 'glen'); btn('Create race');

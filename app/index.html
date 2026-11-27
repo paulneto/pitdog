@@ -599,6 +599,7 @@
 <!-- ================= RACE ================= -->
 <section class="tab on" id="tab-race">
   <div id="banners"></div>
+  <div class="card" id="raceSwitch" data-help="raceswitch" style="display:none"></div>
   <div class="card" id="trackCard">
     <h2><span id="stintLabel">On track</span><span id="stintMax"></span></h2>
     <div class="hero-l" id="nextStopL">Next stop in</div>
@@ -1260,11 +1261,28 @@ function renderRace(){
     big.className='big red'; big.innerHTML='PIT IN<small>Car stopping at Pit In</small>';
   }
   $('banners').innerHTML=ban;
+  renderRaceSwitch(lv);
   if(!lv.finished){ const nx=st.slice(ci+(lv.inPit?0:1)).slice(0,3);
     $('upNextBody').innerHTML=nx.length?nx.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><span class="dot" style="background:${dcol(s.driver)}"></span>${esc(S.drivers[s.driver]?.name)}</span><span>${clockAt(s.start)} → ${clockAt(s.end)} <span style="color:var(--muted)">(${fmt(s.dur)})</span></span></div>`).join(''):'Last stint: bring it home';
   } else $('upNextBody').textContent='—';
 }
 const pitNow=(lv,tt)=>lv.started&&lv.yellow&&!lv.red&&S.race.pitsUnderYellow&&tt>0&&tt<=(S.race.yellowWindow||0);
+function renderRaceSwitch(lv){
+  const box=$('raceSwitch'), r=activeRace(); if(!box) return;
+  const show=DB&&r&&!SIM.on&&(!lv.started||lv.finished); box.style.display=show?'':'none'; if(!show) return;
+  const others=DB.races.filter(x=>!x.sim&&x.id!==r.id&&x.status!=='done').length, done=r.status==='done';
+  box.innerHTML=`<div class="row" style="align-items:center;gap:10px"><div style="flex:1;min-width:0"><div class="sub" style="margin:0">${done?'Finished':lv.finished?'Race over':'This race'}</div><b style="font-size:17px">${esc(r.rules.name||'Race')}</b> <span class="sub" style="margin:0">· ${esc(dayLabel(r.rules.date))}</span></div>
+    ${others?`<button class="btn" id="rsSwitch">Switch</button>`:''}<button class="btn pri2" id="rsNew">+ New race</button></div>
+    ${lv.finished?`<div class="row" style="gap:8px;margin-top:10px"><button class="btn" id="rsDay2" style="flex:1">Same team, new day</button><button class="btn" id="rsDebrief" style="flex:1">Debrief</button></div>`:''}`;
+  $('rsNew').onclick=()=>DB&&newRaceSheet(null);
+  const sw=$('rsSwitch'); if(sw) sw.onclick=()=>pickRaceSheet();
+  const d2=$('rsDay2'); if(d2) d2.onclick=()=>newRaceSheet(r);
+  const db=$('rsDebrief'); if(db) db.onclick=()=>{ if(r.status!=='done') finishRace(); else openDebrief(r.id); };
+}
+function pickRaceSheet(){ const list=DB.races.filter(x=>!x.sim&&x.status!=='done').sort((a,b)=>((a.rules.date||'9999')<(b.rules.date||'9999')?-1:1));
+  openSheet('Switch race',list.map(x=>`<div class="lrow" data-pick="${esc(x.id)}"><div class="lmain"><b>${esc(x.rules.name||'Race')}${x.id===DB.activeRaceId?' <span class="st active">CURRENT</span>':''}</b><small>${esc(dayLabel(x.rules.date))} · ${esc((SERIES[x.series]||{}).label||'')}</small></div><span class="chev">›</span></div>`).join('')+'<div class="hint">Finished races are in Team → Races.</div>',
+    [{label:'+ New race',fn:()=>{ closeSheet(); newRaceSheet(null); }},{label:'Close',cls:'pri',fn:closeSheet}]);
+  $('sheetB').querySelectorAll('[data-pick]').forEach(e=>e.onclick=()=>{ const id=e.dataset.pick; closeSheet(); if(id!==DB.activeRaceId){ dbSave(); DB.activeRaceId=id; reloadActive(); } show('race'); }); }
 function renderTrack(s,lv,ds){
   const R=S.race,C=S.car; const d=S.drivers[s.driver]||{name:'?',max:0};
   const inSeat=lv.started?Math.max(0,lv.now-s.start):0; const last=P.stints.indexOf(s)===P.stints.length-1;
@@ -1847,7 +1865,7 @@ function renderHome(){
       ${f?`<div class="fcast">${ic(f.rain>=50?'rain':'sun')}<b>${Math.round(f.hi)}° / ${Math.round(f.lo)}°${f.imp?'F':'C'}</b><span>${WMO[f.code]||''} · rain ${f.rain??'–'}% · wind ${Math.round(f.wind)} ${f.imp?'mph':'km/h'}</span></div>`:''}
       <div class="pick" style="margin:6px 0 12px">${nr.drivers.map((d,i)=>{ const m=member(d.mid); return m?`<span class="hdrv" style="--c:${safeColor(m.color,i)}">${i+1}. ${esc(m.name)}</span>`:''; }).join('')}</div>
       ${glanceHTML(ser.glance)}
-      <div class="row" style="gap:8px"><button class="btn full" id="hOpen" style="margin:0;font-weight:800">${today?ic('race')+' Open the race screen':ic('plan')+' Plan this race'}</button></div></div>`;
+      <div class="row" style="gap:8px"><button class="btn full" id="hOpen" style="margin:0;font-weight:800;flex:2">${today?ic('race')+' Open the race screen':ic('plan')+' Plan this race'}</button><button class="btn" id="hNew3" style="margin:0;flex:1">+ New race</button></div></div>`;
     h+=`<div class="card" data-help="home_prep"><h2><span>Prep checklist</span><span>${pr.err?'':`${Object.values(nr.prep).filter(Boolean).length}/${pr.items.length}`}</span></h2>${pr.err?`<div class="w w-bad">${esc(pr.err)}</div>`:pr.items.map(([k,t])=>`<label class="chk"><input type="checkbox" data-prep="${k}" ${nr.prep[k]?'checked':''}><span>${t}</span></label>`).join('')}</div>`;
     fetchForecast(nr);
   } else h+=`<div class="card"><h2>Next race</h2><div class="sub" style="margin:0 0 10px">No race planned.</div><button class="btn full" id="hNew" style="font-weight:800">+ New race</button></div>`;
@@ -1864,7 +1882,7 @@ function renderHome(){
   box.innerHTML=h;
   const on=(id,fn)=>{ const e=$(id); if(e) e.onclick=fn; };
   on('hOpen',()=>{ if(nr.id!==DB.activeRaceId){ dbSave(); DB.activeRaceId=nr.id; reloadActive(); } show(nr.rules.date===todayISO()?'race':'plan'); });
-  on('hNew',()=>newRaceSheet(null)); on('hNew2',()=>newRaceSheet(null)); on('hSim',()=>startSim({})); on('hLab',()=>{ show('lab'); renderLab(); });
+  on('hNew',()=>newRaceSheet(null)); on('hNew2',()=>newRaceSheet(null)); on('hNew3',()=>newRaceSheet(null)); on('hSim',()=>startSim({})); on('hLab',()=>{ show('lab'); renderLab(); });
   on('hDebrief',()=>openDebrief(lr.id));
   box.querySelectorAll('[data-prep]').forEach(c=>c.onchange=()=>{ nr.prep[c.dataset.prep]=c.checked; dbSave(); renderHome(); });
 }
@@ -2218,6 +2236,7 @@ const HELP={
   debrief_yellows:{t:'Yellows',read:'Every yellow: when and how long, and whether a stop was due soon enough to take cheaply.',means:'A cheap stop is one due within your yellow window (Plan → Race).',can:'Raise the window if you want to take more yellow stops.',cant:'The time saved is an estimate.'},
   debrief_notes:{t:'Notes',read:'Free notes for this race.',means:'',can:'Write what went well and what to change; saved with the race.',cant:''},
   sync:{t:'Team sync',read:'Signed out: a Google button. Signed in: put your team online, or join one with its 8-character code. Online: your role, the join code (owners), and the sync state.',means:'Every device keeps the whole team and works offline. Pit stops and flags logged anywhere reach the others when there’s signal; nothing is overwritten.',can:'Invite the crew with the link, sync now, stop syncing on this device, sign out.',cant:'Sign-in needs signal once. Crew can log but not change the plan; viewers only watch.'},
+  raceswitch:{t:'Which race',read:'The race this screen is for, and its day. Shown before the green flag and after the finish.',means:'',can:'Start a new race, switch to another planned race, or after the finish set up the next day or open the debrief.',cant:'You can’t switch races mid-race from here: finish the race first.'},
   cc_tl:{t:'Race timeline',read:'Every stint as a coloured bar, stops hatched, yellows and reds marked on top, and a white line for now.',means:'Faded bars are stints already driven.',can:'',cant:''},
 };
 const HELP_AT={'#bigBtn':'bigbtn','#ccGo':'bigbtn','#yBtn':'yellow','#ccY':'yellow','#rBtn':'red','#ccR':'red','#undoBtn':'undo','#ccU':'undo','#banners':'strip',
