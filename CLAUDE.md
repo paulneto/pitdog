@@ -9,3 +9,5 @@ Paul's **personal** project (endurance racing). It's **not Measure Protocol work
 - **Deploy:** push to `main` and GitHub Actions publishes `app/`. That updates the live app the crew uses, so only push working, tested changes.
 - **Data/terms:** live timing comes from Race Monitor (FloSports). **Don't scrape the public timing pages**; the terms forbid it. Use the API only with a key and permission (see roadmap).
 - **Secrets:** a Supabase anon/publishable key may live in the app. **Never** commit a service-role key or a Race Monitor token. Those belong in Vercel environment variables.
+- **Data model:** a local team database `DB` (team, races) is hydrated into the working object `S` for the active race. Call `dbSave()` *before* changing `DB.activeRaceId` (see README). Use `nowMs()` for race time, never `Date.now()`, so the simulator works.
+- **Simulator:** `tests/e2e/scenarios/sim-sweep.js` runs 25 seeded race days. If you change planning or fuel logic, this sweep is the real test. The only allowed flags are the auto-crew's deliberate early departures.

@@ -217,11 +217,57 @@
   .cc-span3{grid-column:1/4}
   .cc-c2{grid-column:2;grid-row:1/3}
 
+  /* ---------- team / sheets / sim ---------- */
+  .mini{background:#20252f;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font:inherit;font-size:12px;font-weight:700;letter-spacing:0;text-transform:none;cursor:pointer}
+  .lrow{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+  .lrow:last-child{border-bottom:0}
+  .lrow .dot{width:12px;height:12px;margin:0;flex:none}
+  .lmain{flex:1;min-width:0}.lmain b{display:block;font-size:16px}.lmain small{color:var(--muted);font-size:12px}
+  .chev{color:var(--muted);font-size:20px}
+  .st{font-size:10px;font-weight:800;letter-spacing:.6px;padding:3px 7px;border-radius:8px;background:#20252f;color:var(--muted)}
+  .st.active{background:rgba(48,209,88,.15);color:var(--green)}.st.live{background:rgba(255,59,48,.15);color:var(--red)}.st.done{background:rgba(10,132,255,.15);color:#8cc4ff}
+  .sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:80;display:none;align-items:flex-end;justify-content:center}
+  .sheet-bg.on{display:flex}
+  .sheet{background:var(--panel);border:1px solid var(--line);border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:92vh;overflow:auto;padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
+  @media(min-width:700px){.sheet-bg{align-items:center}.sheet{border-radius:20px}}
+  .sheet-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.sheet-h b{font-size:20px}
+  .sheet-h button{background:none;border:0;color:var(--muted);font-size:22px;cursor:pointer}
+  .sheet-f{display:flex;gap:8px;margin-top:14px}.sheet-f button{flex:1;padding:14px;border-radius:12px;font:inherit;font-weight:800;border:1px solid var(--line);background:#20252f;color:var(--text);cursor:pointer}
+  .sheet-f button.pri{background:var(--red);border-color:var(--red);color:#fff}.sheet-f button.dng{color:var(--red)}
+  .sheet .chips{margin-bottom:6px}
+  .colors{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}.colors button{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer}.colors button.sel{border-color:#fff}
+  .steps{display:flex;gap:6px;margin-bottom:12px}.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}.steps i.on{background:var(--red)}
+  .pick{display:flex;flex-wrap:wrap;gap:8px}.pick button{position:relative;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;font-weight:700;cursor:pointer}
+  .pick button.sel{border-color:var(--c);background:color-mix(in srgb,var(--c) 20%,transparent)}
+  .pick button .n{position:absolute;top:-8px;right:-8px;background:var(--c);color:#fff;border-radius:50%;width:20px;height:20px;font-size:11px;display:flex;align-items:center;justify-content:center}
+  .drv2{grid-template-columns:1fr 64px 36px 36px 36px!important;align-items:center}
+  .drv2 .dn{padding:8px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .drv2 .dn b{color:var(--muted);margin-right:4px}
+  #simHud{position:fixed;top:0;left:0;right:0;z-index:70;height:calc(40px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 10px 0;display:none;align-items:center;gap:6px;background:repeating-linear-gradient(135deg,#2a1b4a 0 14px,#24173f 14px 28px);border-bottom:1px solid #6b4bd1;color:#e6dcff;font-size:12px;font-weight:700;overflow-x:auto;white-space:nowrap}
+  body.sim-on #simHud{display:flex}
+  body.sim-on{padding-top:calc(40px + env(safe-area-inset-top))}
+  body.sim-on .appbar{top:calc(40px + env(safe-area-inset-top))}
+  body.sim-on #cc{top:calc(40px + env(safe-area-inset-top))}
+  #simHud b{background:#8b5cf6;color:#fff;padding:3px 8px;border-radius:6px;letter-spacing:1px}
+  #simHud button{background:#3b2a66;color:#e6dcff;border:1px solid #6b4bd1;border-radius:7px;padding:5px 9px;font:inherit;cursor:pointer}
+  #simHud button.on{background:#8b5cf6;color:#fff}
+  #simHud .tr{color:#c4b5fd;font-weight:600;margin-left:6px}
+  #simHud .oof{color:#fff;background:#ff3b30;padding:3px 8px;border-radius:6px}
+
   @media (min-width:700px){.clock{font-size:72px}}
   @media print{.tabbar,.action,.appbar{display:none}.tab{display:block!important}body{background:#fff;color:#000}}
 </style>
 </head>
 <body>
+<div id="simHud">
+  <b>SIM</b>
+  <button data-s="0">⏸</button><button data-s="1">1×</button><button data-s="10">10×</button><button data-s="30">30×</button><button data-s="60">60×</button>
+  <button id="simAutoBtn">auto-crew</button>
+  <span class="tr" id="simTruth"></span>
+  <button id="simEnd" style="margin-left:auto">End sim</button>
+</div>
+<div class="sheet-bg" id="sheetBg"><div class="sheet"><div class="sheet-h"><b id="sheetT"></b><button id="sheetX">✕</button></div><div id="sheetB"></div><div class="sheet-f" id="sheetF"></div></div></div>
+
 <div id="cc">
   <div class="cc-top">
     <div class="cc-brand">PIT<b>DOG</b><small>COMMAND CENTER</small></div>
@@ -356,12 +402,8 @@
     <h2>Up next</h2>
     <div id="upNextBody" class="sub" style="margin:0"></div>
   </div>
-</section>
-
-<!-- ================= TEAM ================= -->
-<section class="tab" id="tab-team">
   <div class="card">
-    <h2><span>Drivers today</span><span id="teamShare"></span></h2>
+    <h2><span>Crew today</span><span id="teamShare"></span></h2>
     <div id="teamList"></div>
   </div>
   <div class="card">
@@ -373,6 +415,31 @@
     </div>
     <label class="f" style="margin-top:8px">Re-plan with measured burn <select id="useMeasured"><option value="1">Yes</option><option value="0">No</option></select></label>
     <div class="hint">Measured burn assumes you top the tank up to the same level at every fuel stop, so log the fuel added each time at PIT OUT.</div>
+  </div>
+</section>
+
+<!-- ================= TEAM ================= -->
+<section class="tab" id="tab-team">
+  <div class="card">
+    <h2><span id="teamTitle">Team</span><button class="mini" id="teamEdit">Edit</button></h2>
+    <div class="sub" id="teamSub" style="margin:0"></div>
+  </div>
+  <div class="card">
+    <h2><span>People</span><button class="mini" id="addMember">+ Add</button></h2>
+    <div id="memberList"></div>
+  </div>
+  <div class="card">
+    <h2><span>Cars</span><button class="mini" id="addCar">+ Add</button></h2>
+    <div id="carList"></div>
+  </div>
+  <div class="card">
+    <h2><span>Races</span><button class="mini" id="newRaceBtn">+ New race</button></h2>
+    <div id="raceList"></div>
+  </div>
+  <div class="card">
+    <h2>Simulator</h2>
+    <div class="sub" style="margin:0 0 8px">Run a whole race at up to 60× speed with your team, car and rules. Race control throws yellows and reds, and an auto-crew can run the stops. Nothing is saved to your real races.</div>
+    <button class="btn full" id="simOpen" style="background:#3b2a66;border-color:#6b4bd1;color:#e6dcff;font-weight:800">▶ Start a simulated race</button>
   </div>
 </section>
 
@@ -414,6 +481,7 @@
   </div>
   <div class="card">
     <h2>Car</h2>
+    <label class="f">Car <select id="carSel"></select></label>
     <label class="f">Fuel unit <select id="unit"><option value="gal">US gal</option><option value="L">litres</option></select></label>
     <label class="f">Usable fuel (tank) <input id="cap" type="number" inputmode="decimal" min="1" step="0.1"></label>
     <label class="f">Burn per lap <input id="burn" type="number" inputmode="decimal" min="0.01" step="0.01"></label>
@@ -423,13 +491,14 @@
     <label class="f">Fill rate (per min) <input id="fillRate" type="number" inputmode="decimal" min="0.1" step="0.1"></label>
     <label class="f">Driver change (s) <input id="changeSec" type="number" inputmode="numeric" min="0"></label>
     <label class="f">Jug size <input id="jug" type="number" inputmode="decimal" min="0.5" step="0.5"></label>
-    <div class="hint">Pit-lane loss is the time lost driving through the pit lane compared with a racing lap.</div>
+    <div class="hint">Pit-lane loss is the time lost driving through the pit lane compared with a racing lap. Edits here change this car for every race.</div>
   </div>
   <div class="card">
-    <h2>Drivers (rotation order)</h2>
+    <h2>Drivers this race</h2>
     <div id="drivers"></div>
-    <button class="btn full" id="addDrv">+ Add driver</button>
-    <div class="hint">Max stint per driver, in minutes. The first driver starts.</div>
+    <div class="hint" id="drvHint"></div>
+    <div class="sub" style="margin:12px 0 6px">Add from team</div>
+    <div class="chips" id="addFromTeam"></div>
   </div>
   <div class="card">
     <h2 id="rulesTitle">Rules</h2>
@@ -444,9 +513,10 @@
     <ul class="log" id="logList"></ul>
   </div>
   <div class="card">
-    <h2>Race days</h2>
-    <div id="archiveList" class="sub" style="margin:0 0 6px"></div>
-    <button class="btn full" id="newDay">Start a new race day (archive this log)</button>
+    <h2>This race</h2>
+    <button class="btn full" id="finishRace" style="font-weight:800">🏁 Finish &amp; save to team history</button>
+    <button class="btn full" id="sameDay">Same team, new day</button>
+    <div class="hint">Finishing records seat time per driver and the car's measured fuel burn at this track, so next time plans start from real numbers.</div>
   </div>
   <div class="card">
     <h2>Share &amp; reset</h2>
@@ -497,15 +567,12 @@ const DEFAULT={series:'luckydog',
 const clone=o=>JSON.parse(JSON.stringify(o));
 let S;
 const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
-function load(){
-  try{ if(location.hash.length>1){ const h=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1))))); const cur=JSON.parse(store.get('pitdog')||'null'); h.events=cur?cur.events:[]; h.archive=cur?cur.archive:[]; try{history.replaceState(null,'',location.pathname);}catch(e){} return h; } }catch(e){}
-  try{ const s=store.get('pitdog'); if(s) return JSON.parse(s);}catch(e){}
-  return clone(DEFAULT);
-}
-const save=()=>store.set('pitdog',JSON.stringify(S));
+const save=()=>dbSave();
 const $=id=>document.getElementById(id);
 const buzz=(p=30)=>{try{navigator.vibrate&&navigator.vibrate(p);}catch(e){}};
 const sched=()=>!!(SERIES[S.series]||{}).sched;
+const SIM={on:false,v:0,speed:30,auto:true,done:false,timer:null,last:0,t:null,flags:[]};
+const nowMs=()=>SIM.on?SIM.v:Date.now();
 
 /* ================= helpers ================= */
 function lapMin(s){ const m=String(s).trim().match(/^(\d+):(\d{1,2}(?:\.\d+)?)$/); return m? (+m[1])+(+m[2])/60 : parseFloat(s)||NaN; }
@@ -515,14 +582,14 @@ const wall=ms=>new Date(ms).toLocaleTimeString([], {hour:'2-digit',minute:'2-dig
 const hm=s=>{const [h,m]=(s||'0:0').split(':').map(Number);return h*60+m;};
 const r1=x=>Math.round(x*10)/10;
 function raceLen(){ if(sched()){ let d=hm(S.race.end)-hm(S.race.start); if(d<=0) d+=1440; return d; } return S.race.len; }
-function schedStartMs(ref=Date.now()){ const d=new Date(ref); d.setHours(0,0,0,0); return d.getTime()+hm(S.race.start)*60000; }
+function schedStartMs(ref=nowMs()){ const d=new Date(ref); d.setHours(0,0,0,0); return d.getTime()+hm(S.race.start)*60000; }
 const greenEv=()=>S.events.find(e=>e.type==='green');
 /* race time zero: Lucky Dog = scheduled start on the green-flag day; otherwise the green flag */
 function T0(){ const g=greenEv(); if(!g) return null; return sched()? schedStartMs(g.t) : g.t; }
 function clockAt(min){ const t=T0(); if(t) return wall(t+min*60000); const base=sched()?hm(S.race.start):hm(S.race.startG); const x=base+min; return String(Math.floor(x/60)%24).padStart(2,'0')+':'+String(Math.floor(x%60)).padStart(2,'0'); }
 
 /* ================= events -> live state ================= */
-function live(now=Date.now()){
+function live(now=nowMs()){
   const t0=T0(); const L=raceLen();
   const st={started:!!t0,now:t0?(now-t0)/60000:0,L,stops:[],inPit:false,yellow:false,red:false,finished:false,added:0};
   if(!t0) return st;
@@ -582,7 +649,7 @@ function plan(lv){
     let first=green;
     if(firstCap<green-1e-9){
       first=Math.max(1,firstCap); const R2=Rm-first-stopCost;
-      if(R2<=1){ n=1; first=Rm; }
+      if(R2<=0){ const toEmpty=refuel?fuelT/burn*lap:Infinity; if(toEmpty>=Rm||Rm-stopCost-1<1){ n=1; first=Rm; } else { n=2; first=Rm-stopCost-1; green=1; } }   // finish on reserve if it truly lasts, else a short stop
       else { let m=Math.max(1,remMand); while(m<80&&(R2-(m-1)*stopCost)/m>cap+1e-9) m++; n=m+1; green=(R2-(m-1)*stopCost)/m; }
     }
     // driver rotation that respects rest
@@ -606,7 +673,7 @@ function plan(lv){
       let add = (refuel&&kind==='fuel') ? Math.max(0, Math.min(C.cap,need)-fuel) : 0;
       if(s.actual&&s.actual.out!=null&&s.actual.fuel!=null&&kind==='fuel') add=s.actual.fuel||add;
       const sout=s.actual&&s.actual.out!=null? s.actual.out : (s.locked? nx.start : s.end+stopCost);
-      s.stop={in:s.end,out:sout,dur:stopDur,add,jugs:Math.ceil(add/C.jug-1e-9),kind};
+      s.stop={in:s.end,out:sout,dur:stopDur,add,jugs:Math.ceil(add/(C.jug/2)-1e-9)/2,kind};
       fuel=Math.min(C.cap,fuel+add);
     }
   });
@@ -615,7 +682,8 @@ function plan(lv){
   stints.forEach((s,i)=>{
     if(s.stop&&!s.locked&&R.earliest){ if(s.stop.in<R.earliest) W.push(['bad',`Stop ${i+1} is planned at ${fmt(s.stop.in)}, before the window opens at ${R.earliest}:00.`]); }
     if(s.stop&&!s.locked&&R.latest){ if(s.stop.in>lastStart) W.push(['bad',`Stop ${i+1} is planned at ${fmt(s.stop.in)}, after the window closes.`]); }
-    if(!s.locked&&s.fuelEnd<C.reserve*burn-1e-6) W.push(['bad',`Stint ${i+1}: fuel drops below reserve (${r1(s.fuelEnd)} ${C.unit}).`]);
+    if(!s.locked&&s.fuelEnd<-1e-6) W.push(['bad',`Stint ${i+1}: runs out of fuel (${r1(s.fuelEnd)} ${C.unit}).`]);
+    else if(!s.locked&&s.fuelEnd<C.reserve*burn-0.05) W.push(['warn',`Stint ${i+1}: finishes on reserve (${r1(s.fuelEnd)} ${C.unit} left).`]);
     const d=S.drivers[s.driver]; if(d&&s.dur>d.max+1e-6) W.push(['warn',`Stint ${i+1}: ${d.name} is planned for ${fmt(s.dur)}, over their ${d.max}-min max.`]);
     if(R.maxStint&&s.dur>R.maxStint+1e-6) W.push([s.locked?'bad':'warn',`Stint ${i+1} is ${fmt(s.dur)}, over the ${R.maxStint}-min series limit.`]);
     if(R.rest){ for(let j=i-1;j>=0;j--){ if(stints[j].driver===s.driver){ const gap=s.start-stints[j].end; if(gap<R.rest-1e-6) W.push(['bad',`${d?d.name:'Driver'} gets only ${fmt(gap)} rest before stint ${i+1}. ${R.rest} min required.`]); break; } } }
@@ -648,6 +716,7 @@ const TXT=['track','name','start','end','startG','unit','lap'];
 const num=(f,v)=>TXT.includes(f)?v:parseFloat(v)||0;
 function bind(){
   if(!$('track').options.length) $('track').innerHTML=Object.entries(TRACKS).map(([k,[n]])=>`<option value="${k}">${n}</option>`).join('');
+  if(DB){ const cs=$('carSel'); cs.innerHTML=DB.team.cars.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join(''); cs.value=(activeRace()||{}).carId; cs.onchange=()=>{ dbSave(); activeRace().carId=cs.value; hydrate(); dbSave(); bind(); update(); }; }
   $('series').value=S.series;
   $('series').onchange=()=>{ S.series=$('series').value; Object.assign(S.race,SERIES[S.series].race||{}); bind(); update(); };
   raceFields.forEach(f=>{ $(f).value=S.race[f]??''; $(f).onchange=$(f).oninput=()=>{ S.race[f]=num(f,$(f).value); if(f==='track'){ document.querySelectorAll('.trk-custom').forEach(e=>e.style.display=S.race.track==='custom'?'flex':'none'); fetchWx(true); } update(); }; });
@@ -657,20 +726,28 @@ function bind(){
   document.querySelectorAll('.sched').forEach(e=>e.style.display=sched()?'flex':'none');
   document.querySelectorAll('.nosched').forEach(e=>e.style.display=sched()?'none':'flex');
   document.querySelectorAll('.pcaonly').forEach(e=>e.style.display=S.series==='luckydog'?'none':'flex');
-  const ser=SERIES[S.series]; $('serName').textContent=ser.label; $('rulesTitle').textContent=ser.label+' rules'; $('rulesList').innerHTML=ser.rules.map(r=>`<li>${r}</li>`).join('')+(ser.src?`<li style="list-style:none;margin-left:-16px;font-size:12px">Source: ${ser.src}</li>`:'');
+  const ser=SERIES[S.series]; $('serName').textContent=ser.label+(S.race.name?' · '+S.race.name:''); $('rulesTitle').textContent=ser.label+' rules'; $('rulesList').innerHTML=ser.rules.map(r=>`<li>${r}</li>`).join('')+(ser.src?`<li style="list-style:none;margin-left:-16px;font-size:12px">Source: ${ser.src}</li>`:'');
   renderDrivers();
 }
 function renderDrivers(){
-  const box=$('drivers'); box.innerHTML='';
+  const box=$('drivers'); if(!box) return; box.innerHTML='';
+  const started=live().started;
   S.drivers.forEach((d,i)=>{
-    const row=document.createElement('div'); row.className='drv';
-    row.innerHTML=`<input value="${d.name.replace(/"/g,'&quot;')}" style="border-left:5px solid ${COLORS[i%COLORS.length]}"><input type="number" inputmode="numeric" min="5" step="5" value="${d.max}"><button>×</button>`;
-    const [n,m,x]=row.children;
-    n.oninput=()=>{d.name=n.value;update();};
-    m.oninput=()=>{d.max=parseFloat(m.value)||0;update();};
-    x.onclick=()=>{ if(S.drivers.length>1&&confirm('Remove '+d.name+'?')){S.drivers.splice(i,1);renderDrivers();update();} };
+    const row=document.createElement('div'); row.className='drv drv2';
+    row.innerHTML=`<div class="dn" style="border-left:5px solid ${dcol(i)}"><b>${i+1}</b>${esc(d.name)}</div><input type="number" inputmode="numeric" min="5" step="5" value="${d.max}" title="max stint this race (min)">`+
+      (started?'<span></span><span></span><span></span>':`<button data-a="up" ${i===0?'disabled':''}>↑</button><button data-a="dn" ${i===S.drivers.length-1?'disabled':''}>↓</button><button data-a="x">×</button>`);
+    const inp=row.querySelector('input'); inp.oninput=()=>{ d.max=parseFloat(inp.value)||0; update(); };
+    row.querySelectorAll('button').forEach(b=>b.onclick=()=>{ const a=b.dataset.a;
+      if(a==='up'&&i>0){ [S.drivers[i-1],S.drivers[i]]=[S.drivers[i],S.drivers[i-1]]; }
+      if(a==='dn'&&i<S.drivers.length-1){ [S.drivers[i+1],S.drivers[i]]=[S.drivers[i],S.drivers[i+1]]; }
+      if(a==='x'){ if(S.drivers.length<=1) return; S.drivers.splice(i,1); }
+      renderDrivers(); update(); });
     box.appendChild(row);
   });
+  const avail=DB?DB.team.members.filter(m=>isDriverRole(m.role)&&!S.drivers.some(d=>d.mid===m.id)):[];
+  $('addFromTeam').innerHTML=avail.length?avail.map(m=>`<button class="chipbtn" style="--c:${m.color};flex:0 0 auto" data-mid="${m.id}">+ ${esc(m.name)}</button>`).join(''):'<span class="hint">Everyone who drives is in this race. Add people in the Team tab.</span>';
+  $('addFromTeam').querySelectorAll('[data-mid]').forEach(b=>b.onclick=()=>{ const m=member(b.dataset.mid); S.drivers.push({mid:m.id,name:m.name,color:m.color,max:Math.min(m.maxStint||120,S.race.maxStint||999)}); buzz(10); renderDrivers(); update(); });
+  $('drvHint').textContent=started?'Race has started: the order is locked, but you can still add a late driver or change max stints.':'Order = rotation. Max stint is for this race only (minutes).';
 }
 function renderPlan(P,lv){
   if(P.err){ $('warnings').innerHTML=`<div class="w w-bad">${P.err}</div>`; $('plan').innerHTML=''; $('timeline').innerHTML=''; $('kpis').innerHTML=''; return; }
@@ -682,7 +759,7 @@ function renderPlan(P,lv){
   let tl='';
   if(S.race.earliest) tl+=`<div class="closed" style="left:0;width:${pct(S.race.earliest)}"></div>`;
   if(S.race.latest) tl+=`<div class="closed" style="left:${pct(L-S.race.latest)};width:${pct(S.race.latest)}"></div>`;
-  stints.forEach(s=>{ tl+=`<div class="seg" style="left:${pct(s.start)};width:calc(${pct(s.end)} - ${pct(s.start)});background:${COLORS[s.driver%COLORS.length]};opacity:${s.locked?.5:1}">${(S.drivers[s.driver]?.name||'').split(' ').pop()}</div>`;
+  stints.forEach(s=>{ tl+=`<div class="seg" style="left:${pct(s.start)};width:calc(${pct(s.end)} - ${pct(s.start)});background:${dcol(s.driver)};opacity:${s.locked?.5:1}">${(S.drivers[s.driver]?.name||'').split(' ').pop()}</div>`;
     if(s.stop) tl+=`<div class="seg stopseg" style="left:${pct(s.stop.in)};width:calc(${pct(s.stop.out)} - ${pct(s.stop.in)})"></div>`; });
   if(lv.started) tl+=`<div class="now" style="left:${pct(lv.now)}"></div>`;
   $('timeline').innerHTML=tl;
@@ -692,7 +769,7 @@ function renderPlan(P,lv){
   let h=`<tr><th>#</th><th class="l">Driver</th><th>Out</th><th>In</th><th>Length</th><th>Laps</th><th>Fuel in</th></tr>`;
   stints.forEach((s,i)=>{
     const cur=lv.started&&!lv.finished&&!lv.inPit&&i===ci;
-    h+=`<tr class="${cur?'cur':''}"><td>${i+1}${s.locked?' ✓':''}</td><td class="l"><span class="dot" style="background:${COLORS[s.driver%COLORS.length]}"></span>${S.drivers[s.driver]?.name||'?'}</td><td>${clockAt(s.start)}<br><span style="color:var(--muted);font-size:11px">${fmt(s.start)}</span></td><td>${clockAt(s.end)}<br><span style="color:var(--muted);font-size:11px">${fmt(s.end)}</span></td><td>${fmt(s.dur)}</td><td>${r1(s.laps)}</td><td>${r1(s.fuelEnd)}</td></tr>`;
+    h+=`<tr class="${cur?'cur':''}"><td>${i+1}${s.locked?' ✓':''}</td><td class="l"><span class="dot" style="background:${dcol(s.driver)}"></span>${S.drivers[s.driver]?.name||'?'}</td><td>${clockAt(s.start)}<br><span style="color:var(--muted);font-size:11px">${fmt(s.start)}</span></td><td>${clockAt(s.end)}<br><span style="color:var(--muted);font-size:11px">${fmt(s.end)}</span></td><td>${fmt(s.dur)}</td><td>${r1(s.laps)}</td><td>${r1(s.fuelEnd)}</td></tr>`;
     if(s.stop) h+=`<tr class="stoprow"><td></td><td class="l" colspan="6">${s.stop.kind==='fuel'?'⛽':s.stop.kind==='black'?'🏴':s.stop.kind==='mech'?'🔧':'🔁'} Stop ${i+1} at ${clockAt(s.stop.in)}${s.stop.kind==='fuel'?` · hold ≥ ${fmt(S.race.minStop)}${refuel?` · ${r1(s.stop.add)} ${S.car.unit} (${s.stop.jugs} jug${s.stop.jugs===1?'':'s'})`:''}`:''}</td></tr>`;
   });
   $('plan').innerHTML=h;
@@ -722,14 +799,17 @@ function computeAlerts(lv,P){
   if(R.latest&&lv.now>P.lastStart&&lv.stops.length<(R.mandatory||0)) A.push(['box','Mandatory stop window has CLOSED']);
   return A;
 }
+// half-jug logging: the last jug is usually only partly poured
+const jugSteps=C=>{ const out=[]; const mx=Math.min(6,Math.ceil(C.cap/C.jug)); for(let j=0;j<=mx+1e-9;j+=0.5) out.push(j); return out; };
+const jugLbl=j=>j===0?'0':(Math.floor(j)||'')+(j%1?'½':'');
 function minFor(kind){ return kind==='fuel'||(S.series==='pca'&&kind!=='black')?S.race.minStop:0; }
 function renderRace(){
   const lv=live(); const R=S.race, C=S.car; const pill=$('statusPill'), big=$('bigBtn');
-  $('clockWall').textContent=new Date(Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  $('clockWall').textContent=new Date(nowMs()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const L=lv.L;
   if(!lv.started){
     $('clockLabel').textContent='Race clock';
-    if(sched()){ const until=(schedStartMs()-Date.now())/60000; $('raceClock').textContent=until>0?hms(until):'0:00:00'; $('raceSub').textContent=`${R.name||'Race'}: ${R.start}–${R.end} (${fmt(L)}). ${until>0?'Countdown to scheduled start.':'Scheduled start has passed.'} Tap GREEN FLAG when the race goes green.`; }
+    if(sched()){ const until=(schedStartMs()-nowMs())/60000; $('raceClock').textContent=until>0?hms(until):'0:00:00'; $('raceSub').textContent=`${R.name||'Race'}: ${R.start}–${R.end} (${fmt(L)}). ${until>0?'Countdown to scheduled start.':'Scheduled start has passed.'} Tap GREEN FLAG when the race goes green.`; }
     else { $('raceClock').textContent='0:00:00'; $('raceSub').textContent=`${fmt(L)} race. Tap GREEN FLAG at the start.`; }
     $('raceBar').style.width='0';
   } else {
@@ -742,7 +822,7 @@ function renderRace(){
   const ban=computeAlerts(lv,P).map(([c,h])=>`<div class="banner ${c}">${h}</div>`).join('');
   if(!P||P.err){ $('banners').innerHTML=ban; return; }
   const st=P.stints, ci=curIdx(P), cur=st[ci];
-  $('trackCard').style.display=lv.inPit?'none':'block'; $('pitCard').style.display=lv.inPit?'block':'none';
+  $('trackCard').style.display=lv.inPit||lv.finished?'none':'block'; $('pitCard').style.display=lv.inPit&&!lv.finished?'block':'none';
   const ds=driverStatus(lv,P);
   if(lv.finished){ pill.className='pill done'; pill.textContent='FINISHED'; big.className='big grey'; big.innerHTML='RACE COMPLETE<small>See the Log tab</small>'; }
   else if(!lv.started){ pill.className='pill'; pill.textContent='PRE-RACE'; big.className='big green'; big.innerHTML='GREEN FLAG<small>Race is green</small>';
@@ -762,11 +842,11 @@ function renderRace(){
     $('fuelBox').style.display=kind==='fuel'&&P.refuel?'block':'none';
     $('fuelPlan').textContent=ps?`plan ${r1(ps.add)} ${C.unit}`:'';
     const jsel=pend.jugs!=null?pend.jugs:planJ;
-    $('jugChips').innerHTML=[...Array(Math.min(7,Math.ceil(C.cap/C.jug)+1)).keys()].map(j=>`<button class="chipbtn ${j===jsel?'sel':''}" data-j="${j}" style="--c:var(--amber)">${j}<small>${j*C.jug} ${C.unit}</small></button>`).join('');
+    $('jugChips').innerHTML=jugSteps(C).map(j=>`<button class="chipbtn ${j===jsel?'sel':''}" data-j="${j}" style="--c:var(--amber);min-width:52px">${jugLbl(j)}<small>${r1(j*C.jug)} ${C.unit}</small></button>`).join('');
     $('jugChips').querySelectorAll('button').forEach(b=>b.onclick=()=>{ pend.jugs=+b.dataset.j; buzz(10); renderRace(); });
     const defD=cur?cur.driver:0; const dsel=pend.driver!=null?pend.driver:defD;
     $('nextDrv').innerHTML=S.drivers.map((d,i)=>{ const o=ds[i]; const restLeft=o.lastEnd!=null&&R.rest?R.rest-(a.in-o.lastEnd)-el:0; const tired=restLeft>0;
-      return `<button class="chipbtn ${i===dsel?'sel':''} ${tired?'dim':''}" style="--c:${COLORS[i%COLORS.length]}" data-d="${i}">${d.name}<small>${tired?'rest '+fmt(restLeft):fmt(o.seat)+' driven'}</small></button>`; }).join('');
+      return `<button class="chipbtn ${i===dsel?'sel':''} ${tired?'dim':''}" style="--c:${dcol(i)}" data-d="${i}">${d.name}<small>${tired?'rest '+fmt(restLeft):fmt(o.seat)+' driven'}</small></button>`; }).join('');
     $('nextDrv').querySelectorAll('button').forEach(b=>b.onclick=()=>{ pend.driver=+b.dataset.d; buzz(10); renderRace(); });
     $('pitRem').innerHTML= S.series==='luckydog'?'Full stop at Pit In for the timer · max 5 over the wall · <b>one jug at a time</b> · no funnel · fire bottle ready · return the timer at Pit Out':S.series==='pca'?'Max 3 over the wall · engine off, driver out while fuelling · fireman with the pin pulled':'';
     big.className='big '+(ok?'green':'amber'); big.innerHTML=ok?'PIT OUT<small>Car leaving pit lane</small>':`PIT OUT<small>Too early: ${fmt(target-el)} to go</small>`;
@@ -777,7 +857,7 @@ function renderRace(){
   }
   $('banners').innerHTML=ban;
   if(!lv.finished){ const nx=st.slice(ci+(lv.inPit?0:1)).slice(0,3);
-    $('upNextBody').innerHTML=nx.length?nx.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><span class="dot" style="background:${COLORS[s.driver%COLORS.length]}"></span>${S.drivers[s.driver]?.name}</span><span>${clockAt(s.start)} → ${clockAt(s.end)} <span style="color:var(--muted)">(${fmt(s.dur)})</span></span></div>`).join(''):'Last stint: bring it home 🏁';
+    $('upNextBody').innerHTML=nx.length?nx.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><span class="dot" style="background:${dcol(s.driver)}"></span>${S.drivers[s.driver]?.name}</span><span>${clockAt(s.start)} → ${clockAt(s.end)} <span style="color:var(--muted)">(${fmt(s.dur)})</span></span></div>`).join(''):'Last stint: bring it home 🏁';
   } else $('upNextBody').textContent='—';
 }
 function renderTrack(s,lv,ds){
@@ -785,7 +865,7 @@ function renderTrack(s,lv,ds){
   const inSeat=lv.started?Math.max(0,lv.now-s.start):0; const last=P.stints.indexOf(s)===P.stints.length-1;
   $('stintLabel').textContent=`Stint ${P.stints.indexOf(s)+1} of ${P.stints.length}`;
   $('stintMax').textContent=R.maxStint?`max ${fmt(Math.min(R.maxStint,d.max||R.maxStint))}`:'';
-  $('drvSw').style.background=COLORS[s.driver%COLORS.length]; $('drvName').textContent=d.name;
+  $('drvSw').style.background=dcol(s.driver); $('drvName').textContent=d.name;
   $('drvMeta').textContent=lv.started?`${fmt(inSeat)} in the seat · ${fmt(ds[s.driver].seat)} today`:`Starts the race · planned ${fmt(s.dur)}`;
   const lim=Math.min(s.dur||1e9,R.maxStint||1e9);
   $('stintBar').style.width=Math.min(100,inSeat/(s.dur||1)*100)+'%';
@@ -806,7 +886,7 @@ function renderTeam(lv){
     else if(o.lastEnd!=null&&R.rest&&lv.now-o.lastEnd<R.rest) tag=`<span class="tag rest">RESTING ${fmt(R.rest-(lv.now-o.lastEnd))}</span>`;
     else tag='<span class="tag ready">READY</span>';
     const planned=P.stints.filter(s=>s.driver===o.i).reduce((a,s)=>a+s.dur,0);
-    return `<div class="tcard"><div class="sw" style="background:${COLORS[o.i%COLORS.length]}"></div><div><div class="nm">${o.name}</div><div class="meta">${o.stints} stint${o.stints===1?'':'s'} · ${fmt(o.seat)} driven · ${fmt(planned)} planned</div></div><div class="st">${tag}<div class="meta" style="margin-top:4px">${o.next!=null?'next out '+clockAt(o.next):''}</div></div></div>`; }).join('');
+    return `<div class="tcard"><div class="sw" style="background:${dcol(o.i)}"></div><div><div class="nm">${o.name}</div><div class="meta">${o.stints} stint${o.stints===1?'':'s'} · ${fmt(o.seat)} driven · ${fmt(planned)} planned</div></div><div class="st">${tag}<div class="meta" style="margin-top:4px">${o.next!=null?'next out '+clockAt(o.next):''}</div></div></div>`; }).join('');
   $('fuelUsed').textContent=r1(lv.added)+' '+S.car.unit;
   $('burnMeas').textContent=P.meas?(Math.round(P.meas*100)/100):'–';
   const still=P.stints.filter(s=>!s.locked&&s.stop).reduce((a,s)=>a+s.stop.add,0)+(lv.inPit&&P.stints[curIdx(P)-1]?.stop?P.stints[curIdx(P)-1].stop.add:0);
@@ -820,11 +900,10 @@ function renderLog(){
     if(e.type==='yellow') label=e.on?'Full course yellow':'Yellow cleared'; if(e.type==='red') label=e.on?'Red flag':'Red flag cleared';
     if(e.type==='out'){ label=`${KINDS[e.kind||'fuel'][0]} · ${fmt(e.stopLen||0)}`; if(e.fuel) label+=` · ${r1(e.fuel)} ${S.car.unit}`; if(e.driver!=null) label+=` · ${S.drivers[e.driver]?.name||''} out`; }
     return `<li><div class="ico" style="background:${bg}">${i}</div><div class="t">${fmt(m)}</div><div class="e">${label}</div><div class="c">${wall(e.t)}</div></li>`; }).join('');
-  $('archiveList').innerHTML=(S.archive||[]).length?S.archive.map(a=>`• ${a.name} (${new Date(a.date).toLocaleDateString()}): ${a.stops} stops, ${r1(a.fuel)} ${S.car.unit}`).join('<br>'):'No earlier race days.';
 }
 
 /* ================= actions ================= */
-function addEvent(e){ S.events.push({t:Date.now(),...e}); save(); update(); }
+function addEvent(e){ S.events.push({t:nowMs(),...e}); save(); update(); }
 $('bigBtn').onclick=()=>{
   const lv=live();
   if(lv.finished){ show('log'); return; }
@@ -846,21 +925,20 @@ $('yBtn').onclick=()=>{ const lv=live(); if(!lv.started) return; buzz(20); addEv
 $('rBtn').onclick=()=>{ const lv=live(); if(!lv.started) return; if(!lv.red&&!confirm('Log a RED FLAG?')) return; buzz(60); addEvent({type:'red',on:!lv.red}); };
 $('undoBtn').onclick=()=>{ if(!S.events.length) return; const e=S.events[S.events.length-1]; const nm={green:'GREEN FLAG',in:'PIT IN',out:'PIT OUT',yellow:'YELLOW',red:'RED FLAG'}[e.type];
   if(confirm('Undo '+nm+'?')){ S.events.pop(); save(); buzz(15); update(); } };
-$('newDay').onclick=()=>{ if(!S.events.length){ alert('Nothing to archive yet.'); return; } const lv=live(); const nm=prompt('Name for the next race day:', S.race.name==='Saturday'?'Sunday':'Race 2'); if(nm===null) return;
-  S.archive=S.archive||[]; S.archive.push({name:S.race.name||'Race',date:greenEv()?greenEv().t:Date.now(),stops:lv.stops.length,fuel:lv.added,events:S.events}); S.events=[]; S.race.name=nm; save(); bind(); update(); };
+$('finishRace').onclick=()=>{ if(SIM.on){ alert('Simulations aren\'t saved. Use End sim.'); return; } if(DB) finishRace(); };
+$('sameDay').onclick=()=>{ if(DB&&!SIM.on) newRaceSheet(activeRace()); };
 $('endRace').onclick=()=>{ if(confirm('Clear the race log and clock? Your plan stays.')){ S.events=[]; save(); update(); } };
-$('reset').onclick=()=>{ if(confirm('Reset everything to defaults?')){ S=clone(DEFAULT); save(); bind(); update(); } };
+$('reset').onclick=()=>{ if(SIM.on) return; if(confirm('Delete the team and ALL races on this device?')){ try{ localStorage.removeItem('pitdog_db'); localStorage.removeItem('pitdog'); }catch(e){} DB=null; S=clone(DEFAULT); bind(); update(); startOnboarding(); } };
 $('print').onclick=()=>window.print();
 $('share').onclick=()=>{ const s=clone(S); delete s.events; delete s.archive; const url=location.href.split('#')[0]+'#'+btoa(unescape(encodeURIComponent(JSON.stringify(s))));
   const done=()=>{ $('share').textContent='Link copied ✓'; setTimeout(()=>$('share').textContent='Send plan to teammates',1500); };
   try{ if(navigator.share){ navigator.share({title:'PitDog plan',text:'Our stint plan',url}).catch(()=>{}); return; } navigator.clipboard.writeText(url).then(done,()=>prompt('Copy this link:',url)); }catch(e){ prompt('Copy this link:',url); } };
-$('addDrv').onclick=()=>{ S.drivers.push({name:'Driver '+String.fromCharCode(65+S.drivers.length),max:S.race.maxStint||60}); renderDrivers(); update(); };
 function show(tab){ document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+tab)); document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab)); $('actionBar').style.display=tab==='race'?'block':'none'; window.scrollTo(0,0); }
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); show(b.dataset.tab); });
 
 /* ================= loop ================= */
 function update(){
-  try{ save(); const lv=live(); P=plan(lv); renderPlan(P,lv); renderRace(); renderTeam(lv); renderLog(); if(typeof renderCC==='function') renderCC(); }
+  try{ save(); const lv=live(); P=plan(lv); renderPlan(P,lv); renderRace(); renderTeam(lv); renderLog(); if(typeof renderTeamTab==='function') renderTeamTab(); if(typeof renderCC==='function') renderCC(); }
   catch(e){ console.error(e); $('banners').innerHTML=`<div class="banner box">Something went wrong: ${e.message}</div>`; }
 }
 let wake=null; async function keepAwake(){ try{ if('wakeLock' in navigator && document.visibilityState==='visible') wake=await navigator.wakeLock.request('screen'); }catch(e){} }
@@ -899,7 +977,7 @@ window.addEventListener('resize',applyView); window.addEventListener('orientatio
 function renderCC(){
   if(!document.body.classList.contains('cc-on')) return;
   const lv=live(); if(!P) P=plan(lv); const R=S.race,C=S.car,L=lv.L;
-  $('ccWall').textContent=new Date(Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  $('ccWall').textContent=new Date(nowMs()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
   $('ccRaceName').textContent=`${SERIES[S.series].label} · ${R.name||''}`;
   const fl=$('ccFlag');
   if(lv.finished){ fl.className='cc-flag f'; fl.textContent='CHECKERED'; }
@@ -908,7 +986,7 @@ function renderCC(){
   else if(lv.yellow){ fl.className='cc-flag y'; fl.textContent=R.pitsUnderYellow?'FULL COURSE YELLOW':'FULL COURSE YELLOW · PITS CLOSED'; }
   else { fl.className='cc-flag g'; fl.textContent='GREEN'; }
   // clock
-  if(!lv.started){ const until=sched()?(schedStartMs()-Date.now())/60000:0; $('ccClock').textContent=until>0?'-'+hms(until):'0:00:00'; $('ccClockSub').textContent=sched()?`Scheduled ${R.start}–${R.end}`:`${fmt(L)} race`; $('ccToGo').textContent=hms(L); $('ccChk').textContent=sched()?R.end:'–'; }
+  if(!lv.started){ const until=sched()?(schedStartMs()-nowMs())/60000:0; $('ccClock').textContent=until>0?'-'+hms(until):'0:00:00'; $('ccClockSub').textContent=sched()?`Scheduled ${R.start}–${R.end}`:`${fmt(L)} race`; $('ccToGo').textContent=hms(L); $('ccChk').textContent=sched()?R.end:'–'; }
   else { $('ccClock').textContent=hms(Math.min(Math.max(lv.now,0),L)); $('ccClockSub').textContent=lv.finished?'Race complete 🏁':`elapsed · green ${wall(greenEv().t)}`; $('ccToGo').textContent=lv.finished?'0:00:00':hms(L-lv.now); $('ccChk').textContent=clockAt(L); }
   $('ccRaceBar').style.width=(lv.started?Math.min(100,Math.max(0,lv.now/L*100)):0)+'%';
   $('ccY').className=lv.yellow?'yon':''; $('ccR').className=lv.red?'ron':'';
@@ -936,15 +1014,15 @@ function renderCC(){
     $('ccKinds').innerHTML=Object.entries(KINDS).map(([k,[x]])=>`<button class="${k===kind?'sel':''}" data-k="${k}">${x}</button>`).join('');
     const ps=st[ci-1]&&st[ci-1].stop; const jsel=pend.jugs!=null?pend.jugs:(ps?ps.jugs:0);
     $('ccJugBox').style.display=kind==='fuel'&&P.refuel?'block':'none'; $('ccJugPlan').textContent=ps?`plan ${r1(ps.add)} ${C.unit}`:'';
-    $('ccJugs').innerHTML=[...Array(Math.min(7,Math.ceil(C.cap/C.jug)+1)).keys()].map(j=>`<button class="${j===jsel?'sel':''}" style="--c:#ffb340" data-j="${j}">${j} · ${j*C.jug}</button>`).join('');
+    $('ccJugs').innerHTML=jugSteps(C).map(j=>`<button class="${j===jsel?'sel':''}" style="--c:#ffb340" data-j="${j}">${jugLbl(j)}</button>`).join('');
     const dsel=pend.driver!=null?pend.driver:(cur?cur.driver:0);
-    $('ccDrvs').innerHTML=S.drivers.map((d,i)=>{ const o=ds[i]; const restLeft=o.lastEnd!=null&&R.rest?R.rest-(a.in-o.lastEnd)-el:0; return `<button class="${i===dsel?'sel':''} ${restLeft>0?'dim':''}" style="--c:${COLORS[i%COLORS.length]}" data-d="${i}">${d.name}${restLeft>0?' ⏸':''}</button>`; }).join('');
+    $('ccDrvs').innerHTML=S.drivers.map((d,i)=>{ const o=ds[i]; const restLeft=o.lastEnd!=null&&R.rest?R.rest-(a.in-o.lastEnd)-el:0; return `<button class="${i===dsel?'sel':''} ${restLeft>0?'dim':''}" style="--c:${dcol(i)}" data-d="${i}">${d.name}${restLeft>0?' ⏸':''}</button>`; }).join('');
     go.className='cc-go '+(ok?'green':'amber'); go.innerHTML=ok?'PIT OUT<small>car leaving pit lane</small>':`PIT OUT<small>too early · ${fmt(target-el)}</small>`;
   } else {
     const s=cur||st[st.length-1]; const d=S.drivers[s.driver]||{name:'?',max:0}; const inSeat=lv.started?Math.max(0,lv.now-s.start):0; const last=st.indexOf(s)===st.length-1;
     led.className='cc-led '+(lv.started?'g':'n'); stt.textContent=lv.started?'ON TRACK':'PRE-RACE'; stt.style.color=lv.started?'#30d158':'#8aa8a4';
     $('ccStint').textContent=`STINT ${st.indexOf(s)+1} / ${st.length}`;
-    $('ccDrv').textContent=d.name; $('ccDrv').style.color=COLORS[s.driver%COLORS.length];
+    $('ccDrv').textContent=d.name; $('ccDrv').style.color=dcol(s.driver);
     $('ccDrvSub').textContent=lv.started?`${fmt(inSeat)} in seat · ${fmt(ds[s.driver].seat)} today · ~${Math.floor(inSeat/P.lap)} laps`:`starts the race · planned ${fmt(s.dur)}`;
     const lim=Math.min(R.maxStint||1e9,d.max||1e9); const scale=Math.max(s.dur,Math.min(lim,s.dur*1.3));
     $('ccStintBar').style.width=Math.min(100,inSeat/scale*100)+'%'; $('ccStintBar').style.background=inSeat>s.dur?'linear-gradient(90deg,#b33,#ff3b30)':'';
@@ -964,7 +1042,7 @@ function renderCC(){
     else if(lv.started&&!lv.finished&&nxS&&nxS.driver===o.i&&(lv.inPit||tt<=(R.onDeck||0))) tag='<div class="cc-tag o">ON DECK</div>';
     else if(o.lastEnd!=null&&R.rest&&lv.now-o.lastEnd<R.rest) tag=`<div class="cc-tag r mono">REST ${fmt(R.rest-(lv.now-o.lastEnd))}</div>`;
     else tag='<div class="cc-tag k">READY</div>';
-    const col=COLORS[o.i%COLORS.length];
+    const col=dcol(o.i);
     return `<div class="cc-r"><div class="sw" style="background:${col}"></div><div style="min-width:0"><div class="n">${o.name}</div><div class="m mono">${fmt(o.seat)} / ${fmt(planned)}${o.next!=null?' · next '+clockAt(o.next):''}</div><div class="bar"><b style="width:${o.seat/maxSeat*100}%;background:${col}"></b></div></div>${tag}</div>`; }).join('');
   const tot=ds.reduce((a,o)=>a+o.seat,0); $('ccCrewSum').textContent=lv.started?fmt(tot)+' driven':'';
   // fuel
@@ -984,7 +1062,7 @@ function renderCC(){
   const step=L>360?60:L>120?30:15; for(let m=0;m<L;m+=step){ tl+=`<div class="tkl" style="left:${pct(m)}%"></div><div class="tk mono" style="left:${pct(m)}%;${m===0?'transform:none':m+step>L?'transform:translateX(-100%)':''}">${clockAt(m)}</div>`; }
   if(R.earliest) tl+=`<div class="yl" style="left:0;width:${pct(R.earliest)}%;background:#ffb340;opacity:.5"></div>`;
   if(R.latest) tl+=`<div class="yl" style="left:${pct(L-R.latest)}%;width:${pct(R.latest)}%;background:#ffb340;opacity:.5"></div>`;
-  st.forEach(x=>{ const col=COLORS[x.driver%COLORS.length]; tl+=`<div class="sg" style="left:${pct(x.start)}%;width:${pct(x.end)-pct(x.start)}%;background:${col};opacity:${x.locked?.45:.92}">${(S.drivers[x.driver]?.name||'')}</div>`;
+  st.forEach(x=>{ const col=dcol(x.driver); tl+=`<div class="sg" style="left:${pct(x.start)}%;width:${pct(x.end)-pct(x.start)}%;background:${col};opacity:${x.locked?.45:.92}">${(S.drivers[x.driver]?.name||'')}</div>`;
     if(x.stop) tl+=`<div class="sp" style="left:${pct(x.stop.in)}%;width:${Math.max(.4,pct(x.stop.out)-pct(x.stop.in))}%"></div>`; });
   if(t0){ let yOn=null,rOn=null; S.events.forEach(e=>{ const m=(e.t-t0)/60000; if(e.type==='yellow'){ if(e.on) yOn=m; else if(yOn!=null){ tl+=`<div class="yl" style="left:${pct(yOn)}%;width:${Math.max(.3,pct(m)-pct(yOn))}%"></div>`; yOn=null; } }
     if(e.type==='red'){ if(e.on) rOn=m; else if(rOn!=null){ tl+=`<div class="rd" style="left:${pct(rOn)}%;width:${Math.max(.3,pct(m)-pct(rOn))}%"></div>`; rOn=null; } } });
@@ -999,10 +1077,311 @@ $('ccSetup').onclick=()=>{ store.set('pitdog_view','phone'); applyView(); show('
 $('ccOpen').onclick=()=>{ store.set('pitdog_view','cc'); applyView(); };
 setInterval(()=>{ if(document.body.classList.contains('cc-on')){ try{ P=plan(live()); renderCC(); }catch(e){} } },500);
 setInterval(()=>fetchWx(),5*60000);
-try{ S=load(); if(!S||!S.race||!S.car||!S.drivers) S=clone(DEFAULT); S.series=S.series||'luckydog'; S.race=Object.assign(clone(DEFAULT.race),S.race); S.car=Object.assign(clone(DEFAULT.car),S.car); if(!Array.isArray(S.events)) S.events=[]; if(!Array.isArray(S.archive)) S.archive=[]; }catch(e){ S=clone(DEFAULT); }
+/* ================= TEAM DATABASE (local-first; same shape as the future Supabase tables) ================= */
+const ROLES={owner:'Owner · driver',driver:'Driver',crew:'Crew',viewer:'Viewer'};
+const isDriverRole=r=>r==='owner'||r==='driver';
+const CAR_FIELDS=['unit','cap','burn','reserve','lap','pitLoss','fillRate','changeSec','jug','useMeasured'];
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
+let DB=null;
+const activeRace=()=>DB&&DB.races.find(r=>r.id===DB.activeRaceId);
+const member=id=>DB&&DB.team.members.find(m=>m.id===id);
+const carById=id=>DB&&DB.team.cars.find(c=>c.id===id);
+const dcol=i=>(S&&S.drivers[i]&&S.drivers[i].color)||COLORS[i%COLORS.length];
+function newRaceObj(o){ return Object.assign({id:uid(),status:'planned',created:nowMs(),events:[]},o); }
+function dbFromS(s,teamName){
+  const members=(s.drivers||[]).map((d,i)=>({id:uid(),name:d.name||('Driver '+(i+1)),role:i===0?'owner':'driver',maxStint:d.max||120,color:d.color||COLORS[i%COLORS.length]}));
+  const car=Object.assign({id:uid(),name:'Car 1',measured:{}},clone(DEFAULT.car),s.car||{}); car.id=car.id||uid(); car.measured=car.measured||{};
+  const rules=Object.assign(clone(DEFAULT.race),s.race||{});
+  const race=newRaceObj({series:s.series||'luckydog',rules,carId:car.id,drivers:members.map((m,i)=>({mid:m.id,max:(s.drivers[i]&&s.drivers[i].max)||m.maxStint})),events:s.events||[]});
+  const db={v:2,team:{id:uid(),name:teamName||'My team',series:s.series||'luckydog',members,cars:[car]},races:[race],activeRaceId:race.id};
+  (s.archive||[]).forEach(a=>db.races.push(newRaceObj({series:race.series,rules:Object.assign(clone(rules),{name:a.name}),carId:car.id,drivers:clone(race.drivers),events:a.events||[],status:'done',date:a.date})));
+  return db;
+}
+function hydrate(){
+  const r=activeRace(); if(!r) return;
+  const car=carById(r.carId)||DB.team.cars[0]; r.carId=car.id;
+  r.rules=Object.assign(clone(DEFAULT.race),r.rules); CAR_FIELDS.forEach(f=>{ if(car[f]===undefined) car[f]=DEFAULT.car[f]; });
+  S={series:r.series||'luckydog',race:r.rules,car,drivers:r.drivers.filter(d=>member(d.mid)).map(d=>{ const m=member(d.mid); return {mid:d.mid,name:m.name,color:m.color,max:d.max}; }),events:r.events||[]};
+}
+function syncSToDB(){
+  const r=activeRace(); if(!r||!S) return;
+  r.series=S.series; r.rules=S.race; r.events=S.events; r.drivers=S.drivers.map(d=>({mid:d.mid,max:d.max}));
+  const car=carById(r.carId); if(car&&car!==S.car) Object.assign(car,S.car);
+  if(r.status!=='done') r.status=S.events.some(e=>e.type==='green')?'live':'planned';
+}
+function dbSave(){ if(!DB) return; syncSToDB(); if(!SIM.on) store.set('pitdog_db',JSON.stringify(DB)); }
+function loadDB(){
+  let shared=null; try{ if(location.hash.length>1) shared=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1))))); }catch(e){}
+  try{ DB=JSON.parse(store.get('pitdog_db')||'null'); }catch(e){ DB=null; }
+  if(!DB){ let old=null; try{ old=JSON.parse(store.get('pitdog')||'null'); }catch(e){} if(old&&old.race&&Array.isArray(old.drivers)) DB=dbFromS(old,'My team'); }
+  if(shared&&shared.race&&Array.isArray(shared.drivers)){
+    if(!DB) DB=dbFromS(Object.assign({},shared,{events:[]}),'Shared team');
+    else {
+      const ids=shared.drivers.map((d,i)=>{ let m=DB.team.members.find(x=>x.name.toLowerCase()===String(d.name).toLowerCase()); if(!m){ m={id:uid(),name:d.name,role:'driver',maxStint:d.max||120,color:d.color||COLORS[DB.team.members.length%COLORS.length]}; DB.team.members.push(m);} return {mid:m.id,max:d.max||m.maxStint}; });
+      const car=Object.assign({id:uid(),name:(shared.car&&shared.car.name)||'Shared car',measured:{}},clone(DEFAULT.car),shared.car||{}); car.id=uid(); DB.team.cars.push(car);
+      const r=newRaceObj({series:shared.series||DB.team.series,rules:Object.assign(clone(DEFAULT.race),shared.race),carId:car.id,drivers:ids}); DB.races.push(r); DB.activeRaceId=r.id;
+    }
+    try{ history.replaceState(null,'',location.pathname); }catch(e){}
+  }
+  if(DB&&!activeRace()) DB.activeRaceId=(DB.races.find(r=>r.status!=='done')||DB.races[DB.races.length-1]||{}).id;
+  if(DB&&!activeRace()){ const r=newRaceObj({series:DB.team.series,rules:Object.assign(clone(DEFAULT.race),SERIES[DB.team.series].race||{}),carId:DB.team.cars[0].id,drivers:DB.team.members.filter(m=>isDriverRole(m.role)).map(m=>({mid:m.id,max:m.maxStint}))}); DB.races.push(r); DB.activeRaceId=r.id; }
+  if(DB) store.set('pitdog_db',JSON.stringify(DB));
+}
+/* adopt an S-shaped object as a brand-new local team (tests, demo) */
+function adoptS(s,name){ closeSheet(); DB=dbFromS(s,name||'My team'); hydrate(); dbSave(); bind(); update(); if(typeof applyView==='function') applyView(); }
+function reloadActive(){ hydrate(); dbSave(); pend={driver:null,kind:null,jugs:null}; bind(); update(); }   // callers dbSave() BEFORE changing DB
+
+/* ================= sheets ================= */
+function openSheet(title,body,buttons){
+  $('sheetT').textContent=title; $('sheetB').innerHTML=body;
+  $('sheetF').innerHTML=''; (buttons||[]).forEach(b=>{ const el=document.createElement('button'); el.textContent=b.label; if(b.cls) el.className=b.cls; if(b.id) el.id=b.id; el.onclick=()=>b.fn(); $('sheetF').appendChild(el); });
+  $('sheetBg').classList.add('on'); $('sheetX').style.display=SHEET_LOCK?'none':'';
+}
+let SHEET_LOCK=false;
+function closeSheet(){ SHEET_LOCK=false; $('sheetBg').classList.remove('on'); }
+$('sheetX').onclick=()=>{ if(!SHEET_LOCK) closeSheet(); };
+const val=id=>{ const e=$(id); return e?e.value:''; };
+const seriesOpts=sel=>Object.entries(SERIES).map(([k,v])=>`<option value="${k}" ${k===sel?'selected':''}>${v.label}</option>`).join('');
+const trackOpts=sel=>Object.entries(TRACKS).filter(([k])=>k!=='custom').map(([k,[n]])=>`<option value="${k}" ${k===sel?'selected':''}>${k==='none'?'— none —':n}</option>`).join('');
+const fld=(label,inner)=>`<label class="f">${label} ${inner}</label>`;
+
+/* ================= onboarding ================= */
+let ONB=null;
+function startOnboarding(){
+  SHEET_LOCK=true;
+  openSheet('Welcome to PitDog',`<div class="sub" style="margin:0 0 14px">The pit wall for endurance race teams: stints, fuel, drivers and race-day pit stops, on your phone and an iPad command center.</div>`,
+   [{label:'Try a simulated race',fn:()=>{ SHEET_LOCK=false; closeSheet(); startSim({demo:true}); }},{label:'+ Create a team',cls:'pri',fn:()=>{ ONB={step:1,name:'',series:'luckydog',car:{name:'',unit:'gal',cap:16.4,burn:0.38,lap:'2:20'},people:[]}; onbStep(); }}]);
+}
+function onbStep(){
+  SHEET_LOCK=true; const st=`<div class="steps"><i class="on"></i><i class="${ONB.step>=2?'on':''}"></i><i class="${ONB.step>=3?'on':''}"></i></div>`;
+  if(ONB.step===1) openSheet('Your team',st+fld('Team name',`<input id="oName" type="text" placeholder="Dawg Days" value="${esc(ONB.name)}">`)+fld('Series',`<select id="oSeries">${seriesOpts(ONB.series)}</select>`),
+    [{label:'Back',fn:()=>startOnboarding()},{label:'Next →',cls:'pri',fn:()=>{ ONB.name=val('oName').trim()||'My team'; ONB.series=val('oSeries'); ONB.step=2; onbStep(); }}]);
+  if(ONB.step===2) openSheet('Your car',st+fld('Car name',`<input id="oCar" type="text" placeholder="E30 #42" value="${esc(ONB.car.name)}">`)+fld('Fuel unit',`<select id="oUnit"><option value="gal">US gal</option><option value="L" ${ONB.car.unit==='L'?'selected':''}>litres</option></select>`)+fld('Usable fuel (tank)',`<input id="oCap" type="number" inputmode="decimal" step="0.1" value="${ONB.car.cap}">`)+fld('Burn per lap',`<input id="oBurn" type="number" inputmode="decimal" step="0.01" value="${ONB.car.burn}">`)+fld('Race lap time',`<input id="oLap" type="text" value="${esc(ONB.car.lap)}">`)+'<div class="hint">Best guesses are fine. PitDog learns the real burn from your fuel stops.</div>',
+    [{label:'← Back',fn:()=>{ ONB.step=1; onbStep(); }},{label:'Next →',cls:'pri',fn:()=>{ Object.assign(ONB.car,{name:val('oCar').trim()||'Car 1',unit:val('oUnit'),cap:parseFloat(val('oCap'))||16,burn:parseFloat(val('oBurn'))||0.4,lap:val('oLap')||'2:20'}); ONB.step=3; onbStep(); }}]);
+  if(ONB.step===3){
+    const list=ONB.people.map((p,i)=>`<div class="lrow" style="cursor:default"><span class="dot" style="background:${COLORS[i%COLORS.length]}"></span><div class="lmain"><b>${esc(p.name)}</b><small>${ROLES[p.role]}</small></div><button class="mini" data-rm="${i}">✕</button></div>`).join('');
+    openSheet('Your people',st+`<div class="sub" style="margin:0 0 8px">Add everyone: drivers and crew. You'll choose who drives each race.</div>${list}<div class="row" style="margin-top:10px;gap:8px"><input id="oPerson" type="text" placeholder="Name" style="flex:2;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px;font:inherit;font-size:16px"><select id="oRole" style="flex:1;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:10px;font:inherit"><option value="driver">Driver</option><option value="crew">Crew</option></select><button class="mini" id="oAdd" style="flex:0 0 auto;padding:10px 14px">Add</button></div>`,
+      [{label:'← Back',fn:()=>{ ONB.step=2; onbStep(); }},{label:'Create team ✓',cls:'pri',fn:()=>finishOnboarding()}]);
+    const add=()=>{ const n=val('oPerson').trim(); if(!n) return; ONB.people.push({name:n,role:ONB.people.length===0?'owner':val('oRole')}); onbStep(); setTimeout(()=>$('oPerson')&&$('oPerson').focus(),0); };
+    $('oAdd').onclick=add; $('oPerson').onkeydown=e=>{ if(e.key==='Enter') add(); };
+    $('sheetB').querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{ ONB.people.splice(+b.dataset.rm,1); onbStep(); });
+  }
+}
+function finishOnboarding(){
+  const pend1=val('oPerson').trim(); if(pend1) ONB.people.push({name:pend1,role:ONB.people.length===0?'owner':val('oRole')});
+  if(!ONB.people.some(p=>isDriverRole(p.role))){ alert('Add at least one driver.'); return; }
+  const members=ONB.people.map((p,i)=>({id:uid(),name:p.name,role:p.role,maxStint:(SERIES[ONB.series].race||{}).maxStint||120,color:COLORS[i%COLORS.length]}));
+  const car=Object.assign({id:uid(),measured:{}},clone(DEFAULT.car),ONB.car);
+  const rules=Object.assign(clone(DEFAULT.race),SERIES[ONB.series].race||{},{name:'Race 1'});
+  const r=newRaceObj({series:ONB.series,rules,carId:car.id,drivers:members.filter(m=>isDriverRole(m.role)).map(m=>({mid:m.id,max:m.maxStint}))});
+  DB={v:2,team:{id:uid(),name:ONB.name,series:ONB.series,members,cars:[car]},races:[r],activeRaceId:r.id};
+  ONB=null; closeSheet(); hydrate(); dbSave(); bind(); update(); show('team');
+}
+
+/* ================= team tab ================= */
+function seatByMember(){ const m={}; (DB?DB.races:[]).forEach(r=>{ if(r.summary&&r.summary.seat) for(const [k,v] of Object.entries(r.summary.seat)) m[k]=(m[k]||0)+v; }); return m; }
+function raceStatus(r){ if(SIM.on&&r.sim) return ['SIM','live']; if(r.status==='done') return ['DONE','done']; if(r.id===DB.activeRaceId) return [r.status==='live'?'LIVE':'ACTIVE',r.status==='live'?'live':'active']; return ['PLANNED','']; }
+function renderTeamTab(){
+  if(!DB){ $('teamTitle').textContent='No team yet'; $('teamSub').textContent=''; ['memberList','carList','raceList'].forEach(i=>$(i).innerHTML=''); return; }
+  const T=DB.team, seat=seatByMember(), done=DB.races.filter(r=>r.status==='done');
+  $('teamTitle').textContent=T.name;
+  $('teamSub').textContent=`${(SERIES[T.series]||{}).label||''} · ${T.members.length} people · ${T.cars.length} car${T.cars.length===1?'':'s'} · ${done.length} race${done.length===1?'':'s'} done`;
+  $('memberList').innerHTML=T.members.map(m=>`<div class="lrow" data-mid="${m.id}"><span class="dot" style="background:${m.color}"></span><div class="lmain"><b>${esc(m.name)}</b><small>${ROLES[m.role]||m.role}${isDriverRole(m.role)?' · max stint '+fmt(m.maxStint):''}${seat[m.id]?' · '+fmt(seat[m.id])+' driven':''}</small></div><span class="chev">›</span></div>`).join('')||'<div class="sub">No one yet.</div>';
+  $('carList').innerHTML=T.cars.map(c=>{ const ms=Object.entries(c.measured||{}); return `<div class="lrow" data-cid="${c.id}"><span style="font-size:20px">🏎</span><div class="lmain"><b>${esc(c.name)}</b><small>${c.cap} ${c.unit} · ${c.burn}/lap planned${ms.length?' · measured '+ms.map(([k,v])=>`${(TRACKS[k]||['?'])[0]} ${Math.round(v*100)/100}`).join(', '):''}</small></div><span class="chev">›</span></div>`; }).join('');
+  const order=[...DB.races].sort((a,b)=>(b.id===DB.activeRaceId)-(a.id===DB.activeRaceId)||((a.status==='done')-(b.status==='done'))||((b.date||b.created)-(a.date||a.created)));
+  $('raceList').innerHTML=order.filter(r=>!r.sim||SIM.on).map(r=>{ const [lbl,cls]=raceStatus(r); const names=r.drivers.map(d=>(member(d.mid)||{}).name).filter(Boolean); const car=carById(r.carId);
+    const when=r.status==='done'&&r.date?new Date(r.date).toLocaleDateString():(SERIES[r.series]||{}).sched?`${r.rules.start}–${r.rules.end}`:fmt(r.rules.len||0);
+    return `<div class="lrow" data-rid="${r.id}"><div class="lmain"><b>${esc(r.rules.name||'Race')} <span class="st ${cls}">${lbl}</span></b><small>${r.rules.track&&r.rules.track!=='none'&&TRACKS[r.rules.track]?TRACKS[r.rules.track][0]+' · ':''}${when} · ${esc(car?car.name:'')} · ${names.map(esc).join(', ')}</small>${r.summary?`<small style="display:block">${r.summary.stops} stops · ${Math.round(r.summary.fuel)} ${car?car.unit:''} · ~${r.summary.laps} laps</small>`:''}</div><span class="chev">›</span></div>`; }).join('');
+  $('memberList').querySelectorAll('[data-mid]').forEach(e=>e.onclick=()=>memberSheet(e.dataset.mid));
+  $('carList').querySelectorAll('[data-cid]').forEach(e=>e.onclick=()=>carSheet(e.dataset.cid));
+  $('raceList').querySelectorAll('[data-rid]').forEach(e=>e.onclick=()=>raceSheet(e.dataset.rid));
+}
+function memberSheet(id){
+  dbSave();
+  const m=id?member(id):{id:null,name:'',role:'driver',maxStint:(SERIES[DB.team.series].race||{}).maxStint||120,color:COLORS[DB.team.members.length%COLORS.length]};
+  let color=m.color;
+  const inUse=id&&DB.races.some(r=>r.status!=='done'&&r.drivers.some(d=>d.mid===id));
+  openSheet(id?'Edit person':'Add person',fld('Name',`<input id="mName" type="text" value="${esc(m.name)}">`)+fld('Role',`<select id="mRole">${Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${k===m.role?'selected':''}>${v}</option>`).join('')}</select>`)+fld('Default max stint (min)',`<input id="mMax" type="number" inputmode="numeric" step="5" value="${m.maxStint}">`)+`<div class="sub" style="margin:10px 0 4px">Colour</div><div class="colors" id="mColors">${COLORS.map(c=>`<button style="background:${c}" class="${c===color?'sel':''}" data-c="${c}"></button>`).join('')}</div>`,
+    [...(id&&!inUse?[{label:'Remove',cls:'dng',fn:()=>{ if(confirm('Remove '+m.name+' from the team?')){ DB.team.members=DB.team.members.filter(x=>x.id!==id); DB.races.forEach(r=>{ if(r.status!=='done') r.drivers=r.drivers.filter(d=>d.mid!==id); }); closeSheet(); reloadActive(); } }}]:[]),
+     {label:'Save',cls:'pri',fn:()=>{ const n=val('mName').trim(); if(!n) return; Object.assign(m,{name:n,role:val('mRole'),maxStint:parseFloat(val('mMax'))||120,color}); if(!id){ m.id=uid(); DB.team.members.push(m); } closeSheet(); reloadActive(); }}]);
+  $('mColors').querySelectorAll('button').forEach(b=>b.onclick=()=>{ color=b.dataset.c; $('mColors').querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===b)); });
+}
+function carSheet(id){
+  dbSave();
+  const c=id?carById(id):Object.assign({id:null,name:'',measured:{}},clone(DEFAULT.car));
+  const F=[['unit','Fuel unit','sel'],['cap','Usable fuel (tank)'],['burn','Burn per lap (planned)'],['reserve','Reserve (laps)'],['lap','Race lap time (m:ss)','txt'],['pitLoss','Pit-lane loss (s)'],['fillRate','Fill rate (per min)'],['changeSec','Driver change (s)'],['jug','Jug size']];
+  const ms=Object.entries(c.measured||{});
+  const inUse=id&&DB.races.some(r=>r.status!=='done'&&r.carId===id);
+  openSheet(id?'Edit car':'Add car',fld('Name',`<input id="cName" type="text" value="${esc(c.name)}">`)+F.map(([k,l,t])=>fld(l,t==='sel'?`<select id="c_${k}"><option value="gal">US gal</option><option value="L" ${c[k]==='L'?'selected':''}>litres</option></select>`:`<input id="c_${k}" type="${t==='txt'?'text':'number'}" inputmode="decimal" step="any" value="${esc(c[k])}">`)).join('')+(ms.length?`<div class="hint">Measured burn: ${ms.map(([k,v])=>`${(TRACKS[k]||['?'])[0]} ${Math.round(v*1000)/1000}/lap`).join(' · ')}</div>`:''),
+    [...(id&&!inUse&&DB.team.cars.length>1?[{label:'Remove',cls:'dng',fn:()=>{ if(confirm('Remove '+c.name+'?')){ DB.team.cars=DB.team.cars.filter(x=>x.id!==id); closeSheet(); reloadActive(); } }}]:[]),
+     {label:'Save',cls:'pri',fn:()=>{ c.name=val('cName').trim()||'Car'; F.forEach(([k,,t])=>{ c[k]=t==='sel'||t==='txt'?val('c_'+k):(parseFloat(val('c_'+k))||0); }); if(!id){ c.id=uid(); c.useMeasured=1; DB.team.cars.push(c); } closeSheet(); hydrate(); bind(); update(); dbSave(); }}]);
+}
+function teamSheet(){
+  openSheet('Team',fld('Team name',`<input id="tName" type="text" value="${esc(DB.team.name)}">`)+fld('Default series',`<select id="tSeries">${seriesOpts(DB.team.series)}</select>`),
+    [{label:'Save',cls:'pri',fn:()=>{ DB.team.name=val('tName').trim()||DB.team.name; DB.team.series=val('tSeries'); closeSheet(); dbSave(); update(); }}]);
+}
+function newRaceSheet(base){
+  dbSave();
+  const series=base?base.series:DB.team.series; const sched0=!!(SERIES[series]||{}).sched;
+  const drivers=DB.team.members.filter(m=>isDriverRole(m.role));
+  let sel=base?base.drivers.map(d=>d.mid).filter(id=>member(id)):drivers.map(m=>m.id);
+  const R0=base?base.rules:Object.assign(clone(DEFAULT.race),SERIES[series].race||{});
+  const nm=base?(/saturday/i.test(R0.name)?'Sunday':(R0.name||'Race')+' (day 2)'):'Race '+(DB.races.filter(r=>!r.sim).length+1);
+  const draw=()=>{ $('rPick').innerHTML=drivers.map(m=>{ const k=sel.indexOf(m.id); return `<button class="${k>=0?'sel':''}" style="--c:${m.color}" data-m="${m.id}">${esc(m.name)}${k>=0?`<span class="n">${k+1}</span>`:''}</button>`; }).join('')||'<span class="hint">No drivers on the team yet. Add people first.</span>';
+    $('rPick').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const id=b.dataset.m; sel=sel.includes(id)?sel.filter(x=>x!==id):[...sel,id]; draw(); }); };
+  openSheet(base?'Same team, new day':'New race',fld('Race name',`<input id="rName" type="text" value="${esc(nm)}">`)+fld('Series',`<select id="rSeries">${seriesOpts(series)}</select>`)+fld('Track',`<select id="rTrack">${trackOpts(R0.track||'none')}</select>`)+
+    `<div id="rSched" style="display:${sched0?'block':'none'}">`+fld('Start',`<input id="rStart" type="time" value="${R0.start||'10:00'}">`)+fld('End',`<input id="rEnd" type="time" value="${R0.end||'17:00'}">`)+`</div><div id="rLenBox" style="display:${sched0?'none':'block'}">`+fld('Length (min)',`<input id="rLen" type="number" inputmode="numeric" step="5" value="${R0.len||120}">`)+`</div>`+
+    fld('Car',`<select id="rCar">${DB.team.cars.map(c=>`<option value="${c.id}" ${base&&base.carId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select>`)+
+    `<div class="sub" style="margin:14px 0 8px">Who's driving? Tap in rotation order.</div><div class="pick" id="rPick"></div>`,
+    [{label:'Cancel',fn:closeSheet},{label:base?'Create day 2':'Create race',cls:'pri',fn:()=>{
+      if(!sel.length){ alert('Pick at least one driver.'); return; }
+      const s=val('rSeries'); const rules=base?clone(base.rules):Object.assign(clone(DEFAULT.race),SERIES[s].race||{});
+      if(!base&&s!==series) Object.assign(rules,SERIES[s].race||{});
+      Object.assign(rules,{name:val('rName').trim()||'Race',track:val('rTrack'),start:val('rStart'),end:val('rEnd'),len:parseFloat(val('rLen'))||120});
+      const r=newRaceObj({series:s,rules,carId:val('rCar'),drivers:sel.map(id=>{ const prev=base&&base.drivers.find(d=>d.mid===id); return {mid:id,max:prev?prev.max:Math.min(member(id).maxStint||120,rules.maxStint||999)}; })});
+      DB.races.push(r); DB.activeRaceId=r.id; closeSheet(); reloadActive(); show('plan'); }}]);
+  $('rSeries').onchange=()=>{ const sc=!!(SERIES[val('rSeries')]||{}).sched; $('rSched').style.display=sc?'block':'none'; $('rLenBox').style.display=sc?'none':'block'; };
+  draw();
+}
+function raceSheet(id){
+  const r=DB.races.find(x=>x.id===id); if(!r) return; const isAct=id===DB.activeRaceId; const car=carById(r.carId);
+  const sum=r.summary?`<div class="sub">${r.summary.stops} stops · ${Math.round(r.summary.fuel)} ${car?car.unit:''} added · ~${r.summary.laps} laps${r.summary.meas?' · measured '+Math.round(r.summary.meas*1000)/1000+'/lap':''}</div><div style="margin-top:8px">${Object.entries(r.summary.seat||{}).map(([mid,t])=>`<div class="lrow" style="cursor:default;padding:8px 2px"><span class="dot" style="background:${(member(mid)||{}).color||'#888'}"></span><div class="lmain"><b style="font-size:14px">${esc((member(mid)||{}).name||'?')}</b></div><span class="sub" style="margin:0">${fmt(t)}</span></div>`).join('')}</div>`:'';
+  openSheet(r.rules.name||'Race',`<div class="sub" style="margin:0 0 6px">${(SERIES[r.series]||{}).label||''}${r.rules.track&&TRACKS[r.rules.track]&&r.rules.track!=='none'?' · '+TRACKS[r.rules.track][0]:''} · ${esc(car?car.name:'')}</div>${sum}`,
+    [...(!isAct&&!SIM.on?[{label:'Delete',cls:'dng',fn:()=>{ if(confirm('Delete '+(r.rules.name||'this race')+'?')){ DB.races=DB.races.filter(x=>x.id!==id); closeSheet(); dbSave(); update(); } }}]:[]),
+     ...(!SIM.on?[{label:'Same team, new day',fn:()=>{ closeSheet(); newRaceSheet(r); }}]:[]),
+     ...(!isAct&&!SIM.on?[{label:'Open',cls:'pri',fn:()=>{ dbSave(); DB.activeRaceId=id; closeSheet(); hydrate(); dbSave(); bind(); update(); show(r.status==='done'?'log':'plan'); }}]:[{label:'Close',cls:'pri',fn:closeSheet}])]);
+}
+function finishRace(){
+  const r=activeRace(); if(!r) return; const lv=live(); P=plan(lv);
+  if(!lv.started){ alert('This race hasn\'t started yet.'); return; }
+  if(!confirm('Finish and save '+(r.rules.name||'this race')+' to the team history?')) return;
+  const ds=driverStatus(lv,P); const seat={}; ds.forEach(o=>{ if(o.seat>0) seat[S.drivers[o.i].mid]=Math.round(o.seat*10)/10; });
+  r.summary={stops:lv.stops.length,fuel:lv.added,laps:Math.floor(P.stints.filter(s=>s.locked||s.start<lv.now).reduce((a,s)=>a+Math.min(s.end,lv.now)-s.start,0)/P.lap),seat,meas:P.meas||null};
+  if(P.meas){ const car=carById(r.carId); car.measured=car.measured||{}; car.measured[r.rules.track||'none']=P.meas; }
+  r.status='done'; r.date=(greenEv()||{t:nowMs()}).t; dbSave(); update(); show('team');
+  if(confirm('Saved. Set up the next day with the same team?')) newRaceSheet(r);
+}
+$('teamEdit').onclick=()=>DB&&teamSheet(); $('addMember').onclick=()=>DB&&memberSheet(null); $('addCar').onclick=()=>DB&&carSheet(null); $('newRaceBtn').onclick=()=>DB&&newRaceSheet(null);
+
+/* ================= SIMULATOR ================= */
+// A virtual race on a virtual clock. Race control throws flags; a "truth" car burns real fuel;
+// an optional auto-crew runs the stops. Nothing is saved: the real team data reloads on End.
+function mulberry(a){ return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function startSim(opt){
+  opt=opt||{}; if(SIM.on) endSim(true);
+  if(DB) dbSave();
+  if(!DB||opt.demo){ const demo=clone(DEFAULT); demo.drivers=[{name:'Paul',max:120},{name:'Luc',max:120},{name:'Marco',max:120},{name:'Sam',max:120}]; demo.race.track='glen'; DB=dbFromS(demo,'Demo team'); DB.team.cars[0].name='E30 (demo)'; }
+  else DB=clone(DB);                                    // work on a throwaway copy
+  const base=activeRace();
+  const r=newRaceObj({sim:true,series:base.series,rules:Object.assign(clone(base.rules),{name:'Simulation'}),carId:base.carId,drivers:clone(base.drivers)});
+  DB.races.push(r); DB.activeRaceId=r.id;
+  SIM.on=true; SIM.rng=mulberry(opt.seed||((Date.now()%1e9)|0)); SIM.speed=opt.speed!=null?opt.speed:30; SIM.auto=opt.auto!==false; SIM.done=false; SIM.stopTarget=null; SIM.late=null; SIM.after=0;
+  hydrate();
+  const L=raceLen(); const sch=sched();
+  SIM.v=sch?schedStartMs(Date.now())-2*60000:Date.now();
+  SIM.greenAt=sch?schedStartMs(Date.now())+30000:SIM.v+60000;
+  const g=SIM.rng;
+  SIM.t={fuel:S.car.cap,laps:0,oof:false,burn:S.car.burn*(1+(g()*0.18-0.03)),lap:lapMin(S.car.lap),pace:S.drivers.map(()=>g()*0.065-0.025),added:0};
+  SIM.flags=[]; let t=15+g()*40; while(t<L-10){ const d=3+g()*5; SIM.flags.push({type:'yellow',at:t,dur:d}); t+=d+30-Math.log(1-g())*55; }
+  if(g()<0.3){ SIM.flags.push({type:'red',at:40+g()*(L-80),dur:8+g()*8}); }
+  SIM.flags.forEach(f=>{ f.on=false; f.off=false; });
+  document.body.classList.add('sim-on'); closeSheet(); pend={driver:null,kind:null,jugs:null};
+  bind(); update(); if(typeof applyView==='function') applyView(); show('race'); simHud();
+  clearInterval(SIM.timer); SIM.last=Date.now(); SIM.timer=setInterval(simTick,250);
+}
+function simTick(){ const n=Date.now(); const dt=(n-SIM.last)/60000*SIM.speed; SIM.last=n; if(SIM.on&&dt>0&&!SIM.done) simStep(dt); }
+function simEmit(e){ S.events.push(Object.assign({t:SIM.v},e)); }
+function simStep(dtMin){
+  if(!SIM.on) return;
+  let left=dtMin;
+  while(left>1e-9){
+    const sub=Math.min(0.25,left); left-=sub; SIM.v+=sub*60000;
+    const T=SIM.t; const R=S.race;
+    if(!greenEv()&&SIM.v>=SIM.greenAt) simEmit({type:'green'});
+    let lv=live(); if(!lv.started) continue;
+    // race control
+    SIM.flags.forEach(f=>{ if(!f.on&&lv.now>=f.at&&lv.now<lv.L){ f.on=true; simEmit({type:f.type,on:true}); } if(f.on&&!f.off&&lv.now>=f.at+f.dur){ f.off=true; simEmit({type:f.type,on:false}); } });
+    lv=live(); if(lv.finished){ if(!SIM.done){ SIM.done=true; update(); simHud(); simSummary(); } return; }
+    // the real car
+    if(!lv.inPit&&!lv.red&&!T.oof){
+      if(SIM.after>0){ SIM.after-=sub; }                         // still driving out of pit lane
+      else { const cur=P&&!P.err?P.stints[curIdx(P)]:null; const di=cur?cur.driver:0;
+        const lapT=T.lap*(1+(T.pace[di]||0))*(lv.yellow?1.55:1)*(1+(SIM.rng()-0.5)*0.02);
+        const laps=sub/lapT; T.laps+=laps; T.fuel-=laps*T.burn*(lv.yellow?0.55:1);
+        if(T.fuel<=0){ T.fuel=0; T.oof=true; } }
+    }
+    // the crew
+    if(SIM.auto) simCrew(lv);
+    P=plan(live());
+  }
+  update(); simHud();
+}
+function simCrew(lv){
+  const R=S.race, T=SIM.t; const P2=plan(lv); if(P2.err) return; const st=P2.stints, ci=curIdx(P2);
+  if(lv.inPit){
+    if(lv.red) return;                                                   // work stops under red
+    const a=lv.stops[lv.stops.length-1], el=lv.now-a.in, mn=minFor('fuel');
+    if(SIM.stopTarget==null) SIM.stopTarget=SIM.rng()<0.03? mn-0.3 : mn+5/60+0.05+SIM.rng()*0.45;
+    if(el>=SIM.stopTarget){
+      const need=Math.max(0,S.car.cap-T.fuel); const jugs=P2.refuel?Math.ceil(need/(S.car.jug/2)-1e-9)/2:0; /* crew logs to the nearest half jug */ const add=Math.min(need,jugs*S.car.jug);
+      T.fuel+=add; T.added+=add; T.oof=false;
+      simEmit({type:'out',driver:st[ci]?st[ci].driver:0,stopLen:el,kind:'fuel',fuel:jugs*S.car.jug});
+      SIM.stopTarget=null; SIM.late=null; SIM.after=(S.car.pitLoss||0)/60;
+    }
+    return;
+  }
+  const cur=st[ci]; if(!cur) return; const last=ci===st.length-1; const tt=cur.end-lv.now;
+  if(lv.red||(lv.yellow&&!R.pitsUnderYellow)||(R.earliest&&lv.now<R.earliest)) return;
+  if(SIM.late==null) SIM.late=SIM.rng()<0.15?SIM.rng()*2:0;              // sometimes the crew is a bit late
+  const lowFuel=T.fuel<T.burn*1.5&&lv.L-lv.now>5;
+  const yellowPit=lv.yellow&&R.pitsUnderYellow&&!last&&tt>0&&tt<=(R.yellowWindow||0);
+  if((!last&&tt<=-SIM.late)||yellowPit||lowFuel||T.oof) simEmit({type:'in'});
+}
+function simHud(){
+  if(!SIM.on) return;
+  document.querySelectorAll('#simHud [data-s]').forEach(b=>b.classList.toggle('on',+b.dataset.s===SIM.speed));
+  $('simAutoBtn').classList.toggle('on',SIM.auto); $('simAutoBtn').textContent=SIM.auto?'auto-crew ✓':'auto-crew ✗';
+  const lv=live(); let est='';
+  if(P&&!P.err&&lv.started){ const ci=curIdx(P), s=P.stints[ci]||P.stints[P.stints.length-1]; const e=lv.inPit?(P.stints[ci-1]||{}).fuelEnd:s.fuelStart-Math.max(0,lv.now-s.start)/P.lap*P.burn; if(e!=null) est=` · app est ${r1(Math.max(0,e))}`; }
+  $('simTruth').innerHTML=SIM.t.oof?'<span class="oof">OUT OF FUEL</span>':`truth ${r1(SIM.t.fuel)} ${S.car.unit}${est} · ${Math.floor(SIM.t.laps)} laps`;
+}
+function simReport(){
+  const lv=live(); const P2=plan(lv); const bad=P2.W.filter(w=>w[0]==='bad').map(w=>w[1]);
+  const shortStops=lv.stops.filter(s=>s.out!=null&&s.kind==='fuel'&&s.out-s.in<S.race.minStop).length;
+  const over=P2.stints.filter(s=>S.race.maxStint&&s.dur>S.race.maxStint+1e-6).length;
+  const measErr=P2.meas?(P2.meas/SIM.t.burn-1):null;
+  return {finished:lv.finished,laps:Math.floor(SIM.t.laps),stops:lv.stops.length,oof:SIM.t.oof,shortStops,overStints:over,bad,trueBurn:SIM.t.burn,meas:P2.meas,measErr,yellows:SIM.flags.filter(f=>f.type==='yellow'&&f.on).length,reds:SIM.flags.filter(f=>f.type==='red'&&f.on).length};
+}
+function simSummary(){
+  const x=simReport(); const ok=!x.oof&&!x.shortStops&&!x.overStints&&!x.bad.length;
+  openSheet('Simulation complete',`<div class="sub" style="margin:0 0 10px">${ok?'✅ Clean race: no rule breaks, never ran dry.':'⚠️ Issues found. See below.'}</div>
+    <div class="row" style="margin-bottom:8px"><div class="stat"><div class="v">${x.laps}</div><div class="l">laps</div></div><div class="stat"><div class="v">${x.stops}</div><div class="l">stops</div></div><div class="stat"><div class="v">${x.yellows}/${x.reds}</div><div class="l">yellows/reds</div></div></div>
+    <div class="w ${x.oof?'w-bad':'w-ok'}">${x.oof?'Ran OUT OF FUEL':'Never ran out of fuel'}</div>
+    <div class="w ${x.shortStops?'w-bad':'w-ok'}">${x.shortStops} fuel stop(s) under the ${S.race.minStop}:00 minimum</div>
+    <div class="w ${x.overStints?'w-bad':'w-ok'}">${x.overStints} stint(s) over the ${S.race.maxStint||'∞'}-min max</div>
+    <div class="w ${x.measErr!=null&&Math.abs(x.measErr)>0.15?'w-warn':'w-ok'}">True burn ${Math.round(x.trueBurn*1000)/1000}/lap · app measured ${x.meas?Math.round(x.meas*1000)/1000:'–'}${x.measErr!=null?` (${x.measErr>0?'+':''}${Math.round(x.measErr*100)}%)`:''}</div>
+    ${x.bad.map(b=>`<div class="w w-bad">${b}</div>`).join('')}`,
+    [{label:'Run again',fn:()=>startSim({demo:DB&&DB.team.name==='Demo team',speed:SIM.speed,auto:SIM.auto})},{label:'End simulation',cls:'pri',fn:()=>endSim()}]);
+}
+function endSim(quiet){
+  clearInterval(SIM.timer); SIM.on=false; SIM.done=false; document.body.classList.remove('sim-on'); if(!quiet) closeSheet();
+  DB=null; S=null; loadDB();
+  if(DB){ hydrate(); } else { S=clone(DEFAULT); }
+  pend={driver:null,kind:null,jugs:null};
+  if(!quiet){ bind(); update(); if(typeof applyView==='function') applyView(); if(!DB) startOnboarding(); else show('team'); }
+}
+document.querySelectorAll('#simHud [data-s]').forEach(b=>b.onclick=()=>{ SIM.speed=+b.dataset.s; SIM.last=Date.now(); simHud(); });
+$('simAutoBtn').onclick=()=>{ SIM.auto=!SIM.auto; simHud(); };
+$('simEnd').onclick=()=>{ if(confirm('End the simulation? Nothing from it is saved.')) endSim(); };
+$('simOpen').onclick=()=>startSim({});
+
+try{ loadDB(); }catch(e){ DB=null; }
+if(DB) hydrate(); else S=clone(DEFAULT);
 bind(); update(); keepAwake();
+if(!DB) startOnboarding();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
-setInterval(()=>{ try{ const lv=live(); P=plan(lv); renderRace(); if($('tab-team').classList.contains('on')) renderTeam(lv); if($('tab-plan').classList.contains('on')) renderPlan(P,lv); }catch(e){} },500);
+setInterval(()=>{ try{ const lv=live(); P=plan(lv); renderRace(); if($('tab-race').classList.contains('on')) renderTeam(lv); if($('tab-plan').classList.contains('on')) renderPlan(P,lv); }catch(e){} },500);
 applyView();
 </script>
 </body>

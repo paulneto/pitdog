@@ -53,7 +53,7 @@ Three layers:
 ## Phases
 | Phase | What | Needs |
 |---|---|---|
-| A | Simulator layers 1 and 3 | nothing, can start now |
+| A | ✅ **Done (27 Nov):** simulator (in-app SIM mode, auto-crew, race control, truth car) + automated sweeps; local team/races model | — |
 | B | Team sync (Supabase), with UNDO switched to void events | Supabase URL and anon key |
 | C | Car beacon (GPS laps, auto pit in/out) | a test drive or a recorded GPS track |
 | D | Race Monitor positions and gaps through a Vercel relay | API key and written OK from Race Monitor |
