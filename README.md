@@ -9,7 +9,7 @@
 - **Strategy Lab:** driver profiles (typical lap, consistency, fuel use, fade per hour) feed the planner and the simulator. Compare strategies (your plan, even stints, fast drivers longer, pit on yellows, ignore yellows, combos) over 20–200 simulated races each, with the same random yellows and reds for every strategy. Results show average and worst-10% laps, stops, ran-dry and rule-break rates, and seat time per driver. Conditions: normal, wet, chaos, fuel leak, driver out. "Use this plan" applies a strategy; "Watch one" plays it on the command center; "Practise" lets the crew run a race manually. About 6 ms per simulated race in the browser
 - **Simulator:** run a whole race at up to 60× with your team, car and rules. Race control throws yellows and reds, a "truth" car burns real fuel, and an optional auto-crew runs the stops. The end-of-race report checks for running dry, short stops, stint limits and how close the measured burn was. Nothing is saved
 - **Plan:** stints, fuel and driver rotation within series rules (Lucky Dog: 2-h max stint, 60-min driver rest, 5-min fuel stops, mandatory 5-min stop every 2 h; PCA: stop window, pits closed under FCY)
-- **Race (phone):** one big button (GREEN → PIT IN → PIT OUT), stop-type and jug logging, next-driver picker with rest timers, BOX / on-deck / stint-limit / yellow-window alerts, YELLOW / RED / UNDO
+- **Race (phone):** the next-stop countdown is the hero, one status strip for alerts, one big button (GREEN → PIT IN → PIT OUT), stop-type logging and a glove-sized fuel stepper, next-driver picker with rest timers, BOX / on-deck / stint-limit / yellow-window alerts, YELLOW / RED / UNDO
 - **Command center (iPad landscape):** flag bar, race clock, car/pit panel with ring timer, crew rotation, fuel gauge, track weather, alerts and the full race timeline on one screen
 - **Team / Log:** seat time, rest status, measured fuel burn, event log, multi-day archive, share-a-plan link
 - **Skins:** Night race, Sunlight (for midday glare) and six F1-team-inspired liveries (Rosso, Papaya, Silver Arrow, Midnight, Racing Green, Grove Blue), chosen per device (Log → Look, or SKIN on the command center). See `docs/design-review.md`
@@ -30,7 +30,7 @@ app/                 the app: deployed as-is, no build step
   index.html         the whole app (HTML + CSS + JS in one file)
   sw.js              offline cache (version stamped on deploy)
   manifest.webmanifest, icon*.png/svg
-  fonts/             bundled Barlow + Barlow Condensed (OFL), precached for offline
+  fonts/             bundled Inter (OFL), precached for offline
 tests/e2e/           headless-Chrome scenarios with a fake race clock
   run.sh             run all scenarios (or: run.sh <name-filter>)
   harness.js         fake clock + helpers injected into the app

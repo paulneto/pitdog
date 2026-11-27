@@ -26,8 +26,9 @@ __run(() => {
   // status colours mean status only: identical across F1 skins
   const st = k => { setSkin(k); const cs = getComputedStyle(document.documentElement); return ['--red', '--amber', '--green', '--yellow'].map(v => cs.getPropertyValue(v).trim()).join(); };
   const ref = st('ferrari'); expect(['mclaren', 'mercedes', 'redbull', 'aston', 'williams'].every(k => st(k) === ref), 'status colours identical across F1 skins');
-  expect(getComputedStyle(document.getElementById('raceClock')).fontFamily.includes('Barlow Condensed'), 'race clock uses bundled Barlow Condensed');
-  expect(getComputedStyle(document.body).fontFamily.startsWith('"Barlow"') || getComputedStyle(document.body).fontFamily.startsWith('Barlow'), 'UI uses bundled Barlow');
+  const ff = id => getComputedStyle(typeof id === 'string' ? document.getElementById(id) : id).fontFamily.replace(/"/g, '');
+  expect(ff('nextStop').startsWith('Inter') && ff(document.body).startsWith('Inter') && ff('ccClock').startsWith('Inter'), 'phone hero, UI and command center use bundled Inter');
+  expect(!document.querySelector('.tabbar').textContent.trim().match(/[\u{1F300}-\u{1FAFF}]/u) && document.querySelectorAll('.tabbar svg.i').length === 5, 'tab bar uses the icon set, not emoji');
   setSkin('tower'); expect(document.documentElement.dataset.skin === 'night', 'retired skin (tower) falls back to night');
   setSkin('bogus'); expect(document.documentElement.dataset.skin === 'night', 'unknown skin falls back to night');
 });

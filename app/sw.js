@@ -2,9 +2,7 @@
 // Bump VERSION on every deploy so phones pick up the new version.
 const VERSION = 'pitdog-v1';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png',
-  ...['barlow-latin-400-normal', 'barlow-latin-600-normal', 'barlow-latin-800-normal', 'barlow-latin-800-italic',
-      'barlow-condensed-latin-600-normal', 'barlow-condensed-latin-700-normal', 'barlow-condensed-latin-800-normal', 'barlow-condensed-latin-800-italic']
-    .map(f => './fonts/' + f + '.woff2')];
+  ...['inter-latin-400-normal', 'inter-latin-600-normal', 'inter-latin-800-normal', 'inter-latin-800-italic'].map(f => './fonts/' + f + '.woff2')];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });

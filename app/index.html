@@ -14,17 +14,13 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-  /* Bundled fonts (OFL, see fonts/OFL.txt): served from the app and precached by sw.js so they work with no signal */
-  @font-face{font-family:"Barlow";src:url(fonts/barlow-latin-400-normal.woff2) format("woff2");font-weight:300 500;font-style:normal;font-display:swap}
-  @font-face{font-family:"Barlow";src:url(fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600 700;font-style:normal;font-display:swap}
-  @font-face{font-family:"Barlow";src:url(fonts/barlow-latin-800-normal.woff2) format("woff2");font-weight:800 900;font-style:normal;font-display:swap}
-  @font-face{font-family:"Barlow";src:url(fonts/barlow-latin-800-italic.woff2) format("woff2");font-weight:300 900;font-style:italic;font-display:swap}
-  @font-face{font-family:"Barlow Condensed";src:url(fonts/barlow-condensed-latin-600-normal.woff2) format("woff2");font-weight:300 600;font-style:normal;font-display:swap}
-  @font-face{font-family:"Barlow Condensed";src:url(fonts/barlow-condensed-latin-700-normal.woff2) format("woff2");font-weight:700;font-style:normal;font-display:swap}
-  @font-face{font-family:"Barlow Condensed";src:url(fonts/barlow-condensed-latin-800-normal.woff2) format("woff2");font-weight:800 900;font-style:normal;font-display:swap}
-  @font-face{font-family:"Barlow Condensed";src:url(fonts/barlow-condensed-latin-800-italic.woff2) format("woff2");font-weight:300 900;font-style:italic;font-display:swap}
+  /* Bundled font: Inter (OFL, see fonts/OFL.txt), served from the app and precached by sw.js so it works with no signal */
+  @font-face{font-family:"Inter";src:url(fonts/inter-latin-400-normal.woff2) format("woff2");font-weight:300 500;font-style:normal;font-display:swap}
+  @font-face{font-family:"Inter";src:url(fonts/inter-latin-600-normal.woff2) format("woff2");font-weight:600 700;font-style:normal;font-display:swap}
+  @font-face{font-family:"Inter";src:url(fonts/inter-latin-800-normal.woff2) format("woff2");font-weight:800 900;font-style:normal;font-display:swap}
+  @font-face{font-family:"Inter";src:url(fonts/inter-latin-800-italic.woff2) format("woff2");font-weight:300 900;font-style:italic;font-display:swap}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:15px/1.4 var(--font-ui);overscroll-behavior:none}
+  html,body{font-feature-settings:"cv11";margin:0;min-height:100%;background:var(--bg);color:var(--text);font:15px/1.4 var(--font-ui);overscroll-behavior:none}
   body{padding-top:env(safe-area-inset-top)}
   .appbar{position:sticky;top:0;z-index:5;background:var(--bar);backdrop-filter:blur(10px);display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
   .appbar h1{margin:0;font-size:18px;letter-spacing:.5px;flex:1;white-space:nowrap}
@@ -83,6 +79,34 @@
   .banner.warn{background:rgba(255,179,64,.13);color:var(--amber);font-weight:600}
   .banner.go{background:rgba(48,209,88,.15);color:var(--green)}
   @keyframes flash{50%{opacity:.55}}
+  .i{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em;flex:none}
+  .i .f{fill:currentColor;stroke:none}
+  /* status strip: the most urgent alert big, the rest as one-line chips */
+  .strip{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:800;padding:14px 16px;min-height:58px;letter-spacing:.2px}
+  .strip .i{width:26px;height:26px}
+  .strips2{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 10px}
+  .strip2{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:7px 10px;margin:0;border-radius:10px;animation:none!important}
+  /* phone race hero: the next stop is the number that matters */
+  .aclock{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-weight:800;font-size:20px;letter-spacing:-.3px;white-space:nowrap}
+  .hero-l{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+  .hero-n{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:92px;font-weight:800;line-height:1;letter-spacing:-3px;margin:4px 0 6px}
+  .hero-n.warn{color:var(--amber)}.hero-n.bad{color:var(--red)}
+  .hero-s{font-size:16px;color:var(--muted);margin-bottom:12px}.hero-s b{color:var(--text);font-size:20px;font-weight:800}
+  #trackCard .driver{margin:12px 0 10px}
+  .facts{display:flex;gap:8px;flex-wrap:wrap}
+  .fact{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);font-size:14px;color:var(--text)}
+  .fact b{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:16px}.fact small{color:var(--muted);font-size:12px}
+  .fact.warn{background:color-mix(in srgb,var(--amber) 16%,transparent);border-color:var(--amber);color:var(--amber);font-size:17px;padding:10px 14px}
+  .fact.bad{background:var(--red);border-color:var(--red);color:#fff;font-size:17px;padding:10px 14px}
+  .fact.warn small,.fact.bad small{color:inherit;opacity:.85}
+  .rstrip .rs{font-weight:700;margin-bottom:2px}
+  @media (min-width:700px){.hero-n{font-size:128px}}
+  /* glove-sized fuel stepper */
+  .stepper{display:flex;align-items:stretch;gap:10px;margin-bottom:14px}
+  .stepper .stp{flex:none;width:76px;min-height:66px;border-radius:14px;border:2px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;font-size:36px;font-weight:800;line-height:1;cursor:pointer}
+  .stepper .stp:disabled{opacity:.3}
+  .stepper .sv{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:14px;border:2px solid var(--text);background:var(--panel2);color:var(--text)}
+  .stepper .sv b{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:24px;font-weight:800}.stepper .sv small{font-size:12px;color:var(--muted)}
   .rem{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:10px;margin-top:4px}
   label.f{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);color:var(--text)}
   label.f:last-of-type{border-bottom:0}
@@ -198,7 +222,9 @@
   .cc-tag.d{background:rgba(48,209,88,.15);color:var(--green)}.cc-tag.o{background:rgba(10,132,255,.18);color:var(--info)}
   .cc-tag.r{background:rgba(255,179,64,.14);color:var(--amber)}.cc-tag.k{background:rgba(255,255,255,.06);color:var(--cc-mid)}
   .cc-alerts{display:flex;flex-direction:column;gap:5px;overflow:auto;min-height:0}
-  .cc-a{font-size:13px;font-weight:700;padding:7px 10px;border-radius:7px;border-left:4px solid}
+  #cc .stepper{margin:6px 0;gap:8px}#cc .stepper .stp{width:62px;min-height:50px;font-size:30px;background:var(--cc-deep);border-color:var(--cc-line2);color:var(--cc-text)}
+  #cc .stepper .sv{background:var(--cc-kv);border-color:var(--cc-mid);color:var(--cc-hi)}#cc .stepper .sv b{font-size:20px}#cc .stepper .sv small{color:var(--cc-dim)}
+  .cc-a{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;padding:7px 10px;border-radius:7px;border-left:4px solid}
   .cc-a.box{background:rgba(255,59,48,.16);border-color:var(--red);color:var(--red);animation:ccpulse 1s infinite}
   .cc-a.redf{background:var(--red);border-color:#fff;color:#fff}.cc-a.yellow{background:var(--yellow);border-color:#000;color:#000}
   .cc-a.warn{background:rgba(255,179,64,.12);border-color:var(--amber);color:var(--amber)}
@@ -247,10 +273,10 @@
   .sheet-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.sheet-h b{font-size:20px}
   .sheet-h button{background:none;border:0;color:var(--muted);font-size:22px;cursor:pointer}
   .sheet-f{display:flex;gap:8px;margin-top:14px}.sheet-f button{flex:1;padding:14px;border-radius:12px;font:inherit;font-weight:800;border:1px solid var(--line);background:var(--btn);color:var(--text);cursor:pointer}
-  .sheet-f button.pri{background:var(--red);border-color:var(--red);color:#fff}.sheet-f button.dng{color:var(--red)}
+  .sheet-f button.pri{background:var(--text);border-color:var(--text);color:var(--bg)}.sheet-f button.dng{color:var(--red)}
   .sheet .chips{margin-bottom:6px}
   .colors{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}.colors button{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer}.colors button.sel{border-color:var(--text)}
-  .steps{display:flex;gap:6px;margin-bottom:12px}.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}.steps i.on{background:var(--red)}
+  .steps{display:flex;gap:6px;margin-bottom:12px}.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}.steps i.on{background:var(--text)}
   .pick{display:flex;flex-wrap:wrap;gap:8px}.pick button{position:relative;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;font-weight:700;cursor:pointer}
   .pick button.sel{border-color:var(--c);background:color-mix(in srgb,var(--c) 20%,transparent)}
   .pick button .n{position:absolute;top:-8px;right:-8px;background:var(--c);color:#fff;border-radius:50%;width:20px;height:20px;font-size:11px;display:flex;align-items:center;justify-content:center}
@@ -275,19 +301,19 @@
     --bg:#0b0d11;--panel:#151921;--panel2:#0f1218;--line:#262c38;--text:#eef0f5;--muted:#8f98a8;
     --red:#ff3b30;--green:#30d158;--amber:#ffb340;--blue:#0a84ff;--yellow:#ffd60a;--info:#8cc4ff;
     --btn:#20252f;--bar:rgba(11,13,17,.92);--brand:#ff3b30;--go-ink:#002a0c;
-    --r-card:18px;--r-btn:12px;--font-ui:"Barlow",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--font-num:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;--font-head:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;
+    --r-card:18px;--r-btn:12px;--font-ui:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--font-num:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--font-head:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     --cc-bg:#05070a;--cc-panel:rgba(10,16,18,.88);--cc-line:#16302d;--cc-line2:#1d2c2b;--cc-deep:#071010;--cc-kv:#081110;
     --cc-acc:#2de0c0;--cc-acc2:#4fb8a8;--cc-acc3:#1a8f7d;--cc-accl:#9fe9dc;--cc-text:#e6f1ef;--cc-hi:#ffffff;--cc-mid:#8aa8a4;--cc-dim:#5f7a78;
-    --cc-grid:rgba(0,255,200,.025);--cc-glow:0 0 24px rgba(45,224,192,.25);--cc-fuel:#2de0c0;--cc-bar:linear-gradient(90deg,#1a8f7d,#2de0c0);--cc-barglow:0 0 10px #2de0c0;--cc-r:10px;--cc-num:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;--cc-corner:1;--cc-scan:1;--livery:none;
+    --cc-grid:rgba(0,255,200,.025);--cc-glow:0 0 24px rgba(45,224,192,.25);--cc-fuel:#2de0c0;--cc-bar:linear-gradient(90deg,#1a8f7d,#2de0c0);--cc-barglow:0 0 10px #2de0c0;--cc-r:10px;--cc-num:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--cc-corner:1;--cc-scan:1;--livery:none;
   }
   [data-skin="sunlight"]{
     --bg:#eef1f5;--panel:#ffffff;--panel2:#e6eaf0;--line:#c3ccd8;--text:#05080f;--muted:#465263;
     --red:#d1001f;--green:#007a2b;--amber:#b35a00;--blue:#0050c8;--yellow:#f2c200;--info:#0047b3;
     --btn:#dde3eb;--bar:rgba(255,255,255,.96);--brand:#d1001f;--go-ink:#ffffff;
-    --r-card:14px;--r-btn:12px;--font-num:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;
+    --r-card:14px;--r-btn:12px;--font-num:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     --cc-bg:#e9edf2;--cc-panel:#ffffff;--cc-line:#c3ccd8;--cc-line2:#d3dae4;--cc-deep:#eef1f5;--cc-kv:#f4f6f9;
     --cc-acc:#0050c8;--cc-acc2:#0050c8;--cc-acc3:#0050c8;--cc-accl:#05080f;--cc-text:#05080f;--cc-hi:#000000;--cc-mid:#3b4655;--cc-dim:#5b6675;
-    --cc-grid:transparent;--cc-glow:none;--cc-r:12px;--cc-fuel:#0050c8;--cc-bar:#0050c8;--livery:none;--cc-barglow:none;--cc-num:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;
+    --cc-grid:transparent;--cc-glow:none;--cc-r:12px;--cc-fuel:#0050c8;--cc-bar:#0050c8;--livery:none;--cc-barglow:none;--cc-num:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   }
   [data-skin="tower"]{
     --bg:#000000;--panel:#111111;--panel2:#060606;--line:#2b2b2b;--text:#f4f4f4;--muted:#9a9a9a;
@@ -312,7 +338,7 @@
   [data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]{
     --red:#ff3b30;--green:#30d158;--amber:#ffb340;--blue:#0a84ff;--yellow:#ffd60a;--info:#8cc4ff;--go-ink:#002a0c;
     --r-card:8px;--r-btn:8px;--cc-r:6px;
-    --font-ui:"Barlow",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--font-num:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;--font-head:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;--cc-num:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;--cc-text:#f2f4f6;--cc-hi:#ffffff;--cc-grid:transparent;
+    --font-ui:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--font-num:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--font-head:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--cc-num:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--cc-text:#f2f4f6;--cc-hi:#ffffff;--cc-grid:transparent;
   }
   [data-skin="ferrari"]{
     --bg:#0f0909;--panel:#1b1111;--panel2:#130b0b;--line:#3b2020;--text:#f7eeee;--muted:#b09a9a;
@@ -378,7 +404,7 @@
   :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .cc-p::before,
   :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .cc-p::after{opacity:1;border-radius:0;width:12px;height:12px}
   :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) :is(.cc-drv,.driver .n){text-transform:uppercase;font-style:italic;font-weight:900;letter-spacing:0}
-  :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) :is(.card h2,.cc-h,.big,.cc-go,.cc-flag){font-style:italic}
+  :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) :is(.cc-flag){font-style:italic}
   :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) :is(.clock,.timer,.cc-big,.cc-mid){font-weight:800;letter-spacing:-1.5px}
   :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .card{border-top:3px solid var(--cc-acc)}
   :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .card h2{color:var(--cc-acc2);font-weight:800}
@@ -397,7 +423,7 @@
 <body>
 <div id="simHud">
   <b>SIM</b>
-  <button data-s="0">⏸</button><button data-s="1">1×</button><button data-s="10">10×</button><button data-s="30">30×</button><button data-s="60">60×</button>
+  <button data-s="0" aria-label="Pause"><span data-ic="pause"></span></button><button data-s="1">1×</button><button data-s="10">10×</button><button data-s="30">30×</button><button data-s="60">60×</button>
   <button id="simAutoBtn">auto-crew</button>
   <span class="tr" id="simTruth"></span>
   <button id="simEnd" style="margin-left:auto">End sim</button>
@@ -446,7 +472,7 @@
         <div class="cc-ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" style="stroke:var(--cc-line2)" stroke-width="8"/><circle id="ccRingArc" cx="50" cy="50" r="44" fill="none" stroke="#ff3b30" stroke-width="8" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="276.5"/></svg>
           <div class="t"><div class="cc-mid mono" id="ccPitT">0:00</div><div class="cc-lbl" id="ccPitMin"></div></div></div>
         <div class="cc-lbl">Stop type</div><div class="cc-chips" id="ccKinds"></div>
-        <div id="ccJugBox"><div class="cc-lbl">Fuel added <span id="ccJugPlan" style="color:var(--amber)"></span></div><div class="cc-chips" id="ccJugs"></div></div>
+        <div id="ccJugBox"><div class="cc-lbl">Fuel added <span id="ccJugPlan" style="color:var(--amber)"></span></div><div class="stepper" id="ccJugs"></div></div>
         <div class="cc-lbl">Next driver</div><div class="cc-chips" id="ccDrvs"></div>
       </div>
       <div class="cc-ctl">
@@ -492,7 +518,8 @@
 </div>
 
 <div class="appbar">
-  <h1>PIT<b>DOG</b><span class="ser" id="serName"></span></h1>
+  <h1>PIT<b>DOG</b></h1>
+  <span class="aclock" id="raceClock">0:00:00</span>
   <button id="ccOpen" style="display:none;background:var(--cc-kv);color:var(--cc-acc);border:1px solid var(--cc-line);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:800;letter-spacing:1px;cursor:pointer">⊞ COMMAND CENTER</button>
   <span class="pill" id="statusPill">SETUP</span>
 </div>
@@ -501,22 +528,14 @@
 <!-- ================= RACE ================= -->
 <section class="tab on" id="tab-race">
   <div id="banners"></div>
-  <div class="card">
-    <h2><span id="clockLabel">Race clock</span><span id="clockWall"></span></h2>
-    <div class="clock" id="raceClock">0:00:00</div>
-    <div class="sub" id="raceSub"></div>
-    <div class="bar" style="margin-top:12px"><i id="raceBar" style="width:0;background:var(--blue)"></i></div>
-  </div>
-
   <div class="card" id="trackCard">
     <h2><span id="stintLabel">On track</span><span id="stintMax"></span></h2>
-    <div class="driver"><div class="sw" id="drvSw"></div><div><div class="n" id="drvName">–</div><div class="m" id="drvMeta">–</div></div></div>
+    <div class="hero-l" id="nextStopL">Next stop in</div>
+    <div class="hero-n" id="nextStop">–</div>
+    <div class="hero-s" id="heroSub"></div>
     <div class="bar"><i id="stintBar" style="width:0"></i></div>
-    <div class="row">
-      <div class="stat"><div class="v" id="nextStop">–</div><div class="l" id="nextStopL">Next stop in</div></div>
-      <div class="stat"><div class="v" id="fuelLeft">–</div><div class="l">Fuel left (est)</div></div>
-      <div class="stat"><div class="v" id="lapsDone">–</div><div class="l">Stint laps</div></div>
-    </div>
+    <div class="driver"><div class="sw" id="drvSw"></div><div style="flex:1;min-width:0"><div class="n" id="drvName">–</div><div class="m" id="drvMeta">–</div></div></div>
+    <div class="facts"><span class="fact" id="fuelFact"><span data-ic="fuel"></span><b id="fuelLeft">–</b><small id="fuelFactL">in tank</small></span><span class="fact"><span data-ic="flag"></span><b id="lapsDone">–</b><small>stint laps</small></span></div>
   </div>
 
   <div class="card" id="pitCard" style="display:none">
@@ -528,13 +547,19 @@
     <div class="chips" id="kindChips"></div>
     <div id="fuelBox">
       <h2><span>Fuel added</span><span id="fuelPlan"></span></h2>
-      <div class="chips" id="jugChips"></div>
+      <div class="stepper" id="jugChips"></div>
     </div>
     <h2>Next driver</h2>
     <div class="chips" id="nextDrv"></div>
     <div class="rem" id="pitRem"></div>
   </div>
 
+  <div class="card rstrip">
+    <h2><span id="clockLabel">Race clock</span><span id="clockWall"></span></h2>
+    <div class="rs" id="serName"></div>
+    <div class="sub" id="raceSub" style="margin-top:2px"></div>
+    <div class="bar" style="margin-top:10px"><i id="raceBar" style="width:0;background:var(--blue)"></i></div>
+  </div>
   <div class="card">
     <h2>Up next</h2>
     <div id="upNextBody" class="sub" style="margin:0"></div>
@@ -662,7 +687,7 @@
   <div class="card">
     <h2>Conditions</h2>
     <div class="chips" id="labCond" style="overflow-x:auto;flex-wrap:wrap"></div>
-    <button class="btn full" id="labPlay">🎮 Practise: play a race yourself in these conditions</button>
+    <button class="btn full" id="labPlay"><span data-ic="play"></span> Practise: play a race yourself in these conditions</button>
   </div>
   <div class="card">
     <h2>Strategies to compare</h2>
@@ -670,7 +695,7 @@
   </div>
   <div class="card">
     <div class="row" style="align-items:center"><label class="f" style="border:0;padding:0">Races per strategy <select id="labN"><option value="20">20 (quick)</option><option value="50">50</option><option value="100">100</option><option value="200">200 (slow)</option></select></label></div>
-    <button class="btn full" id="labRun" style="background:var(--red);border-color:var(--red);font-weight:800;margin-top:10px">▶ Run comparison</button>
+    <button class="btn full" id="labRun" style="background:var(--text);border-color:var(--text);color:var(--bg);font-weight:800;margin-top:10px">▶ Run comparison</button>
     <div class="bar" style="margin-top:10px"><i id="labBar" style="width:0;background:var(--blue)"></i></div>
     <div class="sub" id="labStatus" style="margin:0"></div>
   </div>
@@ -688,7 +713,7 @@
   </div>
   <div class="card">
     <h2>This race</h2>
-    <button class="btn full" id="finishRace" style="font-weight:800">🏁 Finish &amp; save to team history</button>
+    <button class="btn full" id="finishRace" style="font-weight:800"><span data-ic="finish"></span> Finish &amp; save to team history</button>
     <button class="btn full" id="sameDay">Same team, new day</button>
     <div class="hint">Finishing records seat time per driver and the car's measured fuel burn at this track, so next time plans start from real numbers.</div>
   </div>
@@ -720,11 +745,11 @@
 </div>
 
 <nav class="tabbar">
-  <button class="on" data-tab="race"><span class="ic">⏱</span>Race</button>
-  <button data-tab="team"><span class="ic">👥</span>Team</button>
-  <button data-tab="plan"><span class="ic">📋</span>Plan</button>
-  <button data-tab="lab"><span class="ic">🧪</span>Lab</button>
-  <button data-tab="log"><span class="ic">🧾</span>Log</button>
+  <button class="on" data-tab="race"><span class="ic" data-ic="race"></span>Race</button>
+  <button data-tab="team"><span class="ic" data-ic="team"></span>Team</button>
+  <button data-tab="plan"><span class="ic" data-ic="plan"></span>Plan</button>
+  <button data-tab="lab"><span class="ic" data-ic="lab"></span>Lab</button>
+  <button data-tab="log"><span class="ic" data-ic="log"></span>Log</button>
 </nav>
 
 <script>
@@ -784,6 +809,10 @@ const SIM={on:false,v:0,speed:30,auto:true,done:false,timer:null,last:0,t:null,f
 const nowMs=()=>SIM.on?SIM.v:Date.now();
 
 /* ================= helpers ================= */
+/* one consistent icon set (inline SVG, stroke = currentColor) instead of emoji, which render differently per device */
+const ICON={race:'<circle cx="12" cy="14" r="8"/><path d="M12 10v4l2.5 2M10 2h4M12 2v4"/>',team:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.5-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.5 3.5 5.2"/>',plan:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.8h6V4M8.5 10h7M8.5 14h7M8.5 18h4"/>',lab:'<path d="M9 3h6M10 3v6L4.6 18.2A2 2 0 0 0 6.3 21h11.4a2 2 0 0 0 1.7-2.8L14 9V3M7.5 14h9"/>',log:'<path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/>',fuel:'<path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16M3 21h13M4 10h11M15 8l3 3v6.5a1.5 1.5 0 0 0 3 0V9l-3-3"/>',swap:'<path d="M4 8h15l-3.5-3.5M20 16H5l3.5 3.5"/>',wrench:'<path d="M14.5 3.5a5 5 0 0 0-6 6.5L3 15.5V21h5.5l5.5-5.5a5 5 0 0 0 6.5-6l-3 3-3.5-1-1-3.5z"/>',flag:'<path d="M5 21V4M5 4h13l-3 4.5 3 4.5H5"/>',pitin:'<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',pitout:'<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>',alert:'<path d="M12 3 2 20h20zM12 10v4M12 17.5v.5"/>',stop:'<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z"/><path d="M12 7v6M12 16.5v.5"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.4-7 8-7s7 2.5 8 7"/>',bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',check:'<path d="M4 12.5 9.5 18 20 6"/>',trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8 21h8M9.5 17h5"/>',play:'<path d="M7 4v16l13-8z"/>',pause:'<path d="M8 5v14M16 5v14"/>',finish:'<path d="M5 21V3"/><rect x="5" y="3" width="14" height="10" rx="1"/><path class="f" d="M5 3h3.5v3.3H5zM12 3h3.5v3.3H12zM8.5 6.3H12v3.4H8.5zM15.5 6.3H19v3.4h-3.5zM5 9.7h3.5V13H5zM12 9.7h3.5V13H12z"/>',rain:'<path d="M7 15a4.5 4.5 0 1 1 1.3-8.8A5.5 5.5 0 0 1 19 8.5a3.5 3.5 0 0 1-1 6.5zM8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',userx:'<circle cx="10" cy="8" r="4"/><path d="M2 21c1-4.5 4.4-7 8-7 1.6 0 3.1.5 4.4 1.4M16 16l5 5M21 16l-5 5"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',car:'<path d="M3 16v-3l2.5-5h13L21 13v3zM3 16v2.5h3V16M18 16v2.5h3V16M6.5 12.5h.01M17.5 12.5h.01"/>'};
+const ic=(n,cls)=>`<svg class="i${cls?' '+cls:''}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]||''}</svg>`;
+document.querySelectorAll('[data-ic]').forEach(e=>{ e.innerHTML=ic(e.dataset.ic); });
 function lapMin(s){ const m=String(s).trim().match(/^(\d+):(\d{1,2}(?:\.\d+)?)$/); return m? (+m[1])+(+m[2])/60 : parseFloat(s)||NaN; }
 function fmt(min){ const neg=min<0; let sec=Math.round(Math.abs(min)*60); const h=Math.floor(sec/3600); sec-=h*3600; const m=Math.floor(sec/60), s=sec%60; return (neg?'-':'')+(h?h+':'+String(m).padStart(2,'0'):m)+':'+String(s).padStart(2,'0'); }
 function hms(min){ let sec=Math.max(0,Math.floor(min*60)); const h=Math.floor(sec/3600); sec-=h*3600; return h+':'+String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0'); }
@@ -1002,38 +1031,52 @@ function renderPlan(P,lv){
   stints.forEach((s,i)=>{
     const cur=lv.started&&!lv.finished&&!lv.inPit&&i===ci;
     h+=`<tr class="${cur?'cur':''}"><td>${i+1}${s.locked?' ✓':''}</td><td class="l"><span class="dot" style="background:${dcol(s.driver)}"></span>${esc(S.drivers[s.driver]?.name||'?')}</td><td>${clockAt(s.start)}<br><span style="color:var(--muted);font-size:11px">${fmt(s.start)}</span></td><td>${clockAt(s.end)}<br><span style="color:var(--muted);font-size:11px">${fmt(s.end)}</span></td><td>${fmt(s.dur)}</td><td>${r1(s.laps)}</td><td>${r1(s.fuelEnd)}</td></tr>`;
-    if(s.stop) h+=`<tr class="stoprow"><td></td><td class="l" colspan="6">${s.stop.kind==='fuel'?'⛽':s.stop.kind==='black'?'🏴':s.stop.kind==='mech'?'🔧':'🔁'} Stop ${i+1} at ${clockAt(s.stop.in)}${s.stop.kind==='fuel'?` · hold ≥ ${fmt(S.race.minStop)}${refuel?` · ${r1(s.stop.add)} ${S.car.unit} (${s.stop.jugs} jug${s.stop.jugs===1?'':'s'})`:''}`:''}</td></tr>`;
+    if(s.stop) h+=`<tr class="stoprow"><td></td><td class="l" colspan="6">${ic((KINDS[s.stop.kind]||KINDS.fuel).ic)} Stop ${i+1} at ${clockAt(s.stop.in)}${s.stop.kind==='fuel'?` · hold ≥ ${fmt(S.race.minStop)}${refuel?` · ${r1(s.stop.add)} ${S.car.unit} (${s.stop.jugs} jug${s.stop.jugs===1?'':'s'})`:''}`:''}</td></tr>`;
   });
   $('plan').innerHTML=h;
 }
 
 /* ================= render: race tab ================= */
 let P=null, pend={driver:null,kind:null,jugs:null};
-const KINDS={fuel:['⛽ Fuel','+ driver'],driver:['🔁 Driver','only'],mech:['🔧 Fix','mechanical'],black:['🏴 Black','flag hold']};
+const KINDS={fuel:{ic:'fuel',t:'Fuel',s:'+ driver'},driver:{ic:'swap',t:'Driver',s:'only'},mech:{ic:'wrench',t:'Fix',s:'mechanical'},black:{ic:'flag',t:'Black flag',s:'hold'}};
+/* alerts are [class, short html, icon?]: a shape, a colour and a number, not a sentence */
+const ALERT_RANK={redf:0,box:1,go:2,yellow:3,warn:4,info:5,ok:6};   // 'pit NOW under yellow' is the decision; the yellow itself is ambient
+const ALERT_IC={redf:'stop',box:'stop',yellow:'alert',go:'bolt',warn:'clock',info:'clock',ok:'check'};
+const alertIc=a=>ic(a[2]||ALERT_IC[a[0]]||'clock');
+const byRank=A=>A.map((a,i)=>[a,i]).sort((x,y)=>(ALERT_RANK[x[0][0]]??9)-(ALERT_RANK[y[0][0]]??9)||x[1]-y[1]).map(x=>x[0]);
 function computeAlerts(lv,P){
   const R=S.race, A=[];
-  if(lv.red) A.push(['redf','🟥 RED FLAG: stop all work, cap the fuel, step away from the car']);
-  if(lv.yellow&&!lv.red) A.push(['yellow',`⚠ FULL COURSE YELLOW${R.pitsUnderYellow?'':': pits closed'}`]);
+  if(lv.red) A.push(['redf','RED FLAG · stop work, cap fuel, step back']);
+  if(lv.yellow&&!lv.red) A.push(['yellow',`FULL COURSE YELLOW${R.pitsUnderYellow?'':' · pits closed'}`]);
   if(!P||P.err){ A.push(['warn',`${P?P.err:''} Fix it in the Plan tab.`]); return A; }
   if(!lv.started||lv.finished) return A;
   const st=P.stints, ci=curIdx(P);
-  if(lv.inPit){ if(lv.red) A.push(['warn','Red flag: work must stop. The timer keeps counting here, so check with the pit marshal.']); return A; }
+  if(lv.inPit){ if(lv.red) A.push(['warn','Red flag · work stops · timer still counts, check with the marshal']); return A; }
   const s=st[ci]||st[st.length-1]; const inSeat=lv.now-s.start, last=st.indexOf(s)===st.length-1, tt=s.end-lv.now;
+  const nm=i=>esc(S.drivers[i]?.name||'');
   if(!last){
-    if(tt<=0) A.push(['box',`BOX BOX BOX: stop ${st.indexOf(s)+1} is due now`]);
-    else if(tt<=3) A.push(['warn',`Box in ${fmt(tt)}. Fueler and fire bottle ready.`]);
-    const nx=st[st.indexOf(s)+1]; if(nx&&tt<=(R.onDeck||0)&&tt>0) A.push(['info',`🪖 On deck: <b>${esc(S.drivers[nx.driver]?.name)}</b>. Gear up, wristband on, out in ${fmt(tt)}`]);
-    if(lv.yellow&&R.pitsUnderYellow&&tt>0&&tt<=(R.yellowWindow||0)&&!lv.red) A.push(['go',`💡 Yellow + stop due in ${fmt(tt)}: pit NOW to lose less time`]);
+    if(tt<=0) A.push(['box',`BOX BOX · stop ${st.indexOf(s)+1} due now`]);
+    else if(tt<=3) A.push(['warn',`Box in ${fmt(tt)} · fuel + fire bottle ready`]);
+    const nx=st[st.indexOf(s)+1]; if(nx&&tt<=(R.onDeck||0)&&tt>0) A.push(['info',`On deck: <b>${nm(nx.driver)}</b> · out in ${fmt(tt)} · gear up`,'user']);
+    if(lv.yellow&&R.pitsUnderYellow&&tt>0&&tt<=(R.yellowWindow||0)&&!lv.red) A.push(['go',`Yellow · stop due in ${fmt(tt)} · pit NOW`]);
   }
-  if(R.maxStint){ if(inSeat>R.maxStint) A.push(['box',`${esc(S.drivers[s.driver]?.name)} is OVER the ${R.maxStint/60}-hour stint limit`]); else if(inSeat>R.maxStint-10) A.push(['warn',`${fmt(R.maxStint-inSeat)} left on ${esc(S.drivers[s.driver]?.name)}'s ${R.maxStint}-min max stint`]); }
-  if(R.mandEvery){ const due=lastMandStop(lv)+R.mandEvery-lv.now; if(due<0) A.push(['box','Mandatory 5-min stop OVERDUE']); else if(due<10) A.push(['warn',`Mandatory 5-min stop due within ${fmt(due)}`]); }
+  if(R.maxStint){ if(inSeat>R.maxStint) A.push(['box',`${nm(s.driver)} OVER ${fmt(R.maxStint)} stint limit`]); else if(inSeat>R.maxStint-10) A.push(['warn',`${nm(s.driver)} · ${fmt(R.maxStint-inSeat)} left on max stint`]); }
+  if(R.mandEvery){ const due=lastMandStop(lv)+R.mandEvery-lv.now; if(due<0) A.push(['box','Mandatory 5-min stop OVERDUE']); else if(due<10) A.push(['warn',`Mandatory 5-min stop due in ${fmt(due)}`]); }
   if(R.earliest&&lv.now<R.earliest) A.push(['info',`Stop window opens in ${fmt(R.earliest-lv.now)}`]);
-  if(R.latest&&lv.now>P.lastStart&&lv.stops.length<mandCount(R,lv.L)) A.push(['box','Mandatory stop window has CLOSED']);
+  const done=['mand','mandfuel'].includes(R.minApplies)?countedStops(lv):lv.stops.length;
+  if(R.latest&&lv.now>P.lastStart&&done<mandCount(R,lv.L)) A.push(['box','Mandatory stop window CLOSED']);
   return A;
 }
+function stripHTML(A){ if(!A.length) return ''; const [t,...rest]=byRank(A);
+  return `<div class="banner strip ${t[0]}">${alertIc(t)}<span>${t[1]}</span></div>`+(rest.length?`<div class="strips2">${rest.map(a=>`<div class="banner strip2 ${a[0]}">${alertIc(a)}<span>${a[1]}</span></div>`).join('')}</div>`:''); }
 // half-jug logging: the last jug is usually only partly poured
 const jugSteps=C=>{ const out=[]; const mx=Math.min(6,Math.ceil(C.cap/C.jug)); for(let j=0;j<=mx+1e-9;j+=0.5) out.push(j); return out; };
 const jugLbl=j=>j===0?'0':(Math.floor(j)||'')+(j%1?'½':'');
+const planJugs=()=>{ if(!P||P.err) return 0; const ps=P.stints[curIdx(P)-1]; return ps&&ps.stop?ps.stop.jugs:0; };
+const curJugs=()=>pend.jugs!=null?pend.jugs:planJugs();
+function stepJugs(d){ const mx=jugSteps(S.car).slice(-1)[0]; pend.jugs=Math.max(0,Math.min(mx,curJugs()+d)); buzz(10); }
+function jugStepper(C){ const j=curJugs(), pj=planJugs(), mx=jugSteps(C).slice(-1)[0];
+  return `<button class="stp" data-step="-0.5" aria-label="Less fuel" ${j<=0?'disabled':''}>−</button><div class="sv" data-j="${j}"><b>${j===0?'No fuel':jugLbl(j)+' jug'+(j>1?'s':'')}</b><small>${r1(j*C.jug)} ${C.unit}${j!==pj?' · plan '+jugLbl(pj):' · as planned'}</small></div><button class="stp" data-step="0.5" aria-label="More fuel" ${j>=mx?'disabled':''}>+</button>`; }
 const PROF0={pace:0,cons:0.015,ff:1,fade:0.005};
 function prof(i){ const d=S&&S.drivers&&S.drivers[i]; return d?{pace:d.pace??0,cons:d.cons??0.015,ff:d.ff??1,fade:d.fade??0.005}:PROF0; }
 function minFor(kind){ const R=S.race, m=R.minStop||0, ap=R.minApplies||'fuel'; if(kind==='black'||!m) return 0;
@@ -1055,11 +1098,11 @@ function renderRace(){
   } else {
     $('clockLabel').textContent=lv.finished?'Race complete':(R.name||'Race')+' clock';
     $('raceClock').textContent=hms(Math.min(Math.max(lv.now,0),L));
-    $('raceSub').textContent=lv.finished?'Checkered flag 🏁':`${hms(L-lv.now)} to go · checkered at ${clockAt(L)}`;
+    $('raceSub').textContent=lv.finished?'Checkered flag':`${hms(L-lv.now)} to go · checkered at ${clockAt(L)}`;
     $('raceBar').style.width=Math.min(100,Math.max(0,lv.now/L*100))+'%';
   }
   $('yBtn').className=lv.yellow?'yon':''; $('rBtn').className=lv.red?'ron':'';
-  const ban=computeAlerts(lv,P).map(([c,h])=>`<div class="banner ${c}">${h}</div>`).join('');
+  const ban=stripHTML(computeAlerts(lv,P));
   if(!P||P.err){ $('banners').innerHTML=ban; return; }
   const st=P.stints, ci=curIdx(P), cur=st[ci];
   $('trackCard').style.display=lv.inPit||lv.finished?'none':'block'; $('pitCard').style.display=lv.inPit&&!lv.finished?'block':'none';
@@ -1072,18 +1115,18 @@ function renderRace(){
     const a=lv.stops[lv.stops.length-1]; const el=lv.now-a.in;
     const kind=pend.kind||(()=>{ const s=st[ci-1]; return 'fuel'; })();
     const mn=minFor(kind); const target=mn?mn+5/60:0; const ok=el>=target;
-    $('pitNo').textContent='#'+lv.stops.length; $('pitKindLbl').textContent=KINDS[kind][0];
+    $('pitNo').textContent='#'+lv.stops.length; $('pitKindLbl').innerHTML=ic(KINDS[kind].ic)+' '+KINDS[kind].t;
     $('pitTimer').textContent=fmt(el); $('pitTimer').className='timer '+(ok?'ok':'wait');
     $('pitTarget').textContent= !mn?'No minimum for this stop type: go when ready': ok?'✓ 5:00 served: GO when ready':`Minimum ${fmt(mn)}. Safe to leave in ${fmt(target-el)}`;
     $('pitBar').style.width=(mn?Math.min(100,el/target*100):100)+'%'; $('pitBar').style.background=ok?'var(--green)':'var(--red)';
-    $('kindChips').innerHTML=Object.entries(KINDS).map(([k,[a,b]])=>`<button class="chipbtn ${k===kind?'sel':''}" data-k="${k}">${a}<small>${b}</small></button>`).join('');
+    $('kindChips').innerHTML=Object.entries(KINDS).map(([k,K])=>`<button class="chipbtn ${k===kind?'sel':''}" data-k="${k}">${ic(K.ic)} ${K.t}<small>${K.s}</small></button>`).join('');
     $('kindChips').querySelectorAll('button').forEach(b=>b.onclick=()=>{ pend.kind=b.dataset.k; buzz(10); renderRace(); });
     const ps=st[ci-1]&&st[ci-1].stop; const planJ=ps?ps.jugs:0;
     $('fuelBox').style.display=kind==='fuel'&&P.refuel?'block':'none';
     $('fuelPlan').textContent=ps?`plan ${r1(ps.add)} ${C.unit}`:'';
     const jsel=pend.jugs!=null?pend.jugs:planJ;
-    $('jugChips').innerHTML=jugSteps(C).map(j=>`<button class="chipbtn ${j===jsel?'sel':''}" data-j="${j}" style="--c:var(--amber);min-width:52px">${jugLbl(j)}<small>${r1(j*C.jug)} ${C.unit}</small></button>`).join('');
-    $('jugChips').querySelectorAll('button').forEach(b=>b.onclick=()=>{ pend.jugs=+b.dataset.j; buzz(10); renderRace(); });
+    $('jugChips').innerHTML=jugStepper(C);
+    $('jugChips').querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{ stepJugs(+b.dataset.step); renderRace(); });
     const defD=cur?cur.driver:0; const dsel=pend.driver!=null?pend.driver:defD;
     $('nextDrv').innerHTML=S.drivers.map((d,i)=>{ const o=ds[i]; const restLeft=o.lastEnd!=null&&R.rest?R.rest-(a.in-o.lastEnd)-el:0; const tired=restLeft>0;
       return `<button class="chipbtn ${i===dsel?'sel':''} ${tired?'dim':''}" style="--c:${dcol(i)}" data-d="${i}">${esc(d.name)}<small>${tired?'rest '+fmt(restLeft):fmt(o.seat)+' driven'}</small></button>`; }).join('');
@@ -1097,7 +1140,7 @@ function renderRace(){
   }
   $('banners').innerHTML=ban;
   if(!lv.finished){ const nx=st.slice(ci+(lv.inPit?0:1)).slice(0,3);
-    $('upNextBody').innerHTML=nx.length?nx.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><span class="dot" style="background:${dcol(s.driver)}"></span>${esc(S.drivers[s.driver]?.name)}</span><span>${clockAt(s.start)} → ${clockAt(s.end)} <span style="color:var(--muted)">(${fmt(s.dur)})</span></span></div>`).join(''):'Last stint: bring it home 🏁';
+    $('upNextBody').innerHTML=nx.length?nx.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><span class="dot" style="background:${dcol(s.driver)}"></span>${esc(S.drivers[s.driver]?.name)}</span><span>${clockAt(s.start)} → ${clockAt(s.end)} <span style="color:var(--muted)">(${fmt(s.dur)})</span></span></div>`).join(''):'Last stint: bring it home';
   } else $('upNextBody').textContent='—';
 }
 function renderTrack(s,lv,ds){
@@ -1110,9 +1153,19 @@ function renderTrack(s,lv,ds){
   const lim=Math.min(s.dur||1e9,R.maxStint||1e9);
   $('stintBar').style.width=Math.min(100,inSeat/(s.dur||1)*100)+'%';
   $('stintBar').style.background=inSeat>lim?'var(--red)':inSeat>s.dur-3?'var(--amber)':'var(--green)';
-  if(last){ $('nextStop').textContent=lv.started?hms(lv.L-lv.now):'–'; $('nextStopL').textContent='To checkered'; }
-  else { const tt=s.end-lv.now; $('nextStop').textContent=lv.started?fmt(tt):clockAt(s.end); $('nextStopL').textContent=lv.started?(tt<0?'Box overdue':'Next stop in'):'First stop'; }
-  $('fuelLeft').textContent=r1(s.fuelStart-inSeat/P.lapOf(s.driver)*P.burnOf(s.driver))+' '+C.unit;
+  const hn=$('nextStop'); let tone='';
+  if(last){ hn.textContent=lv.started?hms(lv.L-lv.now):'–'; $('nextStopL').textContent='To checkered'; $('heroSub').innerHTML=lv.started?'Last stint · bring it home':''; }
+  else { const tt=s.end-lv.now, nx=P.stints[P.stints.indexOf(s)+1];
+    hn.textContent=lv.started?fmt(tt).replace(/^-/,'−'):clockAt(s.end); $('nextStopL').textContent=lv.started?(tt<0?'Box overdue':'Next stop in'):'First stop';
+    if(lv.started) tone=tt<=0?'bad':tt<=3?'warn':'';
+    $('heroSub').innerHTML=`${lv.started?'box '+clockAt(s.end)+' · ':''}then <b>${esc(S.drivers[nx.driver]?.name||'?')}</b>`; }
+  hn.className='hero-n'+(tone?' '+tone:'');
+  // fuel only shouts when it's low
+  const fuelNow=s.fuelStart-inSeat/P.lapOf(s.driver)*P.burnOf(s.driver), resv=C.reserve*P.burnOf(s.driver), rangeMin=(fuelNow-resv)/P.burnOf(s.driver)*P.lapOf(s.driver);
+  $('fuelLeft').textContent=r1(Math.max(0,fuelNow))+' '+C.unit;
+  const low=lv.started&&!last&&P.refuel&&rangeMin<s.end-lv.now-1e-6, vlow=lv.started&&fuelNow<=resv;
+  $('fuelFact').className='fact'+(vlow?' bad':low||(lv.started&&rangeMin<10)?' warn':'');
+  $('fuelFactL').textContent=vlow?'on reserve':(lv.started&&rangeMin<10)?`in tank · ${fmt(Math.max(0,rangeMin))} range`:low?'short of the planned stop':'in tank';
   $('lapsDone').textContent=Math.floor(inSeat/P.lapOf(s.driver));
 }
 
@@ -1133,13 +1186,13 @@ function renderTeam(lv){
   $('fuelNeed').textContent=Math.round(still)+' '+S.car.unit;
 }
 function renderLog(){
-  const t0=T0(); const ic={green:['🟢','color-mix(in srgb,var(--green) 22%,transparent)'],in:['⬇','color-mix(in srgb,var(--red) 22%,transparent)'],out:['⬆','color-mix(in srgb,var(--green) 22%,transparent)'],yellow:['⚠','color-mix(in srgb,var(--yellow) 25%,transparent)'],red:['🟥','color-mix(in srgb,var(--red) 22%,transparent)']};
+  const t0=T0(); const LIC={green:['flag','var(--green)'],in:['pitin','var(--red)'],out:['pitout','var(--green)'],yellow:['alert','var(--yellow)'],red:['stop','var(--red)']};
   if(!S.events.length){ $('logList').innerHTML='<li class="sub">Nothing logged yet.</li>'; }
-  else $('logList').innerHTML=[...S.events].reverse().map(e=>{ const m=t0?(e.t-t0)/60000:0; const [i,bg]=ic[e.type]||['•','#222'];
+  else $('logList').innerHTML=[...S.events].reverse().map(e=>{ const m=t0?(e.t-t0)/60000:0; const [iname,col]=LIC[e.type]||['clock','var(--muted)'];
     let label={green:'Green flag',in:'Pit in',out:'Pit out'}[e.type]||'';
     if(e.type==='yellow') label=e.on?'Full course yellow':'Yellow cleared'; if(e.type==='red') label=e.on?'Red flag':'Red flag cleared';
-    if(e.type==='out'){ label=`${KINDS[e.kind||'fuel'][0]} · ${fmt(e.stopLen||0)}`; if(e.fuel) label+=` · ${r1(e.fuel)} ${S.car.unit}`; if(e.driver!=null) label+=` · ${esc(S.drivers[e.driver]?.name||'')} out`; }
-    return `<li><div class="ico" style="background:${bg}">${i}</div><div class="t">${fmt(m)}</div><div class="e">${label}</div><div class="c">${wall(e.t)}</div></li>`; }).join('');
+    if(e.type==='out'){ label=`${KINDS[e.kind||'fuel'].t} stop · ${fmt(e.stopLen||0)}`; if(e.fuel) label+=` · ${r1(e.fuel)} ${S.car.unit}`; if(e.driver!=null) label+=` · ${esc(S.drivers[e.driver]?.name||'')} out`; }
+    return `<li><div class="ico" style="background:color-mix(in srgb,${col} 20%,transparent);color:${col}">${ic(iname)}</div><div class="t">${fmt(m)}</div><div class="e">${label}</div><div class="c">${wall(e.t)}</div></li>`; }).join('');
 }
 
 /* ================= actions ================= */
@@ -1227,15 +1280,15 @@ function renderCC(){
   else { fl.className='cc-flag g'; fl.textContent='GREEN'; }
   // clock
   if(!lv.started){ const until=sched()?(schedStartMs()-nowMs())/60000:0; $('ccClock').textContent=until>0?'-'+hms(until):'0:00:00'; $('ccClockSub').textContent=sched()?`Scheduled ${R.start}–${R.end}`:`${fmt(L)} race`; $('ccToGo').textContent=hms(L); $('ccChk').textContent=sched()?R.end:'–'; }
-  else { $('ccClock').textContent=hms(Math.min(Math.max(lv.now,0),L)); $('ccClockSub').textContent=lv.finished?'Race complete 🏁':`elapsed · green ${wall(greenEv().t)}`; $('ccToGo').textContent=lv.finished?'0:00:00':hms(L-lv.now); $('ccChk').textContent=clockAt(L); }
+  else { $('ccClock').textContent=hms(Math.min(Math.max(lv.now,0),L)); $('ccClockSub').textContent=lv.finished?'Race complete':`elapsed · green ${wall(greenEv().t)}`; $('ccToGo').textContent=lv.finished?'0:00:00':hms(L-lv.now); $('ccChk').textContent=clockAt(L); }
   $('ccRaceBar').style.width=(lv.started?Math.min(100,Math.max(0,lv.now/L*100)):0)+'%';
   $('ccY').className=lv.yellow?'yon':''; $('ccR').className=lv.red?'ron':'';
   // alerts
   const A=computeAlerts(lv,P); if(P&&!P.err&&!A.length) A.push(['ok', lv.started? 'All clear. Plan on track.':'Ready. Waiting for green.']);
-  $('ccAlerts').innerHTML=A.map(([c,h])=>`<div class="cc-a ${c}">${h}</div>`).join(''); $('ccAlertN').textContent=A.filter(a=>a[0]!=='ok').length?A.filter(a=>a[0]!=='ok').length+' active':'';
+  $('ccAlerts').innerHTML=byRank(A).map(a=>`<div class="cc-a ${a[0]}">${alertIc(a)}<span>${a[1]}</span></div>`).join(''); $('ccAlertN').textContent=A.filter(a=>a[0]!=='ok').length?A.filter(a=>a[0]!=='ok').length+' active':'';
   const t0=T0(); const ev=[...S.events].reverse().slice(0,4);
   $('ccLog').innerHTML=ev.map(e=>{ const m=t0?fmt((e.t-t0)/60000):''; let l={green:'GREEN',in:'PIT IN',out:'PIT OUT'}[e.type]||''; if(e.type==='yellow') l=e.on?'YELLOW':'YELLOW CLEAR'; if(e.type==='red') l=e.on?'RED':'RED CLEAR';
-    if(e.type==='out') l+=` · ${KINDS[e.kind||'fuel'][0].split(' ')[1]} ${fmt(e.stopLen||0)}${e.fuel?' · '+r1(e.fuel)+C.unit:''} · ${esc(S.drivers[e.driver]?.name||'')}`; return `<b>${m}</b> ${l}`; }).join('<br>');
+    if(e.type==='out') l+=` · ${KINDS[e.kind||'fuel'].t} ${fmt(e.stopLen||0)}${e.fuel?' · '+r1(e.fuel)+C.unit:''} · ${esc(S.drivers[e.driver]?.name||'')}`; return `<b>${m}</b> ${l}`; }).join('<br>');
   const go=$('ccGo');
   if(!P||P.err){ go.className='cc-go grey'; go.textContent='FIX PLAN'; return; }
   const st=P.stints, ci=curIdx(P), cur=st[ci]; const ds=driverStatus(lv,P);
@@ -1251,12 +1304,12 @@ function renderCC(){
     $('ccPitT').textContent=fmt(el); $('ccPitT').style.color=ok?'var(--green)':'var(--red)';
     $('ccPitMin').textContent=!mn?'no minimum':ok?'GO WHEN READY':`min ${fmt(mn)} · ${fmt(target-el)} left`;
     const arc=$('ccRingArc'); const frac=mn?Math.min(1,el/target):1; arc.style.strokeDashoffset=String(276.5*(1-frac)); arc.style.stroke=ok?'var(--green)':'var(--red)';
-    $('ccKinds').innerHTML=Object.entries(KINDS).map(([k,[x]])=>`<button class="${k===kind?'sel':''}" data-k="${k}">${x}</button>`).join('');
+    $('ccKinds').innerHTML=Object.entries(KINDS).map(([k,K])=>`<button class="${k===kind?'sel':''}" data-k="${k}">${ic(K.ic)} ${K.t}</button>`).join('');
     const ps=st[ci-1]&&st[ci-1].stop; const jsel=pend.jugs!=null?pend.jugs:(ps?ps.jugs:0);
     $('ccJugBox').style.display=kind==='fuel'&&P.refuel?'block':'none'; $('ccJugPlan').textContent=ps?`plan ${r1(ps.add)} ${C.unit}`:'';
-    $('ccJugs').innerHTML=jugSteps(C).map(j=>`<button class="${j===jsel?'sel':''}" style="--c:var(--amber)" data-j="${j}">${jugLbl(j)}</button>`).join('');
+    $('ccJugs').innerHTML=jugStepper(C);
     const dsel=pend.driver!=null?pend.driver:(cur?cur.driver:0);
-    $('ccDrvs').innerHTML=S.drivers.map((d,i)=>{ const o=ds[i]; const restLeft=o.lastEnd!=null&&R.rest?R.rest-(a.in-o.lastEnd)-el:0; return `<button class="${i===dsel?'sel':''} ${restLeft>0?'dim':''}" style="--c:${dcol(i)}" data-d="${i}">${esc(d.name)}${restLeft>0?' ⏸':''}</button>`; }).join('');
+    $('ccDrvs').innerHTML=S.drivers.map((d,i)=>{ const o=ds[i]; const restLeft=o.lastEnd!=null&&R.rest?R.rest-(a.in-o.lastEnd)-el:0; return `<button class="${i===dsel?'sel':''} ${restLeft>0?'dim':''}" style="--c:${dcol(i)}" data-d="${i}">${esc(d.name)}${restLeft>0?' · rest':''}</button>`; }).join('');
     go.className='cc-go '+(ok?'green':'amber'); go.innerHTML=ok?'PIT OUT<small>car leaving pit lane</small>':`PIT OUT<small>too early · ${fmt(target-el)}</small>`;
   } else {
     const s=cur||st[st.length-1]; const d=S.drivers[s.driver]||{name:'?',max:0}; const inSeat=lv.started?Math.max(0,lv.now-s.start):0; const last=st.indexOf(s)===st.length-1;
@@ -1269,7 +1322,7 @@ function renderCC(){
     const mx=$('ccStintMax'); if(lim<1e9&&lim<=scale){ mx.style.display='block'; mx.style.left=(lim/scale*100)+'%'; } else mx.style.display='none';
     $('ccStintLim').textContent=`plan ${fmt(s.dur)}${lim<1e9?' · max '+fmt(lim):''}`;
     if(last){ $('ccNextL').textContent='To checkered'; $('ccNext').textContent=lv.started?hms(L-lv.now):'–'; $('ccNextSub').textContent='last stint: bring it home'; $('ccNext').style.color='var(--cc-hi)'; }
-    else { const tt=s.end-lv.now; $('ccNextL').textContent=lv.started?(tt<0?'Box overdue':'Next stop in'):'First stop'; $('ccNext').textContent=lv.started?fmt(tt):clockAt(s.end);
+    else { const tt=s.end-lv.now; $('ccNextL').textContent=lv.started?(tt<0?'Box overdue':'Next stop in'):'First stop'; $('ccNext').textContent=lv.started?fmt(tt).replace(/^-/,'−'):clockAt(s.end);
       $('ccNext').style.color=lv.started&&tt<=0?'var(--red)':lv.started&&tt<=3?'var(--amber)':'var(--cc-hi)';
       const nx=st[st.indexOf(s)+1]; $('ccNextSub').textContent=`box ${clockAt(s.end)} · then ${S.drivers[nx.driver]?.name||''}`; }
     go.className='cc-go '+(lv.started?'red':'green'); go.innerHTML=lv.started?'PIT IN<small>car stopping at pit in</small>':'GREEN FLAG<small>race is green</small>';
@@ -1304,11 +1357,11 @@ function renderCC(){
   const step=[15,30,60,120,180,240,360].find(m=>m*pxPerMin>=78)||480;
   const short=(m,withMin)=>{ const t=T0()?T0()+m*60000:(()=>{ const d=new Date(nowMs()); d.setHours(0,0,0,0); return d.getTime()+((sched()?hm(R.start):hm(R.startG))+m)*60000; })();
     return new Date(t).toLocaleTimeString([], withMin?{hour:'numeric',minute:'2-digit'}:{hour:'numeric'}); };
-  const lblW=txt=>txt.length*6.4+6; let ax=''; const endTxt='🏁 '+short(L,true), endLeft=W-lblW(endTxt); let lastRight=-1e9;
+  const lblW=txt=>txt.length*6.4+6; let ax=''; const endTxt=short(L,true), endLeft=W-lblW(endTxt)-16; let lastRight=-1e9;
   for(let m=0;m<L;m+=step){ const x=m*pxPerMin, txt=short(m,step<60||(m%60)!==0), w=lblW(txt); const left=m===0?0:x-w/2;
     tl+=`<div class="tkl" style="left:${pct(m)}%"></div>`;
     if(left>=lastRight+10&&left+w<=endLeft-10){ ax+=`<div class="tk mono" style="left:${pct(m)}%;${m===0?'transform:none':''}">${txt}</div>`; lastRight=left+w; } }
-  ax+=`<div class="tk mono end" style="left:100%;transform:translateX(-100%)">${endTxt}</div>`;
+  ax+=`<div class="tk mono end" style="left:100%;transform:translateX(-100%)">${ic('finish')} ${endTxt}</div>`;
   if(R.earliest) tl+=`<div class="yl" style="left:0;width:${pct(R.earliest)}%;background:var(--amber);opacity:.5"></div>`;
   if(R.latest) tl+=`<div class="yl" style="left:${pct(L-R.latest)}%;width:${pct(R.latest)}%;background:var(--amber);opacity:.5"></div>`;
   st.forEach(x=>{ const col=dcol(x.driver); const segW=(x.end-x.start)*pxPerMin, nm=S.drivers[x.driver]?.name||''; tl+=`<div class="sg" title="${esc(nm)}" style="left:${pct(x.start)}%;width:${pct(x.end)-pct(x.start)}%;background:${col};opacity:${x.locked?.45:.92}"><span>${segW<34?'':segW<60?esc(nm.slice(0,1)):esc(nm)}</span></div>`;
@@ -1320,7 +1373,7 @@ function renderCC(){
   $('ccTl').innerHTML=`<div class="tl-track">${tl}</div><div class="tl-axis">${ax}</div>`; $('ccTlSum').textContent=`${st.length} stints · ${st.length-1} stops · ~${Math.floor(P.laps)} laps`;
 }
 $('ccGo').onclick=()=>$('bigBtn').onclick(); $('ccY').onclick=()=>$('yBtn').onclick(); $('ccR').onclick=()=>$('rBtn').onclick(); $('ccU').onclick=()=>$('undoBtn').onclick();
-$('ccCar').addEventListener('click',e=>{ const b=e.target.closest('button[data-k],button[data-j],button[data-d]'); if(!b) return;
+$('ccCar').addEventListener('click',e=>{ const b=e.target.closest('button[data-k],button[data-step],button[data-d]'); if(!b||b.disabled) return; if(b.dataset.step){ stepJugs(+b.dataset.step); renderCC(); renderRace(); return; }
   if(b.dataset.k) pend.kind=b.dataset.k; if(b.dataset.j!=null&&b.dataset.j!=='') pend.jugs=+b.dataset.j; if(b.dataset.d!=null&&b.dataset.d!=='') pend.driver=+b.dataset.d; buzz(10); renderCC(); renderRace(); });
 $('ccSetup').onclick=()=>{ store.set('pitdog_view','phone'); applyView(); show('plan'); };
 $('ccOpen').onclick=()=>{ store.set('pitdog_view','cc'); applyView(); };
@@ -1496,7 +1549,7 @@ function renderTeamTab(){
   $('teamTitle').textContent=T.name;
   $('teamSub').textContent=`${(SERIES[T.series]||{}).label||''} · ${T.members.length} people · ${T.cars.length} car${T.cars.length===1?'':'s'} · ${done.length} race${done.length===1?'':'s'} done`;
   $('memberList').innerHTML=T.members.map(m=>`<div class="lrow" data-mid="${m.id}"><span class="dot" style="background:${m.color}"></span><div class="lmain"><b>${esc(m.name)}</b><small>${ROLES[m.role]||m.role}${isDriverRole(m.role)?' · max stint '+fmt(m.maxStint):''}${seat[m.id]?' · '+fmt(seat[m.id])+' driven':''}</small></div><span class="chev">›</span></div>`).join('')||'<div class="sub">No one yet.</div>';
-  $('carList').innerHTML=T.cars.map(c=>{ const ms=Object.entries(c.measured||{}); return `<div class="lrow" data-cid="${c.id}"><span style="font-size:20px">🏎</span><div class="lmain"><b>${esc(c.name)}</b><small>${c.cap} ${c.unit} · ${c.burn}/lap planned${ms.length?' · measured '+ms.map(([k,v])=>`${(TRACKS[k]||['?'])[0]} ${Math.round(v*100)/100}`).join(', '):''}</small></div><span class="chev">›</span></div>`; }).join('');
+  $('carList').innerHTML=T.cars.map(c=>{ const ms=Object.entries(c.measured||{}); return `<div class="lrow" data-cid="${c.id}"><span style="font-size:22px;color:var(--muted)">${ic('car')}</span><div class="lmain"><b>${esc(c.name)}</b><small>${c.cap} ${c.unit} · ${c.burn}/lap planned${ms.length?' · measured '+ms.map(([k,v])=>`${(TRACKS[k]||['?'])[0]} ${Math.round(v*100)/100}`).join(', '):''}</small></div><span class="chev">›</span></div>`; }).join('');
   const order=[...DB.races].sort((a,b)=>(b.id===DB.activeRaceId)-(a.id===DB.activeRaceId)||((a.status==='done')-(b.status==='done'))||((b.date||b.created)-(a.date||a.created)));
   $('raceList').innerHTML=order.filter(r=>!r.sim||SIM.on).map(r=>{ const [lbl,cls]=raceStatus(r); const names=r.drivers.map(d=>(member(d.mid)||{}).name).filter(Boolean); const car=carById(r.carId);
     const when=r.status==='done'&&r.date?new Date(r.date).toLocaleDateString():(SERIES[r.series]||{}).sched?`${r.rules.start}–${r.rules.end}`:fmt(r.rules.len||0);
@@ -1668,7 +1721,7 @@ function simReport(){
 }
 function simSummary(){
   const x=simReport(); const ok=!x.oof&&!x.shortStops&&!x.overStints&&!x.bad.length;
-  openSheet('Simulation complete',`<div class="sub" style="margin:0 0 10px">${ok?'✅ Clean race: no rule breaks, never ran dry.':'⚠️ Issues found. See below.'}</div>
+  openSheet('Simulation complete',`<div class="sub" style="margin:0 0 10px">${ok?ic('check')+' Clean race: no rule breaks, never ran dry.':ic('alert')+' Issues found. See below.'}</div>
     <div class="row" style="margin-bottom:8px"><div class="stat"><div class="v">${x.laps}</div><div class="l">laps</div></div><div class="stat"><div class="v">${x.stops}</div><div class="l">stops</div></div><div class="stat"><div class="v">${x.yellows}/${x.reds}</div><div class="l">yellows/reds</div></div></div>
     <div class="w ${x.oof?'w-bad':'w-ok'}">${x.oof?'Ran OUT OF FUEL':'Never ran out of fuel'}</div>
     <div class="w ${x.shortStops?'w-bad':'w-ok'}">${x.shortStops} fuel stop(s) under the ${S.race.minStop}:00 minimum</div>
@@ -1690,11 +1743,11 @@ $('simEnd').onclick=()=>{ if(confirm('End the simulation? Nothing from it is sav
 $('simOpen').onclick=()=>startSim({});
 
 /* ================= STRATEGY LAB ================= */
-const CONDS={normal:{label:'Normal',lapMul:1,burnMul:1,yMul:1,redP:0.3,desc:'Typical day'},
-  wet:{label:'🌧 Wet',lapMul:1.08,burnMul:0.92,yMul:1.8,redP:0.35,desc:'Laps 8% slower, less fuel, more yellows'},
-  chaos:{label:'💥 Chaos',lapMul:1,burnMul:1,yMul:2.5,redP:0.8,desc:'Lots of yellows, a red likely'},
-  leak:{label:'⛽ Fuel leak',lapMul:1,burnMul:1.15,yMul:1,redP:0.3,desc:'Burning 15% more than planned'},
-  driverout:{label:'🤒 Driver out',lapMul:1,burnMul:1,yMul:1,redP:0.3,drop:true,desc:'Last driver in the rotation can\'t race'}};
+const CONDS={normal:{label:'Normal',ic:'sun',lapMul:1,burnMul:1,yMul:1,redP:0.3,desc:'Typical day'},
+  wet:{label:'Wet',ic:'rain',lapMul:1.08,burnMul:0.92,yMul:1.8,redP:0.35,desc:'Laps 8% slower, less fuel, more yellows'},
+  chaos:{label:'Chaos',ic:'bolt',lapMul:1,burnMul:1,yMul:2.5,redP:0.8,desc:'Lots of yellows, a red likely'},
+  leak:{label:'Fuel leak',ic:'drop',lapMul:1,burnMul:1.15,yMul:1,redP:0.3,desc:'Burning 15% more than planned'},
+  driverout:{label:'Driver out',ic:'userx',lapMul:1,burnMul:1,yMul:1,redP:0.3,drop:true,desc:'Last driver in the rotation can\'t race'}};
 const STRATS=[
   {key:'plan',name:'Your current plan',desc:'Exactly as set in the Plan tab.',rules:{}},
   {key:'even',name:'Even stints',desc:'Equal stint lengths.',rules:{weighting:'even'}},
@@ -1722,7 +1775,7 @@ function renderLab(){
   $('labDrivers').querySelectorAll('input').forEach(inp=>inp.onchange=()=>{ const m=member(inp.dataset.mid); if(!m) return; const v=inp.value.trim();
     if(inp.dataset.f==='lap'){ const l=lapMin(v); if(l>0) m.pace=l/base-1; } else { const x=parseFloat(v); if(isFinite(x)) m[inp.dataset.f]=x/100; }
     DB.team.exampleProfiles=false; hydrate(); dbSave(); update(); renderLab(); });
-  $('labCond').innerHTML=Object.entries(CONDS).map(([k,c])=>`<button class="chipbtn ${k===LAB.cond?'sel':''}" data-c="${k}" style="flex:0 0 auto">${c.label}<small>${c.desc}</small></button>`).join('');
+  $('labCond').innerHTML=Object.entries(CONDS).map(([k,c])=>`<button class="chipbtn ${k===LAB.cond?'sel':''}" data-c="${k}" style="flex:0 0 auto">${ic(c.ic)} ${c.label}<small>${c.desc}</small></button>`).join('');
   $('labCond').querySelectorAll('button').forEach(b=>b.onclick=()=>{ LAB.cond=b.dataset.c; renderLab(); });
   const noY=!S.race.pitsUnderYellow;
   $('labStrats').innerHTML=STRATS.map(s=>{ const dis=noY&&s.rules.yellowWindow; return `<label class="lrow" style="cursor:pointer;${dis?'opacity:.4':''}"><input type="checkbox" data-k="${s.key}" ${LAB.sel.includes(s.key)&&!dis?'checked':''} ${dis?'disabled':''} style="width:22px;height:22px"><div class="lmain"><b style="font-size:15px">${s.name}</b><small>${s.desc}${dis?' (pits are closed under yellow in this series)':''}</small></div></label>`; }).join('');
@@ -1762,7 +1815,7 @@ function renderLabResults(){
   const pc=x=>((x-lo)/span*100).toFixed(1)+'%';
   $('labResults').innerHTML=rows.map(r=>{ const isBest=r.avg===best; const d=r.avg-rows[0].avg;
     return `<div class="lrow" style="cursor:default;display:block">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:16px">${isBest?'🏆 ':''}${r.name}</b><span style="font-size:22px;font-weight:800;font-variant-numeric:tabular-nums">${r1(r.avg)} <small style="font-size:12px;color:var(--muted)">laps${rows.length>1&&r!==rows[0]?` (${d>=0?'+':''}${r1(d)})`:''}</small></span></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:16px">${isBest?ic('trophy')+' ':''}${r.name}</b><span style="font-size:22px;font-weight:800;font-variant-numeric:tabular-nums">${r1(r.avg)} <small style="font-size:12px;color:var(--muted)">laps${rows.length>1&&r!==rows[0]?` (${d>=0?'+':''}${r1(d)})`:''}</small></span></div>
       <div style="position:relative;height:14px;margin:8px 0;background:var(--panel2);border-radius:7px;border:1px solid var(--line)">
         <div style="position:absolute;top:3px;bottom:3px;left:${pc(r.p10)};width:calc(${pc(r.p90)} - ${pc(r.p10)});background:${isBest?'var(--green)':'var(--blue)'};border-radius:4px;opacity:.6"></div>
         <div style="position:absolute;top:-2px;bottom:-2px;width:3px;left:${pc(r.avg)};background:#fff;border-radius:2px"></div></div>

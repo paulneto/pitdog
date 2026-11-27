@@ -10,7 +10,8 @@ __run(() => {
     car: { unit: '<i>gal</i>', lap: '<b>2:20</b>', cap: 'NaN', name: XSS },
   };
   const boot = hash => { history.replaceState(null, '', location.pathname + hash); DB = null; loadDB(); if (DB) hydrate(); else S = clone(DEFAULT); bind(); update(); if (DB && PENDING_SHARE) shareSheet(); };
-  const noMarkup = () => document.querySelectorAll('img,svg:not(#ccPitView svg),#banners b b,.drv2 i').length === 0 && !window.__pwned;
+  // injected markup shows up as <img>, an inline event handler, or a nested <b>/<i> from a name; the app itself uses none of these
+  const noMarkup = () => !document.querySelector('img,#banners b b,.drv2 i') && ![...document.querySelectorAll('*')].some(e => [...e.attributes].some(a => /^on/i.test(a.name))) && !window.__pwned;
 
   // 1. existing team, race not started: asked first, nothing changes until "Add and open"
   fresh(); localStorage.setItem('pitdog_view', 'cc'); applyView();
