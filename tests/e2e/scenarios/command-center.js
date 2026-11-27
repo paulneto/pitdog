@@ -35,4 +35,7 @@ __run(() => {
   expect([...document.querySelectorAll('#sheetB .mrow b')].map(b => b.textContent).join().includes('Home') && [...document.querySelectorAll('#sheetB .mrow b')].map(b => b.textContent).join().includes('Phone view'), 'command center menu offers Home and Phone view');
   [...document.querySelectorAll('#sheetB .mrow')].find(b => b.textContent.includes('Home')).click();
   expect(!document.body.classList.contains('cc-on') && $('tab-home').classList.contains('on'), 'menu → Home leaves the command center');
+  // after the flag: no stale countdown or stop brief; the flag bar reads CHECKERED
+  store.set('pitdog_view', 'cc'); applyView(); adv(1000); renderCC();
+  expect(/race complete/i.test(txt('ccNextL')) && !txt('ccBrief') && txt('ccFlag') === 'CHECKERED' && /FINISH/.test(txt('ccGo')), 'command center after the flag: race complete, no brief, FINISH: ' + [txt('ccNextL'), txt('ccBrief'), txt('ccFlag'), txt('ccGo')].join(' | '));
 });

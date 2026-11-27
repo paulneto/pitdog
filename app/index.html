@@ -244,7 +244,8 @@
   .cc-flag.r{background:var(--red);color:var(--on-fill);animation:ccpulse .8s infinite}
   .cc-flag.n{background:color-mix(in srgb,var(--cc-text) 5%,transparent);color:var(--cc-dim);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cc-text) 8%,transparent)}
   /* checkered flag: literal black and white by definition, not a theme colour */
-  .cc-flag.f{background:repeating-conic-gradient(#fff 0 25%,#111 0 50%) 0 0/20px 20px;color:#000;text-shadow:0 0 6px #fff}
+  .cc-flag.f{background:repeating-conic-gradient(#fff 0 25%,#111 0 50%) 0 0/20px 20px;color:#000}
+  .cc-flag.f span{background:#fff;color:#000;padding:2px 12px;border-radius:4px}
   @keyframes ccpulse{50%{opacity:.6}}
   .cc-wall{font-size:22px;font-weight:700;color:var(--cc-accl)}
   .cc-tbtn{background:transparent;color:var(--cc-mid);border:1px solid var(--cc-line2);border-radius:8px;padding:7px 12px;font:inherit;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer}
@@ -363,7 +364,7 @@
   @media(min-width:700px){.sheet-bg{align-items:center}.sheet{border-radius:20px}}
   .sheet-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.sheet-h b{font-size:20px}
   .sheet-h button{background:none;border:0;color:var(--muted);font-size:22px;cursor:pointer}
-  .sheet-f{display:flex;gap:8px;margin-top:14px}.sheet-f button{flex:1;padding:14px;border-radius:12px;font:inherit;font-weight:800;border:1px solid var(--line);background:var(--btn);color:var(--text);cursor:pointer}
+  .sheet-f{display:flex;gap:8px;margin-top:14px;position:sticky;bottom:calc(-18px - env(safe-area-inset-bottom));background:var(--panel);padding:10px 0 calc(8px + env(safe-area-inset-bottom));margin-bottom:calc(-18px - env(safe-area-inset-bottom));z-index:2}.sheet-f button{flex:1;padding:14px;border-radius:12px;font:inherit;font-weight:800;border:1px solid var(--line);background:var(--btn);color:var(--text);cursor:pointer}
   .sheet-f button.pri{background:var(--text);border-color:var(--text);color:var(--bg)}.sheet-f button.dng{color:var(--red)}
   .sheet .chips{margin-bottom:6px}
   .colors{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}.colors button{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer}.colors button.sel{border-color:var(--text)}
@@ -876,7 +877,7 @@
   <div class="card">
     <h2>This race</h2>
     <button class="btn full" id="finishRace" style="font-weight:800"><span data-ic="finish"></span> Finish &amp; save to team history</button>
-    <button class="btn full" id="sameDay">Same team, new day</button>
+    <button class="btn full" id="sameDay">Race now: start the next race</button>
     <button class="btn full" id="endRace" style="color:var(--red)">Clear this race log</button>
     <div class="hint">Finishing records seat time per driver and the car's measured fuel burn at this track, so next time plans start from real numbers.</div>
   </div>
@@ -1452,7 +1453,7 @@ $('undoBtn').onclick=()=>{ if(!S.events.length) return; const e=S.events[S.event
   if((activeRace()||{}).status==='done'){ toast2('This race is finished and saved. Start the next one with Race now.'); return; }
   if(confirm('Undo '+nm+'?')){ voidEvent(e); save(); buzz(15); update(); pushSoon(); } };
 $('finishRace').onclick=()=>{ if(SIM.on){ alert('Simulations aren\'t saved. Use End sim.'); return; } if(DB) finishRace(); };
-$('sameDay').onclick=()=>{ if(DB&&!SIM.on) newRaceSheet(activeRace()); };
+$('sameDay').onclick=()=>{ if(DB&&!SIM.on) raceNow(); };
 $('endRace').onclick=()=>{ if(confirm('Clear the race log and clock? Your plan stays. (A backup is kept: Team → Data on this device.)')){ backupDB('before clearing the race log'); [...S.events].forEach(voidEvent); save(); update(); renderBackup(); pushSoon(); } };
 $('reset').onclick=()=>{ if(SIM.on) return; if(confirm('Delete the team and ALL races on this device? (A backup is kept: Team → Data on this device.)')){ backupDB('before reset'); try{ localStorage.removeItem('pitdog_db'); localStorage.removeItem('pitdog'); }catch(e){} DB=null; S=clone(DEFAULT); bind(); update(); startOnboarding(); } };
 $('print').onclick=()=>printSheet();
@@ -1549,7 +1550,7 @@ function renderCC(){
   $('ccWall').textContent=new Date(nowMs()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
   $('ccRaceName').textContent=`${SERIES[S.series].label} · ${R.name||''}`;
   const fl=$('ccFlag');
-  if(lv.finished){ fl.className='cc-flag f'; fl.textContent='CHECKERED'; }
+  if(lv.finished){ fl.className='cc-flag f'; fl.innerHTML='<span>CHECKERED</span>'; }
   else if(!lv.started){ fl.className='cc-flag n'; fl.textContent='PRE-RACE'; }
   else if(lv.red){ fl.className='cc-flag r'; fl.textContent='RED FLAG'; }
   else if(lv.yellow){ fl.className='cc-flag y'; fl.textContent=R.pitsUnderYellow?'FULL COURSE YELLOW':'FULL COURSE YELLOW · PITS CLOSED'; }
@@ -1582,7 +1583,12 @@ function renderCC(){
   // car panel
   const led=$('ccLed'), stt=$('ccState');
   $('ccTrackView').style.display=lv.inPit?'none':'block'; $('ccPitView').style.display=lv.inPit?'block':'none';
-  if(lv.finished){ led.className='cc-led n'; stt.textContent='FINISHED'; go.className='cc-go grey'; go.innerHTML='RACE COMPLETE'; }
+  if(lv.finished){ led.className='cc-led n'; stt.textContent='FINISHED'; stt.style.color='var(--cc-mid)'; const done=(activeRace()||{}).status==='done'&&!SIM.on;
+    $('ccTrackView').style.display='block'; $('ccPitView').style.display='none'; $('ccStint').textContent='CHECKERED';
+    $('ccNextL').textContent='Race complete'; $('ccNext').textContent=hms(L); $('ccNext').style.color='var(--cc-hi)';
+    $('ccNextSub').textContent=`${lv.stops.length} stop${lv.stops.length===1?'':'s'} · ${r1(lv.added)} ${S.car.unit} added`; $('ccBrief').innerHTML='';
+    $('ccDrvSub').textContent=done?'saved to the team history':'finish to save it and see the debrief';
+    go.className='cc-go '+(done?'green':'grey'); go.innerHTML=done?'RACE NOW<small>start the next race</small>':'FINISH<small>save &amp; see the debrief</small>'; }
   else if(lv.inPit){
     led.className='cc-led a'; stt.textContent='IN PITS'; stt.style.color='var(--amber)';
     const a=lv.stops[lv.stops.length-1], el=lv.now-a.in, kind=pend.kind||'fuel', mn=minFor(kind), target=mn?mn+5/60:0, ok=el>=target;
