@@ -95,9 +95,19 @@ async function init(){
   if(!ME.is_admin){ $('gate').innerHTML=`<h2>Not an admin</h2><p class="muted">${esc(ME.email)} isn’t on the PitDog admin list. Admins are added in the Supabase dashboard or by another admin.</p>`; return; }
   $('gate').style.display='none'; $('app').style.display=''; render();
 }
+// in-page Google sign-in (Google Identity Services → Supabase signInWithIdToken), same as the app: no redirect via the Supabase host
+const GOOGLE_CLIENT_ID='846016887540-4l73s7sub7hram5djch1ofa27s7gd56n.apps.googleusercontent.com';
+async function sha256hex(t){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
 function showSignIn(){
-  $('gate').innerHTML=`<h2>PitDog system admin</h2><p class="muted">Sign in with the Google account on the admin list.</p><button class="btn pri" id="google" style="padding:12px 20px;font-size:15px">Sign in with Google</button><p class="muted small">Locked out? The Supabase dashboard (PitDog org) always has full access.</p>`;
-  $('google').onclick=()=>sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
+  $('gate').innerHTML=`<h2>PitDog system admin</h2><p class="muted">Sign in with the Google account on the admin list.</p><div id="google" style="display:flex;justify-content:center;min-height:44px"></div><p class="muted small">Locked out? The Supabase dashboard (PitDog org) always has full access.</p>`;
+  if(window.PITDOG_SB){ const b=document.createElement('button'); b.className='btn pri'; b.id='googleTest'; b.textContent='Sign in with Google'; b.onclick=()=>sb.auth.signInWithIdToken({provider:'google',token:'test',nonce:'test'}); $('google').appendChild(b); return; }
+  const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true;
+  s.onload=async()=>{ const nonce=crypto.randomUUID(), hashed=await sha256hex(nonce);
+    google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,nonce:hashed,use_fedcm_for_prompt:true,callback:async r=>{
+      const {error}=await sb.auth.signInWithIdToken({provider:'google',token:r.credential,nonce}); if(error){ toast(error.message,true); return; } location.reload(); }});
+    google.accounts.id.renderButton($('google'),{theme:'filled_black',size:'large',shape:'pill',text:'signin_with'}); };
+  s.onerror=()=>{ $('google').innerHTML='<p class="muted">Can’t reach Google: check your connection.</p>'; };
+  document.head.appendChild(s);
 }
 $('signOut').onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
 $('tabs').onclick=e=>{ const b=e.target.closest('button[data-t]'); if(!b) return; TAB=b.dataset.t; OPEN_TEAM=null; document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b)); render(); };

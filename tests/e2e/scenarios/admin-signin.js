@@ -19,7 +19,7 @@ const DATA = {
 };
 const settingsRows = [{ key: 'banner', value: { text: '', level: 'info' }, note: 'banner', updated_at: null }, { key: 'maintenance', value: false, note: 'pause sync', updated_at: null }];
 window.PITDOG_SB = {
-  auth: { getSession: async () => ({ data: { session: window.__noSession ? null : { user: { id: A } } } }), signInWithOAuth: async o => { CALLS.push(['oauth', o]); }, signOut: async () => {} },
+  auth: { getSession: async () => ({ data: { session: window.__noSession ? null : { user: { id: A } } } }), signInWithOAuth: async o => { CALLS.push(['oauth', o]); }, signInWithIdToken: async o => { CALLS.push(['idtoken', o]); return { data: {}, error: null }; }, signOut: async () => {} },
   rpc: async (fn, args) => { CALLS.push([fn, args || {}]); return { data: DATA[fn] ? DATA[fn]() : null, error: null }; },
   from: () => ({ select: () => ({ order: async () => ({ data: settingsRows, error: null }) }) }),
 };
@@ -28,7 +28,7 @@ const called = (fn, pred) => CALLS.some(c => c[0] === fn && (!pred || pred(c[1])
 
 __run(() => {
   expect(/Sign in with Google/.test(txt('gate')) && $('app').style.display === 'none', 'signed out: only a Google sign-in button');
-  tap('#google');
-  expect(CALLS.some(c => c[0] === 'oauth' && c[1].provider === 'google'), 'sign-in uses Google OAuth');
+  tap('#googleTest');
+  expect(CALLS.some(c => c[0] === 'idtoken' && c[1].provider === 'google'), 'sign-in uses Google (in-page ID token, no redirect)');
   expect(!CALLS.some(c => c[0].startsWith('admin_')), 'no admin calls before sign-in');
 });

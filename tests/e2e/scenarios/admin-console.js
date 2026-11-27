@@ -20,7 +20,7 @@ const DATA = {
 };
 const settingsRows = [{ key: 'banner', value: { text: '', level: 'info' }, note: 'banner', updated_at: null }, { key: 'maintenance', value: false, note: 'pause sync', updated_at: null }];
 window.PITDOG_SB = {
-  auth: { getSession: async () => ({ data: { session: window.__noSession ? null : { user: { id: A } } } }), signInWithOAuth: async o => { CALLS.push(['oauth', o]); }, signOut: async () => {} },
+  auth: { getSession: async () => ({ data: { session: window.__noSession ? null : { user: { id: A } } } }), signInWithOAuth: async o => { CALLS.push(['oauth', o]); }, signInWithIdToken: async o => { CALLS.push(['idtoken', o]); return { data: {}, error: null }; }, signOut: async () => {} },
   rpc: async (fn, args) => { CALLS.push([fn, args || {}]); return { data: DATA[fn] ? DATA[fn]() : null, error: null }; },
   from: () => ({ select: () => ({ order: async () => ({ data: settingsRows, error: null }) }) }),
 };
