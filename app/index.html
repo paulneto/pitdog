@@ -636,6 +636,7 @@
 <!-- ================= HOME ================= -->
 <section class="tab" id="tab-home"><div id="homeBody"></div></section>
 <!-- ================= DEBRIEF (opened from Home, a finished race, or the end of a race) ================= -->
+<section class="tab" id="tab-records"><div class="backbar"><button class="btn" data-back="home">‹ Home</button><b>Team records</b></div><div id="recordsBody"></div></section>
 <section class="tab" id="tab-debrief"><div class="backbar"><button class="btn" data-back="home">‹ Home</button><b>Debrief</b></div><div id="debriefBody"></div></section>
 <!-- ================= RACE ================= -->
 <section class="tab on" id="tab-race">
@@ -1460,9 +1461,9 @@ function fixStopSheet(){
 }
 const lv0=()=>live();
 document.addEventListener('click',ev=>{ const b=ev.target.closest('[data-act="fix"]'); if(b){ ev.stopPropagation(); fixStopSheet(); return; } const rd=ev.target.closest('[data-radar]'); if(rd){ ev.stopPropagation(); if(rd.closest('#homeBody')){ const nr=nextRace(); if(nr&&nr.id!==DB.activeRaceId){ dbSave(); DB.activeRaceId=nr.id; reloadActive(); } } radarSheet(); } });
-const TAB_PARENT={lab:'plan',log:'race',debrief:'home'};
+const TAB_PARENT={lab:'plan',log:'race',debrief:'home',records:'home'};
 function show(tab){ const par=TAB_PARENT[tab]||tab; document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+tab)); document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===par)); $('actionBar').style.display=tab==='race'?'block':'none'; window.scrollTo(0,0); }
-function go(tab){ show(tab); if(tab==='lab') renderLab(); if(tab==='home') renderHome(); if(tab==='log') renderLog(); if(tab==='team') renderTeamTab(); }
+function go(tab){ show(tab); if(tab==='records') renderRecords(); if(tab==='lab') renderLab(); if(tab==='home') renderHome(); if(tab==='log') renderLog(); if(tab==='team') renderTeamTab(); }
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); go(b.dataset.tab); });
 document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>go(b.dataset.back));
 $('openLog').onclick=()=>go('log'); $('openLab').onclick=()=>go('lab');
@@ -2043,13 +2044,14 @@ function renderHome(){
   const meas=T.cars.flatMap(c=>Object.entries(c.measured||{}).map(([k,v])=>`${esc(c.name)} at ${esc((TRACKS[k]||['?'])[0])}: ${Math.round(v*100)/100} ${esc(c.unit)}/lap`));
   h+=`<div class="card" data-help="home_team"><h2><span>${esc(T.name)}</span><span>${(n=>n+' race'+(n===1?'':'s')+' done')(DB.races.filter(r=>r.status==='done'&&!r.sim).length)}</span></h2>
     ${drv.map((m,i)=>`<div class="hseat"><span>${esc(m.name)}</span><i><b style="width:${(seat[m.id]||0)/maxSeat*100}%;background:${safeColor(m.color,i)}"></b></i><em>${fmt(seat[m.id]||0)}</em></div>`).join('')||'<div class="sub">No drivers yet.</div>'}
-    <div class="hint">${meas.length?'Measured fuel burn · '+meas.join(' · '):'Measured fuel burn per track appears after your first finished race.'}</div></div>`;
+    <div class="hint">${meas.length?'Measured fuel burn · '+meas.join(' · '):'Measured fuel burn per track appears after your first finished race.'}</div>
+    <button class="btn full" id="hRecords" style="margin-top:10px;font-weight:800">${ic('trophy')} Team records ›</button></div>`;
   h+=`<div class="card"><h2>Quick actions</h2><div class="row" style="flex-wrap:wrap"><button class="btn" id="hNew2">Plan a race</button><button class="btn" id="hSim">${ic('play')} Practise</button><button class="btn" id="hLab">${ic('lab')} Strategy Lab</button></div></div>`;
   box.innerHTML=h;
   const on=(id,fn)=>{ const e=$(id); if(e) e.onclick=fn; };
   on('hOpen',()=>{ if(nr.id!==DB.activeRaceId){ dbSave(); DB.activeRaceId=nr.id; reloadActive(); } show(nr.rules.date===todayISO()?'race':'plan'); });
   on('hNow',()=>{ if(liveR||ready){ show('race'); update(); } else raceNow(); }); on('hNew',()=>newRaceSheet(null)); on('hNew2',()=>newRaceSheet(null)); on('hNew3',()=>newRaceSheet(null)); on('hSim',()=>startSim({})); on('hLab',()=>{ show('lab'); renderLab(); });
-  on('hDebrief',()=>openDebrief(lr.id));
+  on('hDebrief',()=>openDebrief(lr.id)); on('hRecords',openRecords);
   box.querySelectorAll('[data-prep]').forEach(c=>c.onchange=()=>{ nr.prep[c.dataset.prep]=c.checked; dbSave(); renderHome(); });
 }
 
@@ -2094,6 +2096,57 @@ function computeDebrief(r){
       lapsLost:overMin/lap, missedSaving:missed.length*(C.pitLoss/60)*YELLOW_STOP_SAVING/lap,
       seriesLabel:(SERIES[S.series]||{}).label||'', names:S.drivers.map(d=>d.name), colors:S.drivers.map((d,i)=>safeColor(d.color,i))};
   });
+}
+/* ================= TEAM RECORDS ================= */
+// Season records from finished races: each race goes through computeDebrief (log-based, no network), cached per race.
+const REC_CACHE={};
+function raceDebrief(r){ const k=r.id+'|'+r.events.length+'|'+(r.date||0); if(REC_CACHE[r.id]&&REC_CACHE[r.id].k===k) return REC_CACHE[r.id].d;
+  let d=null; try{ d=computeDebrief(r); }catch(e){ d={err:String(e)}; } REC_CACHE[r.id]={k,d}; return d; }
+const raceYear=r=>new Date(r.date||r.created||0).getFullYear();
+function computeRecords(year){
+  const races=DB.races.filter(r=>!r.sim&&r.status==='done'&&r.events.some(e=>e.type==='green')&&(year==null||raceYear(r)===year))
+    .sort((a,b)=>(b.date||0)-(a.date||0));
+  const out={races:[],n:0,hours:0,laps:0,stops:0,fuel:0,pit:0,overMin:0,drivers:{},fuelStops:[],shorts:0,yOffer:0,yTaken:0,overMax:0};
+  races.forEach(r=>{ const d=raceDebrief(r); if(!d||d.err) return; const car=carById(r.carId)||{};
+    out.n++; out.hours+=d.L/60; out.laps+=d.laps; out.stops+=d.stops.length; out.pit+=d.pitTime; out.overMin+=d.overMin; out.shorts+=d.shorts.length; out.overMax+=d.overMax.length;
+    out.fuel+=d.stops.reduce((a,s)=>a+(s.fuel||0),0);
+    d.yellows.forEach(y=>{ if(y.offer){ out.yOffer++; if(y.took) out.yTaken++; } });
+    d.stops.forEach(s=>{ if(s.kind==='fuel'&&s.len!=null) out.fuelStops.push({len:s.len,need:s.need,over:s.over,race:r,unit:car.unit}); });
+    d.drivers.forEach(o=>{ const mid=(r.drivers[o.i]||{}).mid||('n:'+o.name), m=member(mid);
+      const D=out.drivers[mid]=out.drivers[mid]||{name:m?m.name:o.name,color:m?m.color:null,races:0,seat:0,stints:0,longest:0,over:0};
+      if(o.seat>0){ D.races++; D.seat+=o.seat; D.stints+=o.stints; D.longest=Math.max(D.longest,o.longest); }
+      if(d.overMax.some(x=>x.i===o.i)) D.over++; });
+    out.races.push({r,d,car}); });
+  const legal=out.fuelStops.filter(s=>s.over==null||s.over>=-1e-6);
+  out.bestStop=legal.length?legal.reduce((a,s)=>s.len<a.len?s:a):null;
+  out.avgStop=out.fuelStops.length?out.fuelStops.reduce((a,s)=>a+s.len,0)/out.fuelStops.length:null;
+  out.avgOver=out.fuelStops.length?out.fuelStops.reduce((a,s)=>a+Math.max(0,s.over||0),0)/out.fuelStops.length:null;
+  return out; }
+let REC_YEAR=null;
+function openRecords(){ go('records'); }
+function renderRecords(){ const box=$('recordsBody'); if(!box||!DB) return;
+  const years=[...new Set(DB.races.filter(r=>!r.sim&&r.status==='done').map(raceYear))].sort((a,b)=>b-a);
+  if(REC_YEAR!=null&&!years.includes(REC_YEAR)) REC_YEAR=null;
+  const R=computeRecords(REC_YEAR), sec=x=>Math.round(x*60)+' s', unit=(DB.team.cars[0]||{}).unit||'';
+  if(!R.n){ box.innerHTML=`<div class="card"><h2>Team records</h2><div class="sub" style="margin:0 0 10px">Records build up from finished races: seat time, pit stops, fuel burn and how you used the yellows.</div><button class="btn full pri2" id="recNow">Race now</button></div>`; $('recNow').onclick=()=>raceNow(); return; }
+  const drv=Object.values(R.drivers).filter(o=>o.seat>0).sort((a,b)=>b.seat-a.seat), maxSeat=Math.max(1,...drv.map(o=>o.seat));
+  const meas=DB.team.cars.flatMap(c=>Object.entries(c.measured||{}).map(([k,v])=>({car:c,track:k,v})));
+  box.innerHTML=
+    (years.length>1?`<div class="chips" id="recYears"><button class="chipbtn ${REC_YEAR==null?'sel':''}" data-y="">All</button>${years.map(y=>`<button class="chipbtn ${REC_YEAR===y?'sel':''}" data-y="${y}">${y}</button>`).join('')}</div>`:'')+
+    `<div class="card" data-help="rec_season"><h2><span>${esc(DB.team.name)}</span><span>${REC_YEAR||'All seasons'}</span></h2>
+      <div class="kpis" style="margin:0"><div class="stat"><div class="v">${R.n}</div><div class="l">race${R.n===1?'':'s'}</div></div><div class="stat"><div class="v">${Math.round(R.hours*10)/10}</div><div class="l">hours raced</div></div><div class="stat"><div class="v">~${R.laps}</div><div class="l">laps (est)</div></div>
+      <div class="stat"><div class="v">${R.stops}</div><div class="l">pit stops</div></div><div class="stat"><div class="v">${Math.round(R.fuel)}</div><div class="l">${esc(unit)} added</div></div><div class="stat"><div class="v">${fmt(R.pit)}</div><div class="l">in the pits</div></div></div></div>`+
+    `<div class="card" data-help="rec_drivers"><h2><span>Drivers</span><span>seat time</span></h2>${drv.map((o,i)=>`<div class="hseat"><span>${esc(o.name)}</span><i><b style="width:${o.seat/maxSeat*100}%;background:${safeColor(o.color,i)}"></b></i><em>${fmt(o.seat)}</em></div>
+      <div class="sub" style="margin:-2px 0 8px">${o.races} race${o.races===1?'':'s'} · ${o.stints} stint${o.stints===1?'':'s'} · longest ${fmt(o.longest)}${o.over?` · <span style="color:var(--red)">${o.over} over the max</span>`:''}</div>`).join('')}</div>`+
+    `<div class="card" data-help="rec_pits"><h2>Pit stops</h2><div class="kpis" style="margin:0">
+      <div class="stat"><div class="v">${R.bestStop?fmt(R.bestStop.len):'–'}</div><div class="l">best fuel stop</div></div>
+      <div class="stat"><div class="v">${R.avgStop!=null?fmt(R.avgStop):'–'}</div><div class="l">average fuel stop</div></div>
+      <div class="stat"><div class="v">${R.avgOver!=null?sec(R.avgOver):'–'}</div><div class="l">over the minimum, per stop</div></div></div>
+      <div class="hint">${R.overMin>0.5?`${sec(R.overMin)} spent beyond the minimums in total.`:'No time wasted beyond the minimums.'}${R.shorts?` <b style="color:var(--red)">${R.shorts} stop${R.shorts===1?' was':'s were'} short of the minimum.</b>`:''}${R.yOffer?` Yellows: ${R.yTaken} of ${R.yOffer} cheap-stop chances taken.`:''}</div></div>`+
+    (meas.length?`<div class="card" data-help="rec_fuel"><h2>Measured fuel burn</h2>${meas.map(x=>`<div class="lrow" style="cursor:default"><div class="lmain"><b>${esc((TRACKS[x.track]||['No track'])[0])}</b><small>${esc(x.car.name)} · planned ${x.car.burn}/lap</small></div><span class="sub" style="margin:0">${Math.round(x.v*1000)/1000} ${esc(x.car.unit)}/lap</span></div>`).join('')}</div>`:'')+
+    `<div class="card" data-help="rec_races"><h2>Races</h2>${R.races.map(({r,d,car})=>`<div class="lrow" data-deb="${esc(r.id)}"><div class="lmain"><b>${esc(r.rules.name||'Race')}</b><small>${r.date?new Date(r.date).toLocaleDateString([], {year:'numeric',month:'short',day:'numeric'}):''}${TRACKS[r.rules.track]&&r.rules.track!=='none'?' · '+esc(TRACKS[r.rules.track][0]):''} · ${fmt(d.L)} · ~${d.laps} laps · ${d.stops.length} stops</small></div><span class="chev">›</span></div>`).join('')}</div>`;
+  box.querySelectorAll('[data-y]').forEach(b=>b.onclick=()=>{ REC_YEAR=b.dataset.y?+b.dataset.y:null; renderRecords(); });
+  box.querySelectorAll('[data-deb]').forEach(e=>e.onclick=()=>openDebrief(e.dataset.deb));
 }
 let DEBRIEF_ID=null;
 function openDebrief(id){ DEBRIEF_ID=id; show('debrief'); renderDebrief(); }
@@ -2378,6 +2431,11 @@ const HELP={
   crew:{t:'Crew today',read:'Each driver: stints and time driven, time planned, and DRIVING / RESTING / READY.',means:'Resting counts down the series’ minimum rest between stints.',can:'',cant:''},
   fuelcard:{t:'Fuel summary',read:'Fuel added so far, the measured burn per lap, and fuel still to add.',means:'Measured burn appears after the first full-to-full stint.',can:'Turn “Re-plan with measured burn” off to plan on your own estimate only.',cant:''},
   clock:{t:'Race time',read:'Race time elapsed (or a countdown to the scheduled start).',means:'',can:'',cant:''},
+  rec_season:{t:'Season totals',read:'Finished races only (not simulations), for the season picked above.',means:'Laps are estimated from lap times unless real timing is added later.',can:'Pick a season.',cant:''},
+  rec_drivers:{t:'Drivers',read:'Seat time per driver from the race logs, stints, and their longest stint.',means:'“Over the max” counts races where a stint ran past the driver’s or series’ limit.',can:'',cant:''},
+  rec_pits:{t:'Pit stops',read:'Fuel stops from every log: best and average time in the pits, and time spent beyond the minimum hold.',means:'Time over the minimum is time given away on track.',can:'',cant:''},
+  rec_fuel:{t:'Measured fuel burn',read:'What each car really burned per lap at each track, measured between full tanks.',means:'The next plan at that track starts from this number.',can:'',cant:''},
+  rec_races:{t:'Races',read:'Every finished race, newest first.',means:'',can:'Open a race’s debrief.',cant:''},
   trackmap:{t:'Track map',read:'The circuit outline; the dashed line is the pit lane.',means:'Drawn from OpenStreetMap (© OpenStreetMap contributors) and stored in the app, so it shows without signal.',can:'Pick the track in Plan → Race.',cant:'It doesn’t show where the car is: PitDog has no live position yet.'},
   pill:{t:'Status',read:'PRE-RACE, ON TRACK, IN PITS or FINISHED.',means:'Comes from the race log.',can:'',cant:''},
   tabs:{t:'Tabs',read:'Race (pit wall), Team (people, cars, races, simulator), Plan (stints and rules), Lab (strategy comparison), Log (history, look, export).',means:'',can:'',cant:''},
