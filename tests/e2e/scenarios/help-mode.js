@@ -20,7 +20,7 @@ __run(() => {
   const keys = new Set(Object.values(HELP_AT));
   expect([...keys].every(k => HELP[k] && HELP[k].t && HELP[k].read), 'every section has a card with a title and how to read it');
   expect([...document.querySelectorAll('[data-help]')].every(e => HELP[e.dataset.help]), 'every tagged element points at a card');
-  const must = ['#bigBtn','#yBtn','#rBtn','#undoBtn','#banners','#nextStop','#fuelFact','#pitTimer','#jugChips','#fullTgl','#nextDrv','#ccGo','#ccCar','#ccRoster','#ccTl','#ccStopsList','.tabbar'];
+  const must = ['#bigBtn','#yBtn','#rBtn','#undoBtn','#banners','#nextStop','#fuelFact','#pitTimer','#jugChips','#fullTgl','#nextDrv','#ccGo','#ccCar','#ccRoster','#ccTl','#ccStopsList','.tabbar','#menuBtn','#ccMenu','#ccHome','#ccBrief','#openLog','#rsNew'];
   expect(must.every(sel => document.querySelector(sel) && document.querySelector(sel).dataset.help), 'all the key race-day controls have help');
   click('helpBtn');
   expect(!document.body.classList.contains('help-on') && !$('helpCard').classList.contains('on'), '? again leaves help mode');
