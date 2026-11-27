@@ -19,4 +19,11 @@ __run(() => {
   expect(S.drivers[P.stints[curIdx(P)].driver].name === S.drivers[2].name, 'CC next-driver pick applied');
   expect(document.querySelectorAll('#ccTl .sg').length === P.stints.length, 'timeline shows every stint');
   expect(document.querySelectorAll('#ccRoster .cc-r').length === S.drivers.length, 'roster shows every driver');
+  // the stop brief under the countdown: what the crew needs ready
+  const ci = curIdx(P), cur = P.stints[ci], nx = P.stints[ci + 1];
+  if (nx && cur.stop) {
+    const b = document.getElementById('ccBrief').textContent;
+    expect(/brief/i.test(b) && b.includes(S.drivers[nx.driver].name) && (cur.stop.add > 0 ? /jug/.test(b) : /none/.test(b)), 'stop brief names the next driver and the fuel in jugs: ' + b);
+    expect(document.getElementById('ccGo').getBoundingClientRect().bottom <= document.getElementById('ccCar').getBoundingClientRect().bottom + 1, 'PIT button stays inside the car panel: ' + Math.round(document.getElementById('ccGo').getBoundingClientRect().bottom) + ' vs ' + Math.round(document.getElementById('ccCar').getBoundingClientRect().bottom) + ' win ' + innerWidth + 'x' + innerHeight);
+  }
 });
