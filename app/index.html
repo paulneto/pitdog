@@ -74,6 +74,7 @@
   .side button.ron{background:var(--red);color:var(--on-fill);border-color:var(--red)}
   .tabbar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--tab) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:var(--bar);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;z-index:7}
   .tabbar button{flex:1;background:none;border:0;color:var(--muted);font:inherit;font-size:11px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+  .backbar{display:flex;align-items:center;gap:12px;margin:0 0 12px}.backbar .btn{flex:0 0 auto;font-weight:800;min-height:44px}.backbar b{font-size:18px}
   .tabbar button .ic{font-size:21px;line-height:1}
   .tabbar button.on{color:var(--brand)}
   .banner{border-radius:14px;padding:12px 14px;margin-bottom:10px;font-weight:700}
@@ -622,7 +623,7 @@
 <!-- ================= HOME ================= -->
 <section class="tab" id="tab-home"><div id="homeBody"></div></section>
 <!-- ================= DEBRIEF (opened from Home, a finished race, or the end of a race) ================= -->
-<section class="tab" id="tab-debrief"><div id="debriefBody"></div></section>
+<section class="tab" id="tab-debrief"><div class="backbar"><button class="btn" data-back="home">‹ Home</button><b>Debrief</b></div><div id="debriefBody"></div></section>
 <!-- ================= RACE ================= -->
 <section class="tab on" id="tab-race">
   <div id="banners"></div>
@@ -668,6 +669,7 @@
     <h2><span>Crew today</span><span id="teamShare"></span></h2>
     <div id="teamList"></div>
   </div>
+  <button class="card lrow" id="openLog" style="width:100%;text-align:left;font:inherit;color:var(--text)"><div class="lmain"><b>Race log</b><small id="logCount">Every stop, flag and fix, and finishing the race</small></div><span class="chev">›</span></button>
   <div class="card" id="fuelCard">
     <h2>Fuel</h2>
     <div class="row">
@@ -703,6 +705,20 @@
     <h2>Simulator</h2>
     <div class="sub" style="margin:0 0 8px">Run a whole race at up to 200× speed with your team, car and rules. Race control throws yellows and reds, and an auto-crew can run the stops. Nothing is saved to your real races.</div>
     <button class="btn full sim" id="simOpen"><span data-ic="play"></span> Start a simulated race</button>
+  </div>
+  <div class="card">
+    <h2>Look</h2>
+    <div class="skinlist" id="skinTiles" role="radiogroup" aria-label="Look"></div>
+    <div class="hint">Each phone and iPad keeps its own look. On the iPad command center, the SKIN button opens this list.</div>
+  </div>
+  <div class="card">
+    <h2>Data on this device</h2>
+    <button class="btn full" id="exportDb"><span data-ic="pitout"></span> Export all data (file)</button>
+    <button class="btn full" id="importDb"><span data-ic="pitin"></span> Import data from a file</button>
+    <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+    <button class="btn full" id="restoreBk" style="display:none"></button>
+    <button class="btn full" id="reset" style="color:var(--muted)">Reset everything</button>
+    <div class="hint">Add to your home screen (iPhone: Share → Add to Home Screen; Android: ⋮ → Add to Home screen) to run it full-screen. The race keeps running even if you close the app. One phone runs the pit wall; the share link sends the plan to the others.</div>
   </div>
 </section>
 
@@ -774,10 +790,15 @@
     <div id="rulesGlance"></div>
     <ul class="rules" id="rulesList"></ul>
   </div>
+  <div class="card">
+    <h2>Share &amp; try</h2>
+    <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="share">Send plan to teammates</button><button class="btn" id="print">Print plan</button></div>
+    <button class="btn full" id="openLab" style="margin-top:10px;font-weight:800"><span data-ic="lab"></span> Strategy Lab: compare strategies over many simulated races ›</button>
+  </div>
 </section>
 
 <!-- ================= LAB ================= -->
-<section class="tab" id="tab-lab">
+<section class="tab" id="tab-lab"><div class="backbar"><button class="btn" data-back="plan">‹ Plan</button><b>Strategy Lab</b></div>
   <div class="card">
     <h2>Strategy Lab</h2>
     <div class="sub" style="margin:0">Compare strategies over many simulated races of <b id="labRace"></b>, using your drivers, car and series rules. Every strategy faces the same yellows and reds, so the comparison is fair.</div>
@@ -810,7 +831,7 @@
 </section>
 
 <!-- ================= LOG ================= -->
-<section class="tab" id="tab-log">
+<section class="tab" id="tab-log"><div class="backbar"><button class="btn" data-back="race">‹ Race</button><b>Race log</b></div>
   <div class="card">
     <h2>Race log</h2>
     <ul class="log" id="logList"></ul>
@@ -819,24 +840,8 @@
     <h2>This race</h2>
     <button class="btn full" id="finishRace" style="font-weight:800"><span data-ic="finish"></span> Finish &amp; save to team history</button>
     <button class="btn full" id="sameDay">Same team, new day</button>
-    <div class="hint">Finishing records seat time per driver and the car's measured fuel burn at this track, so next time plans start from real numbers.</div>
-  </div>
-  <div class="card">
-    <h2>Look</h2>
-    <div class="skinlist" id="skinTiles" role="radiogroup" aria-label="Look"></div>
-    <div class="hint">Each phone and iPad keeps its own look. On the iPad command center, the SKIN button opens this list.</div>
-  </div>
-  <div class="card">
-    <h2>Share &amp; reset</h2>
-    <button class="btn full" id="share">Send plan to teammates</button>
-    <button class="btn full" id="print">Print plan</button>
-    <button class="btn full" id="exportDb"><span data-ic="pitout"></span> Export all data (file)</button>
-    <button class="btn full" id="importDb"><span data-ic="pitin"></span> Import data from a file</button>
-    <input type="file" id="importFile" accept="application/json,.json" style="display:none">
-    <button class="btn full" id="restoreBk" style="display:none"></button>
     <button class="btn full" id="endRace" style="color:var(--red)">Clear this race log</button>
-    <button class="btn full" id="reset" style="color:var(--muted)">Reset everything</button>
-    <div class="hint">Add to your home screen (iPhone: Share → Add to Home Screen; Android: ⋮ → Add to Home screen) to run it full-screen. The race keeps running even if you close the app. One phone runs the pit wall; the share link sends the plan to the others.</div>
+    <div class="hint">Finishing records seat time per driver and the car's measured fuel burn at this track, so next time plans start from real numbers.</div>
   </div>
 </section>
 </main>
@@ -857,8 +862,6 @@
   <button class="on" data-tab="race"><span class="ic" data-ic="race"></span>Race</button>
   <button data-tab="team"><span class="ic" data-ic="team"></span>Team</button>
   <button data-tab="plan"><span class="ic" data-ic="plan"></span>Plan</button>
-  <button data-tab="lab"><span class="ic" data-ic="lab"></span>Lab</button>
-  <button data-tab="log"><span class="ic" data-ic="log"></span>Log</button>
 </nav>
 
 <script>
@@ -1358,7 +1361,7 @@ function renderTeam(lv){
   const still=P.stints.filter(s=>!s.locked&&s.stop).reduce((a,s)=>a+s.stop.add,0)+(lv.inPit&&P.stints[curIdx(P)-1]?.stop?P.stints[curIdx(P)-1].stop.add:0);
   $('fuelNeed').textContent=Math.round(still)+' '+S.car.unit;
 }
-function renderLog(){
+function renderLog(){ const lc=$('logCount'); if(lc){ const n=(S.events||[]).length; lc.textContent=n?`${n} entr${n===1?'y':'ies'} · fix, finish or clear the race here`:'Nothing logged yet · finish or clear the race here'; }
   const t0=T0(); const LIC={green:['flag','var(--green)'],in:['pitin','var(--red)'],out:['pitout','var(--green)'],yellow:['alert','var(--yellow)'],red:['stop','var(--red)']};
   if(!S.events.length){ $('logList').innerHTML='<li class="sub">Nothing logged yet.</li>'; }
   else $('logList').innerHTML=[...S.events].reverse().map(e=>{ const m=t0?(e.t-t0)/60000:0; const [iname,col]=LIC[e.type]||['clock','var(--muted)'];
@@ -1433,8 +1436,12 @@ function fixStopSheet(){
 }
 const lv0=()=>live();
 document.addEventListener('click',ev=>{ const b=ev.target.closest('[data-act="fix"]'); if(b){ ev.stopPropagation(); fixStopSheet(); return; } const rd=ev.target.closest('[data-radar]'); if(rd){ ev.stopPropagation(); if(rd.closest('#homeBody')){ const nr=nextRace(); if(nr&&nr.id!==DB.activeRaceId){ dbSave(); DB.activeRaceId=nr.id; reloadActive(); } } radarSheet(); } });
-function show(tab){ document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+tab)); document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab)); $('actionBar').style.display=tab==='race'?'block':'none'; window.scrollTo(0,0); }
-document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); show(b.dataset.tab); if(b.dataset.tab==='lab') renderLab(); if(b.dataset.tab==='home') renderHome(); });
+const TAB_PARENT={lab:'plan',log:'race',debrief:'home'};
+function show(tab){ const par=TAB_PARENT[tab]||tab; document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+tab)); document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===par)); $('actionBar').style.display=tab==='race'?'block':'none'; window.scrollTo(0,0); }
+function go(tab){ show(tab); if(tab==='lab') renderLab(); if(tab==='home') renderHome(); if(tab==='log') renderLog(); if(tab==='team') renderTeamTab(); }
+document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); go(b.dataset.tab); });
+document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>go(b.dataset.back));
+$('openLog').onclick=()=>go('log'); $('openLab').onclick=()=>go('lab');
 
 /* ================= loop ================= */
 function update(){ document.body.classList.toggle('nodb',!DB&&!SIM.on);
