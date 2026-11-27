@@ -73,3 +73,26 @@ Three layers:
 >
 > Thanks,
 > Paul
+
+---
+
+## 4. Platform vision (future): proper backend, accounts, teams, management
+*Added 27 Nov 2026. Paul: "this could be the one."* PitDog grows from a single-device app into a multi-team platform.
+
+**Backend:** Supabase (Postgres + Auth + Realtime + Edge Functions) for data and sync. Vercel for the app and any server API (Race Monitor relay, webhooks). The race stays **event-sourced** (an append-only events table), and the app stays **offline-first**: queue locally and sync when signal returns.
+
+**Accounts (OAuth):** Google and **Sign in with Apple** (expected on iOS), plus email magic links as a fallback. One person can belong to several teams.
+
+**Teams and roles:** team owner/admin, pit wall, crew, driver and viewer. Invite by link or code. Role-based permissions enforced with Supabase row-level security.
+
+**Management system:**
+- **Team:** roster (drivers, crew), licences/wristbands, contact details
+- **Cars:** fuel capacity, measured burn per track, lap times, maintenance log
+- **Events calendar:** series, track, schedule (multi-day), entry status
+- **Race history:** every race kept (events, stints, stops, fuel), with stats per driver and per track
+- **Arrive-and-drive seats:** seat time sold per driver against seat time driven, plus cost splits (entry, fuel, tyres)
+- **Series presets:** Lucky Dog, PCA, ChampCar, WRL, 24 Hours of Lemons, and more (rules docs per series)
+
+**Product angle:** grassroots endurance (Lucky Dog, ChampCar, WRL, Lemons) has many small teams running stints on paper and whiteboards. A free team tier plus paid features (history, analytics, live timing) is a plausible path, to be validated with teams at events.
+
+**Order:** finish the single-team sync (section 2) on the new schema so it grows straight into accounts and teams rather than being rebuilt.
