@@ -11,6 +11,12 @@
 - **Team / Log:** seat time, rest status, measured fuel burn, event log, multi-day archive, share-a-plan link
 - **Offline-first:** installs to the home screen and runs with no signal (service worker); race state survives reloads
 
+## Platform notes
+- **Vibration** on button presses works on **Android only**. iPhone Safari doesn't support it, so the buttons just work without the buzz.
+- **Race state is saved per device** in the browser. It survives reloads and closing the app (tested), but **clearing website data or using a private tab loses it**.
+- **Offline:** open the app once with signal (on iPhone, from the home-screen icon) so it's saved for offline use. Updates arrive the next time it's opened with signal.
+- **Weather** needs signal; without it the command center shows the last reading.
+
 ## Project layout
 ```
 app/                 the app: deployed as-is, no build step
