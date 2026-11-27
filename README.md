@@ -19,6 +19,9 @@
 - **Offline:** open the app once with signal (on iPhone, from the home-screen icon) so it's saved for offline use. Updates arrive the next time it's opened with signal.
 - **Weather** needs signal; without it the command center shows the last reading.
 
+## Screenshots
+See `docs/screenshots/`: onboarding, Team tab, new race driver picker, simulator on the command center, simulation report, and the command center under yellow and during a pit stop.
+
 ## Project layout
 ```
 app/                 the app: deployed as-is, no build step
