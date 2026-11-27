@@ -473,6 +473,11 @@
   :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .card h2{color:var(--cc-acc2);font-weight:800}
   /* skin picker tiles */
   /* help mode: a ? toggle; while on, tapping/hovering any [data-help] section explains it instead of acting */
+  .menubtn{display:inline-flex;align-items:center;justify-content:center;font-size:18px}
+  .mrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:var(--r-card,14px);padding:14px;margin:0 0 8px;font:inherit;cursor:pointer;min-height:64px}
+  .mrow .i,.mrow svg{width:24px;height:24px;flex:none}
+  .mrow b{display:block;font-size:16px}.mrow small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+  .mrow.dng b{color:var(--red)}
   .helpbtn{width:34px;height:34px;flex:none;border-radius:50%;border:1.5px solid var(--line);background:var(--btn);color:var(--text);font:inherit;font-weight:900;font-size:16px;cursor:pointer}
   body.help-on .helpbtn,body.help-on #ccHelp{background:var(--text);color:var(--bg);border-color:var(--text)}
   .helpbar{display:none;position:fixed;left:0;right:0;top:0;z-index:90;padding:calc(env(safe-area-inset-top) + 8px) 14px 8px;background:var(--text);color:var(--bg);font-weight:700;font-size:14px;align-items:center;gap:10px}
@@ -518,6 +523,7 @@
     <div class="cc-flagbar" id="ccFlagBar"><div class="cc-flag n" id="ccFlag">PRE-RACE</div><div class="cc-topalert" id="ccTopAlert"></div></div>
     <div class="cc-wall mono" id="ccWall">--:--:--</div>
     <button class="cc-tbtn" id="ccHelp" aria-pressed="false">HELP</button>
+    <button class="cc-tbtn" id="ccMenu">MENU</button>
     <button class="cc-tbtn" id="ccSkin">SKIN</button>
     <button class="cc-tbtn" id="ccSetup">SETUP</button>
   </div>
@@ -608,6 +614,7 @@
   <button id="ccOpen" style="display:none;background:var(--cc-kv);color:var(--cc-acc);border:1px solid var(--cc-line);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:800;letter-spacing:1px;cursor:pointer">⊞ COMMAND CENTER</button>
   <span class="syncpill" id="syncPill" style="display:none"></span>
   <button class="helpbtn" id="helpBtn" aria-pressed="false" aria-label="Help mode">?</button>
+  <button class="helpbtn menubtn" id="menuBtn" aria-label="Menu"><span data-ic="menu"></span></button>
   <span class="pill" id="statusPill">SETUP</span>
 </div>
 
@@ -918,7 +925,7 @@ const nowMs=()=>SIM.on?SIM.v:Date.now()+CLOCK_SKEW;
 
 /* ================= helpers ================= */
 /* one consistent icon set (inline SVG, stroke = currentColor) instead of emoji, which render differently per device */
-const ICON={radar:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12 18.5 5.5"/><circle cx="12" cy="12" r="1" class="f"/>',home:'<path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5M10 20v-5.5h4V20"/>',race:'<circle cx="12" cy="14" r="8"/><path d="M12 10v4l2.5 2M10 2h4M12 2v4"/>',team:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.5-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.5 3.5 5.2"/>',plan:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.8h6V4M8.5 10h7M8.5 14h7M8.5 18h4"/>',lab:'<path d="M9 3h6M10 3v6L4.6 18.2A2 2 0 0 0 6.3 21h11.4a2 2 0 0 0 1.7-2.8L14 9V3M7.5 14h9"/>',log:'<path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/>',fuel:'<path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16M3 21h13M4 10h11M15 8l3 3v6.5a1.5 1.5 0 0 0 3 0V9l-3-3"/>',swap:'<path d="M4 8h15l-3.5-3.5M20 16H5l3.5 3.5"/>',wrench:'<path d="M14.5 3.5a5 5 0 0 0-6 6.5L3 15.5V21h5.5l5.5-5.5a5 5 0 0 0 6.5-6l-3 3-3.5-1-1-3.5z"/>',flag:'<path d="M5 21V4M5 4h13l-3 4.5 3 4.5H5"/>',pitin:'<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',pitout:'<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>',alert:'<path d="M12 3 2 20h20zM12 10v4M12 17.5v.5"/>',stop:'<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z"/><path d="M12 7v6M12 16.5v.5"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.4-7 8-7s7 2.5 8 7"/>',bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',check:'<path d="M4 12.5 9.5 18 20 6"/>',trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8 21h8M9.5 17h5"/>',play:'<path d="M7 4v16l13-8z"/>',pause:'<path d="M8 5v14M16 5v14"/>',finish:'<path d="M5 21V3"/><rect x="5" y="3" width="14" height="10" rx="1"/><path class="f" d="M5 3h3.5v3.3H5zM12 3h3.5v3.3H12zM8.5 6.3H12v3.4H8.5zM15.5 6.3H19v3.4h-3.5zM5 9.7h3.5V13H5zM12 9.7h3.5V13H12z"/>',rain:'<path d="M7 15a4.5 4.5 0 1 1 1.3-8.8A5.5 5.5 0 0 1 19 8.5a3.5 3.5 0 0 1-1 6.5zM8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',userx:'<circle cx="10" cy="8" r="4"/><path d="M2 21c1-4.5 4.4-7 8-7 1.6 0 3.1.5 4.4 1.4M16 16l5 5M21 16l-5 5"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',car:'<path d="M3 16v-3l2.5-5h13L21 13v3zM3 16v2.5h3V16M18 16v2.5h3V16M6.5 12.5h.01M17.5 12.5h.01"/>'};
+const ICON={menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',radar:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12 18.5 5.5"/><circle cx="12" cy="12" r="1" class="f"/>',home:'<path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5M10 20v-5.5h4V20"/>',race:'<circle cx="12" cy="14" r="8"/><path d="M12 10v4l2.5 2M10 2h4M12 2v4"/>',team:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.5-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.5 3.5 5.2"/>',plan:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.8h6V4M8.5 10h7M8.5 14h7M8.5 18h4"/>',lab:'<path d="M9 3h6M10 3v6L4.6 18.2A2 2 0 0 0 6.3 21h11.4a2 2 0 0 0 1.7-2.8L14 9V3M7.5 14h9"/>',log:'<path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/>',fuel:'<path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16M3 21h13M4 10h11M15 8l3 3v6.5a1.5 1.5 0 0 0 3 0V9l-3-3"/>',swap:'<path d="M4 8h15l-3.5-3.5M20 16H5l3.5 3.5"/>',wrench:'<path d="M14.5 3.5a5 5 0 0 0-6 6.5L3 15.5V21h5.5l5.5-5.5a5 5 0 0 0 6.5-6l-3 3-3.5-1-1-3.5z"/>',flag:'<path d="M5 21V4M5 4h13l-3 4.5 3 4.5H5"/>',pitin:'<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',pitout:'<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>',alert:'<path d="M12 3 2 20h20zM12 10v4M12 17.5v.5"/>',stop:'<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z"/><path d="M12 7v6M12 16.5v.5"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.4-7 8-7s7 2.5 8 7"/>',bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',check:'<path d="M4 12.5 9.5 18 20 6"/>',trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8 21h8M9.5 17h5"/>',play:'<path d="M7 4v16l13-8z"/>',pause:'<path d="M8 5v14M16 5v14"/>',finish:'<path d="M5 21V3"/><rect x="5" y="3" width="14" height="10" rx="1"/><path class="f" d="M5 3h3.5v3.3H5zM12 3h3.5v3.3H12zM8.5 6.3H12v3.4H8.5zM15.5 6.3H19v3.4h-3.5zM5 9.7h3.5V13H5zM12 9.7h3.5V13H12z"/>',rain:'<path d="M7 15a4.5 4.5 0 1 1 1.3-8.8A5.5 5.5 0 0 1 19 8.5a3.5 3.5 0 0 1-1 6.5zM8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',userx:'<circle cx="10" cy="8" r="4"/><path d="M2 21c1-4.5 4.4-7 8-7 1.6 0 3.1.5 4.4 1.4M16 16l5 5M21 16l-5 5"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',car:'<path d="M3 16v-3l2.5-5h13L21 13v3zM3 16v2.5h3V16M18 16v2.5h3V16M6.5 12.5h.01M17.5 12.5h.01"/>'};
 const ic=(n,cls)=>`<svg class="i${cls?' '+cls:''}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]||''}</svg>`;
 document.querySelectorAll('[data-ic]').forEach(e=>{ e.innerHTML=ic(e.dataset.ic); });
 function lapMin(s){ const m=String(s).trim().match(/^(\d+):(\d{1,2}(?:\.\d+)?)$/); return m? (+m[1])+(+m[2])/60 : parseFloat(s)||NaN; }
@@ -949,9 +956,11 @@ function live(now=nowMs()){
     if(e.type==='in'&&!cur){ cur={in:m,kind:'fuel'}; st.stops.push(cur); }   // a second PIT IN (two devices) is ignored
     if(e.type==='out'&&cur){ cur.out=m; cur.next=e.driver; cur.kind=e.kind||'fuel'; cur.fuel=e.fuel||0; cur.full=!!e.full; st.added+=cur.fuel; cur=null; }
     if(e.type==='yellow'){ if(e.on&&!st.yellow) st.flags.push({type:'yellow',from:m,to:null}); if(!e.on&&st.yellow){ const f=st.flags.filter(x=>x.type==='yellow').pop(); if(f) f.to=m; } st.yellow=e.on; }
+    if(e.type==='end'&&st.ended==null) st.ended=m;     // "End the race now": the flag came early
     if(e.type==='red'){ if(e.on&&!st.red) st.flags.push({type:'red',from:m,to:null}); if(!e.on&&st.red){ const f=st.flags.filter(x=>x.type==='red').pop(); if(f) f.to=m; } st.red=e.on; }
   }
   st.inPit=!!cur;
+  if(st.ended!=null){ st.now=Math.min(st.now,st.ended); st.L=Math.min(L,st.ended); st.finished=true; st.inPit=false; }
   if(st.now>=L) st.finished=true;
   return st;
 }
@@ -1629,7 +1638,7 @@ function cleanCar(c){ c=c&&typeof c==='object'?c:{}; const out=clone(DEFAULT.car
     else if(k==='useMeasured') out[k]=v?1:0;
     else out[k]=nonneg(v,out[k]); }
   return out; }
-function cleanEvents(ev){ return (Array.isArray(ev)?ev:[]).filter(e=>e&&typeof e==='object'&&['green','in','out','yellow','red'].includes(e.type)&&isFinite(+e.t)).map(e=>{
+function cleanEvents(ev){ return (Array.isArray(ev)?ev:[]).filter(e=>e&&typeof e==='object'&&['green','in','out','yellow','red','end'].includes(e.type)&&isFinite(+e.t)).map(e=>{
   const o={t:+e.t,type:e.type}; if(typeof e.id==='string'&&/^[0-9a-f-]{36}$/i.test(e.id)) o.id=e.id; if(e.type==='yellow'||e.type==='red') o.on=!!e.on;
   if(e.type==='out'){ o.kind=own(KINDS,e.kind)?e.kind:'fuel'; o.fuel=nonneg(e.fuel,0); o.full=!!e.full; o.stopLen=nonneg(e.stopLen,0); if(Number.isInteger(e.driver)&&e.driver>=0) o.driver=e.driver; }
   return o; }); }
@@ -1910,16 +1919,42 @@ function raceSheet(id){
      ...(r.status==='done'&&!SIM.on?[{label:'Debrief',fn:()=>{ closeSheet(); openDebrief(r.id); }}]:[]),
      ...(!isAct&&!SIM.on?[{label:'Open',cls:'pri',fn:()=>{ dbSave(); DB.activeRaceId=id; closeSheet(); hydrate(); dbSave(); bind(); update(); show(r.status==='done'?'log':'plan'); }}]:[{label:'Close',cls:'pri',fn:closeSheet}])]);
 }
-function finishRace(){
+function finishRace(sure){
   const r=activeRace(); if(!r) return; const lv=live(); P=plan(lv);
   if(!lv.started){ alert('This race hasn\'t started yet.'); return; }
-  if(!confirm('Finish and save '+(r.rules.name||'this race')+' to the team history?')) return;
+  if(!sure&&!confirm('Finish and save '+(r.rules.name||'this race')+' to the team history?')) return;
   const ds=driverStatus(lv,P); const seat={}; ds.forEach(o=>{ if(o.seat>0) seat[S.drivers[o.i].mid]=Math.round(o.seat*10)/10; });
   r.summary={stops:lv.stops.length,fuel:lv.added,laps:Math.floor(P.stints.filter(s=>s.locked||s.start<lv.now).reduce((a,s)=>a+Math.min(s.end,lv.now)-s.start,0)/P.lap),seat,meas:P.meas||null};
   if(P.meas){ const car=carById(r.carId); car.measured=car.measured||{}; car.measured[r.rules.track||'none']=P.meas; }
   r.status='done'; r.date=(greenEv()||{t:nowMs()}).t; dbSave(); update(); openDebrief(r.id);
 }
 $('teamEdit').onclick=()=>DB&&teamSheet(); $('addMember').onclick=()=>DB&&memberSheet(null); $('addCar').onclick=()=>DB&&carSheet(null); $('newRaceBtn').onclick=()=>DB&&newRaceSheet(null);
+
+/* ================= MENU: a way out of any state ================= */
+function ensureActiveRace(){ if(!DB||activeRace()) return;
+  DB.activeRaceId=(DB.races.find(r=>!r.sim&&r.status!=='done')||{}).id;
+  if(!activeRace()){ const r=newRaceObj({series:DB.team.series,rules:Object.assign(clone(DEFAULT.race),SERIES[DB.team.series].race||{}),carId:DB.team.cars[0].id,drivers:DB.team.members.filter(m=>isDriverRole(m.role)).map(m=>({mid:m.id,max:m.maxStint}))}); DB.races.push(r); DB.activeRaceId=r.id; } }
+function abandonRace(){ const r=activeRace(); if(!r||SIM.on) return;
+  if(!confirm(`Abandon ${r.rules.name||'this race'}? Its log is thrown away and it won’t count in the team history. A backup of this device is kept (Log → Restore).`)) return;
+  dbSave(); backupDB('before abandoning '+(r.rules.name||'a race'));
+  if(r.sid){ r.status='done'; r.summary=null; } else DB.races=DB.races.filter(x=>x!==r);   // a shared race can't be deleted by crew: it's closed instead
+  DB.activeRaceId=null; ensureActiveRace(); reloadActive(); show('race'); raceNow(); }
+function menuSheet(){
+  const r=DB&&activeRace(), lv=r?live():null, liveR=!!(lv&&lv.started&&!lv.finished&&!SIM.on), started=!!(lv&&lv.started), cc=document.body.classList.contains('cc-on');
+  const items=[];
+  if(HELP_ON) items.push(['check','Leave help mode','Taps work normally again',()=>setHelp(false)]);
+  if(SIM.on) items.push(['stop','End the simulation','Back to your real races; nothing from the sim is kept',()=>endSim()]);
+  if(liveR) items.push(['finish','End the race now','Checkered flag now: saves the race and opens the debrief',()=>{ if(!confirm(`End ${r.rules.name||'the race'} now and save it?`)) return; addEvent({type:'end'}); finishRace(true); }]);
+  if(r&&!SIM.on&&r.status!=='done'&&started) items.push(['userx','Abandon this race','Throw it away: no debrief, not in the history',()=>abandonRace()]);
+  if(DB&&!SIM.on&&!liveR) items.push(['race','Race now','Set up and start a new race',()=>raceNow()]);
+  if(DB&&!cc) items.push(['home','Home','Next race, last race, your team',()=>{ show('home'); renderHome(); }]);
+  if(cc) items.push(['user','Phone view','Leave the command center on this device',()=>{ store.set('pitdog_view','phone'); applyView(); }]);
+  items.push(['alert','Start over on this device','Delete the team and races here (a backup is kept)',()=>$('reset').click()]);
+  SHEET_LOCK=false;
+  openSheet('Menu',items.map((it,i)=>`<button class="mrow${['userx','alert'].includes(it[0])?' dng':''}" data-i="${i}">${ic(it[0])}<span><b>${it[1]}</b><small>${it[2]}</small></span></button>`).join(''),[{label:'Close',cls:'pri',fn:closeSheet}]);
+  $('sheetB').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{ closeSheet(); items[+b.dataset.i][3](); }); }
+$('menuBtn').onclick=menuSheet; $('ccMenu').onclick=menuSheet;
+document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return; if($('sheetBg').classList.contains('on')){ if(!SHEET_LOCK) closeSheet(); } else if(HELP_ON) setHelp(false); });
 
 /* ================= HOME ================= */
 // Race day opens on the race screen; any other day opens here: next race + prep, last race, team, quick actions.
@@ -1991,7 +2026,7 @@ const YELLOW_STOP_SAVING=0.4;   // * assumption: a stop under yellow costs ~40% 
 function computeDebrief(r){
   return withRace(r,()=>{
     const g=greenEv(); if(!g) return {err:'This race was never started.'};
-    const t0=T0(), L=raceLen(), lastEv=Math.max(...S.events.map(e=>e.t)), endT=Math.max(t0+L*60000,lastEv);
+    const endE=S.events.find(e=>e.type==='end'), t0=T0(), L=endE?Math.min(raceLen(),(endE.t-t0)/60000):raceLen(), lastEv=Math.max(...S.events.map(e=>e.t)), endT=Math.max(t0+L*60000,lastEv);
     const lv=live(endT), P2=plan(lv); if(P2.err) return {err:P2.err};
     const R=S.race, C=S.car, lap=lapMin(C.lap);
     // stops: time over the minimum is time given away
@@ -2356,7 +2391,7 @@ function showHelp(el){ const h=HELP[el.dataset.help]; if(!h) return; HELP_AT_T=D
   $('helpCard').classList.add('on'); }
 // capture phase: in help mode a tap explains instead of acting (PIT IN must never fire from help mode)
 document.addEventListener('click',e=>{ if(!HELP_ON) return;
-  if(e.target.closest('#helpBtn,#ccHelp,#helpExit')) return;
+  if(e.target.closest('#helpBtn,#ccHelp,#helpExit,#menuBtn,#ccMenu,#sheetBg')) return;
   const tabBtn=e.target.closest('.tabbar button');   // moving between tabs is harmless: let it through, and explain the tab
   if(tabBtn){ setTimeout(()=>{ helpTag(); const sec=$('tab-'+tabBtn.dataset.tab); if(sec&&sec.dataset.help) showHelp(sec); },0); return; }
   e.preventDefault(); e.stopPropagation();
