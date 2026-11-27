@@ -5,7 +5,8 @@ Sign-in is OAuth-only, so the test doesn't sign anyone in. It simulates users ex
 (role `authenticated` + JWT claims carrying the user id), creates two throwaway users and teams, runs every check,
 then deletes everything it made, all in one request.
 
-User A owns a team; user B is a stranger, then a crew member, then pit wall; "nobody" is a signed-out caller.
+User A owns a team; user B is a stranger, then a crew member, then pit wall; C is a platform admin (verified email
+on the admin list); D has a listed but unverified email; "nobody" is a signed-out caller.
 Needs: a Supabase CLI login (token in the macOS keychain) and PITDOG_SUPABASE_REF in ~/.pitdog/supabase.env.
 Usage:  python3 supabase/tests/rls_check.py
 """
@@ -52,6 +53,14 @@ CHECKS = [
   ("an event can't point at another team's race", 'A', f"insert into events(id,race_id,team_id,t,type) values (gen_random_uuid(),{RACE},{TEAM2},6,'in') returning id", 'denied'),
   ("only the owner can rotate the join code", 'B', f"select public.rotate_join_code({TEAM})", 'denied'),
   ('owner rotates the join code', 'A', f"select public.rotate_join_code({TEAM})", 'ok'),
+  ("a stranger can't use the admin overview", 'B', "select * from public.admin_teams()", 'denied'),
+  ('platform admin sees every team', 'C', "select * from teams where name like 'RLS check team%'", 'rows:2'),
+  ('platform admin reads any race log', 'C', "select * from events", 'rows:3'),
+  ('platform admin can repair a plan', 'C', "update races set settings='{\"name\":\"fixed by admin\"}' returning id", 'rows:1'),
+  ('platform admin overview lists the teams', 'C', "select * from public.admin_teams() where name like 'RLS check team%'", 'rows:2'),
+  ('platform admin can join a team to help', 'C', f"select public.admin_join_team({TEAM2},'pitwall')", 'ok'),
+  ("an unverified email on the admin list gets nothing", 'D', "select * from teams", 'rows:0'),
+  ("nobody can read the admin list", 'B', "select * from public.platform_admins", 'denied'),
   ('owner can delete the team (cascades)', 'A', f"delete from teams where id={TEAM} returning id", 'rows:1'),
 ]
 # after these checks, remember ids the later checks refer to
@@ -86,13 +95,18 @@ script = """
 create temp table results(i int, descr text, ok boolean, detail text);
 create temp table ids(k text, id uuid, code text);
 grant all on results, ids to authenticated, anon;
-insert into ids values ('userA', gen_random_uuid(), null), ('userB', gen_random_uuid(), null);
-insert into auth.users(id, aud, role, instance_id) select id, 'authenticated', 'authenticated', '00000000-0000-0000-0000-000000000000' from ids;
+insert into ids values ('userA', gen_random_uuid(), null), ('userB', gen_random_uuid(), null), ('userC', gen_random_uuid(), null), ('userD', gen_random_uuid(), null);
+insert into public.platform_admins(email, note) values ('rls-admin@pitdog.test', 'rls_check'), ('rls-unverified@pitdog.test', 'rls_check');
+insert into auth.users(id, aud, role, instance_id, email, email_confirmed_at)
+  select id, 'authenticated', 'authenticated', '00000000-0000-0000-0000-000000000000',
+    case k when 'userC' then 'rls-admin@pitdog.test' when 'userD' then 'rls-unverified@pitdog.test' end,
+    case k when 'userC' then now() end from ids;
 do $t$ declare n int; ok boolean; detail text; begin
 """ + ''.join(block(i, *c) for i, c in enumerate(CHECKS)) + """
 end $t$;
 delete from public.teams where name in ('RLS check team','RLS check team 2','anon team');
 delete from auth.users where id in (select id from pg_temp.ids where k like 'user%');
+delete from public.platform_admins where note = 'rls_check';
 select i, descr, ok, detail from pg_temp.results order by i;
 """
 rows = query(script)

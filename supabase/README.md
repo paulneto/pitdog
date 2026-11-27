@@ -23,8 +23,18 @@ team with its 8-character join code. Allowed redirect URLs: `https://paulneto.gi
 Row-level security is on for every table; realtime is enabled on `events`, `races` and `teams`.
 `rotate_join_code(team)` lets the owner replace a leaked code.
 
+## Admin access
+- **In the app (platform admin):** `public.platform_admins` lists admin emails (seeded: `paul@neto.me`). An admin signs
+  in with OAuth like anyone else; if that account's **verified** email is on the list, every permission check passes:
+  all teams, races and logs are readable and fixable. `admin_teams()` gives an overview of every team;
+  `admin_join_team(team, role)` adds the admin to a team (e.g. to help on race day). Clients can't read or change the
+  list (RLS with no policies); add or remove admins in the Supabase SQL editor:
+  `insert into public.platform_admins(email, note) values ('someone@example.com', 'why');`
+- **Break-glass:** the Supabase dashboard (owner of the PitDog org) always has full access (Table Editor, SQL editor),
+  whatever the app's rules or login providers are doing. The Supabase CLI login on Paul's Mac is a second way in.
+
 ## Checks
-`python3 supabase/tests/rls_check.py` runs 25 permission checks **inside the real database** (simulated users,
+`python3 supabase/tests/rls_check.py` runs 33 permission checks (including platform admins) **inside the real database** (simulated users,
 everything it creates is deleted in the same request). Run it after any migration.
 
 ## Applying a migration
