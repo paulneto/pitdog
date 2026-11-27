@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="0" fill="#0b0d11"/>
+  <g transform="translate(0,300)">
+    <g fill="#eef0f5">
+      <rect x="0" y="0" width="64" height="40"/><rect x="128" y="0" width="64" height="40"/><rect x="256" y="0" width="64" height="40"/><rect x="384" y="0" width="64" height="40"/>
+      <rect x="64" y="40" width="64" height="40"/><rect x="192" y="40" width="64" height="40"/><rect x="320" y="40" width="64" height="40"/><rect x="448" y="40" width="64" height="40"/>
+    </g>
+  </g>
+  <text x="256" y="215" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" font-weight="900" font-size="150" fill="#eef0f5" letter-spacing="-4">PIT</text>
+  <text x="256" y="455" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" font-weight="900" font-size="96" fill="#ff3b30" letter-spacing="2">DOG</text>
+</svg>
