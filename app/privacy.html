@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PitDog privacy</title>
+<link rel="icon" href="icon-192.png">
+<style>
+  @font-face{font-family:"Inter";src:url(fonts/inter-latin-400-normal.woff2) format("woff2");font-weight:300 500}
+  @font-face{font-family:"Inter";src:url(fonts/inter-latin-600-normal.woff2) format("woff2");font-weight:600 700}
+  :root{--bg:#0b0d11;--panel:#151921;--line:#262c38;--text:#eef0f5;--muted:#8f98a8;--brand:#ff3b30}
+  @media (prefers-color-scheme:light){:root{--bg:#f4f6f9;--panel:#fff;--line:#d3dae4;--text:#05080f;--muted:#465263;--brand:#d1001f}}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 "Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  main{max-width:720px;margin:0 auto;padding:32px 18px 64px}
+  h1{font-size:28px;margin:0 0 4px}h1 b{color:var(--brand)}
+  h2{font-size:18px;margin:28px 0 6px}
+  p,li{color:var(--text)}.muted{color:var(--muted)}
+  a{color:inherit}
+</style>
+</head>
+<body>
+<main>
+<h1>PIT<b>DOG</b> privacy</h1>
+<p class="muted">Last updated 27 November 2026</p>
+
+<p>PitDog is a pit-wall app for amateur endurance race teams, run by one person (Paul Neto) as a personal project. It isn’t a business, it has no ads, and it never sells or shares your data.</p>
+
+<h2>What PitDog stores</h2>
+<ul>
+  <li><b>On your device:</b> your team, cars, races, race logs and settings, in the browser’s storage. You can export or delete it from the app’s Log tab.</li>
+  <li><b>If you sign in (team sync):</b> your Google account’s name, email address and account ID, which your team you’re in, your role, and the team data you sync (plans, race logs, roster and cars).</li>
+  <li><b>Weather:</b> the app asks Open-Meteo for the forecast at your track’s coordinates. No personal data is sent.</li>
+</ul>
+
+<h2>Sign-in with Google</h2>
+<p>PitDog only asks Google for your basic profile (name and email) so you can sign in. It doesn’t access your Gmail, Drive, contacts or anything else.</p>
+
+<h2>Who can see your data</h2>
+<ul>
+  <li>Members of your team can see your team’s data, according to their role.</li>
+  <li>The PitDog administrator can see all data to run and support the service, for example to fix a broken race log.</li>
+  <li>Data is stored with Supabase (servers in the United States) and the app is hosted on GitHub Pages. They process it only to provide those services.</li>
+</ul>
+
+<h2>Deleting your data</h2>
+<p>Leave your team or ask your team owner to remove you. To delete your account and its data, email <a href="mailto:paul@neto.me">paul@neto.me</a>; it will be removed within 30 days. Race logs you wrote stay with the team’s race history unless the team is deleted.</p>
+
+<h2>Contact</h2>
+<p><a href="mailto:paul@neto.me">paul@neto.me</a></p>
+<p class="muted"><a href="./">Back to PitDog</a></p>
+</main>
+</body>
+</html>
