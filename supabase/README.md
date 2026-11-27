@@ -33,8 +33,16 @@ Row-level security is on for every table; realtime is enabled on `events`, `race
 - **Break-glass:** the Supabase dashboard (owner of the PitDog org) always has full access (Table Editor, SQL editor),
   whatever the app's rules or login providers are doing. The Supabase CLI login on Paul's Mac is a second way in.
 
+## System admin console: `app/admin.html`
+Live at `https://paulneto.github.io/pitdog/admin.html` (not linked from the app; `noindex`). Sign in with Google; the
+page opens only for platform admins, and every action is an `admin_*` RPC that re-checks admin rights in the database
+and writes to `admin_audit`. Tabs: **Teams** (rename, new join code, roles, remove people, join as pit wall, delete,
+race settings override, race log with void), **Accounts** (status, teams, suspend 1/7/30 days or indefinitely, restore,
+delete), **App settings** (`app_settings`: banner, maintenance, series_overrides, features, readable by every client),
+**Admins** (add/remove; the last admin can't be removed) and **Audit log**. Destructive actions need the name typed.
+
 ## Checks
-`python3 supabase/tests/rls_check.py` runs 33 permission checks (including platform admins) **inside the real database** (simulated users,
+`python3 supabase/tests/rls_check.py` runs 49 permission checks (team roles, platform admins, admin console RPCs) **inside the real database** (simulated users,
 everything it creates is deleted in the same request). Run it after any migration.
 
 ## Applying a migration

@@ -61,6 +61,23 @@ CHECKS = [
   ('platform admin can join a team to help', 'C', f"select public.admin_join_team({TEAM2},'pitwall')", 'ok'),
   ("an unverified email on the admin list gets nothing", 'D', "select * from teams", 'rows:0'),
   ("nobody can read the admin list", 'B', "select * from public.platform_admins", 'denied'),
+  # --- admin console RPCs
+  ("a non-admin can't list accounts", 'B', "select * from public.admin_users()", 'denied'),
+  ("a non-admin can't change settings", 'B', "select public.admin_set_setting('rls_check','1')", 'denied'),
+  ("a non-admin can't suspend anyone", 'B', f"select public.admin_set_banned({ID('userA')}, now() + interval '1 day')", 'denied'),
+  ("app settings can't be written directly", 'B', "insert into app_settings(key,value) values ('rls_check','1') returning key", 'denied'),
+  ('anyone can read app settings (banner, flags)', None, "select * from app_settings where key in ('banner','maintenance','series_overrides','features')", 'rows:4'),
+  ('admin console: whoami says admin', 'C', "select 1 where (public.admin_whoami()->>'is_admin')::boolean", 'rows:1'),
+  ('admin console: lists accounts with their teams', 'C', f"select * from public.admin_users() where user_id in ({ID('userA')},{ID('userB')})", 'rows:2'),
+  ('admin console: team detail', 'C', f"select 1 where jsonb_array_length(public.admin_team_detail({TEAM})->'members') = 2", 'rows:1'),
+  ('admin console: change a role', 'C', f"select public.admin_set_role({TEAM},{ID('userB')},'viewer')", 'ok'),
+  ('admin console: override race settings', 'C', f"select public.admin_update_race({RACE}, '{{\"name\":\"admin override\"}}')", 'ok'),
+  ('admin console: void a bad event', 'C', "select public.admin_void_event((select id from events where type='in' limit 1),'rls check')", 'ok'),
+  ('admin console: set an app setting', 'C', "select public.admin_set_setting('rls_check','{\"x\":1}','rls_check')", 'ok'),
+  ('admin console: suspend an account', 'C', f"select public.admin_set_banned({ID('userB')}, now() + interval '1 day')", 'ok'),
+  ("admin console: can't suspend yourself", 'C', f"select public.admin_set_banned({ID('userC')}, now() + interval '1 day')", 'denied'),
+  ('admin console: every action is in the audit log', 'C', "select * from public.admin_audit_log(50) where admin_email='rls-admin@pitdog.test'", 'rows:6'),
+  ("nobody can read the audit table directly", 'C', "select * from public.admin_audit", 'denied'),
   ('owner can delete the team (cascades)', 'A', f"delete from teams where id={TEAM} returning id", 'rows:1'),
 ]
 # after these checks, remember ids the later checks refer to
@@ -107,6 +124,8 @@ end $t$;
 delete from public.teams where name in ('RLS check team','RLS check team 2','anon team');
 delete from auth.users where id in (select id from pg_temp.ids where k like 'user%');
 delete from public.platform_admins where note = 'rls_check';
+delete from public.admin_audit where admin_email = 'rls-admin@pitdog.test';
+delete from public.app_settings where key = 'rls_check';
 select i, descr, ok, detail from pg_temp.results order by i;
 """
 rows = query(script)

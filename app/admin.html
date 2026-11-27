@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b0d11">
+<title>PitDog Admin</title>
+<link rel="icon" href="icon-192.png">
+<!-- the admin console is online-only (it talks to Supabase), so loading the client from a CDN is fine here -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+  @font-face{font-family:"Inter";src:url(fonts/inter-latin-400-normal.woff2) format("woff2");font-weight:300 500;font-display:swap}
+  @font-face{font-family:"Inter";src:url(fonts/inter-latin-600-normal.woff2) format("woff2");font-weight:600 700;font-display:swap}
+  @font-face{font-family:"Inter";src:url(fonts/inter-latin-800-normal.woff2) format("woff2");font-weight:800 900;font-display:swap}
+  :root{--bg:#0b0d11;--panel:#151921;--panel2:#0f1218;--line:#262c38;--text:#eef0f5;--muted:#8f98a8;
+    --red:#ff3b30;--green:#30d158;--amber:#ffb340;--blue:#0a84ff;--info:#8cc4ff;--btn:#20252f;--brand:#ff3b30;
+    --r:12px;--font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  @media (prefers-color-scheme:light){:root{--bg:#eef1f5;--panel:#fff;--panel2:#e6eaf0;--line:#c3ccd8;--text:#05080f;--muted:#465263;
+    --red:#d1001f;--green:#007a2b;--amber:#b35a00;--blue:#0050c8;--info:#0047b3;--btn:#dde3eb;--brand:#d1001f}}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 var(--font);font-feature-settings:"cv11"}
+  header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:12px 18px;background:var(--panel);border-bottom:1px solid var(--line)}
+  header h1{margin:0;font-size:18px;letter-spacing:.5px;flex:1}header h1 b{color:var(--brand)}header h1 small{color:var(--muted);font-weight:600;margin-left:8px;font-size:12px;letter-spacing:1px}
+  .who{font-size:13px;color:var(--muted)}
+  nav{display:flex;gap:4px;padding:10px 18px 0;max-width:1180px;margin:0 auto;flex-wrap:wrap}
+  nav button{background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);font:inherit;font-weight:700;padding:8px 12px;cursor:pointer}
+  nav button.on{color:var(--text);border-color:var(--brand)}
+  main{max-width:1180px;margin:0 auto;padding:16px 18px 60px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:14px}
+  .card h2{margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+  tr.click{cursor:pointer}tr.click:hover td{background:var(--panel2)}
+  .btn{background:var(--btn);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:7px 12px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .btn.pri{background:var(--text);color:var(--bg);border-color:var(--text)}.btn.dng{color:var(--red);border-color:color-mix(in srgb,var(--red) 50%,var(--line))}
+  .btn:disabled{opacity:.4;cursor:default}
+  input,select,textarea{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:7px 10px;font:inherit;font-size:14px}
+  textarea{width:100%;min-height:120px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .muted{color:var(--muted)}.small{font-size:12px}
+  .tag{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:9px;background:var(--btn);color:var(--muted);margin:1px 2px 1px 0}
+  .tag.ok{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}
+  .tag.bad{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
+  .tag.adm{background:color-mix(in srgb,var(--blue) 18%,transparent);color:var(--info)}
+  .code{font-family:ui-monospace,Menlo,monospace;letter-spacing:2px;font-weight:700}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:700;display:none;z-index:20;max-width:90vw}
+  .toast.err{background:var(--red);color:#fff}
+  .center{max-width:440px;margin:12vh auto;text-align:center}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:820px){.grid2{grid-template-columns:1fr}th.hide,td.hide{display:none}}
+  details summary{cursor:pointer;font-weight:700;padding:6px 0}
+  .ev{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+  .voided{text-decoration:line-through;opacity:.5}
+</style>
+</head>
+<body>
+<header>
+  <h1>PIT<b>DOG</b><small>SYSTEM ADMIN</small></h1>
+  <span class="who" id="who"></span>
+  <button class="btn" id="signOut" style="display:none">Sign out</button>
+</header>
+<div id="gate" class="center"></div>
+<div id="app" style="display:none">
+  <nav id="tabs">
+    <button data-t="teams" class="on">Teams</button><button data-t="accounts">Accounts</button>
+    <button data-t="settings">App settings</button><button data-t="admins">Admins</button><button data-t="audit">Audit log</button>
+  </nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+/* PitDog system admin console. Every action is an admin_* RPC that checks admin rights IN THE DATABASE and writes
+   an audit row; this page is only a front end for them. Sign-in is Google OAuth (the only provider enabled). */
+const SUPABASE_URL='https://xbyxqcudlugyqwgdnktj.supabase.co';
+const SUPABASE_KEY='sb_publishable_G6_rkktXYoQIRFm1qFmvpw__xM8BcUf';   // publishable key: designed to be public; the secret key is never in the app
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const when=t=>t?new Date(t).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'–';
+let sb=null, ME=null, TAB='teams', OPEN_TEAM=null;
+
+function toast(msg,err){ const t=$('toast'); t.textContent=msg; t.className='toast'+(err?' err':''); t.style.display='block'; clearTimeout(toast.h); toast.h=setTimeout(()=>t.style.display='none',err?6000:2500); }
+async function rpc(fn,args){ const {data,error}=await sb.rpc(fn,args||{}); if(error){ toast(error.message,true); throw error; } return data; }
+// destructive actions: the admin types the name to confirm, so a mis-click can't do it
+function confirmTyped(what,name){ const v=prompt(`${what}\n\nType "${name}" to confirm:`); return v!=null&&v.trim()===String(name); }
+
+async function init(){
+  sb=window.PITDOG_SB||(window.supabase&&window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{flowType:'pkce',persistSession:true,detectSessionInUrl:true}}));
+  if(!sb){ $('gate').innerHTML='<h2>Can’t reach Supabase</h2><p class="muted">The admin console needs a connection.</p>'; return; }
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session) return showSignIn();
+  ME=await rpc('admin_whoami');
+  $('who').textContent=ME.email||''; $('signOut').style.display='';
+  if(!ME.is_admin){ $('gate').innerHTML=`<h2>Not an admin</h2><p class="muted">${esc(ME.email)} isn’t on the PitDog admin list. Admins are added in the Supabase dashboard or by another admin.</p>`; return; }
+  $('gate').style.display='none'; $('app').style.display=''; render();
+}
+function showSignIn(){
+  $('gate').innerHTML=`<h2>PitDog system admin</h2><p class="muted">Sign in with the Google account on the admin list.</p><button class="btn pri" id="google" style="padding:12px 20px;font-size:15px">Sign in with Google</button><p class="muted small">Locked out? The Supabase dashboard (PitDog org) always has full access.</p>`;
+  $('google').onclick=()=>sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
+}
+$('signOut').onclick=async()=>{ await sb.auth.signOut(); location.reload(); };
+$('tabs').onclick=e=>{ const b=e.target.closest('button[data-t]'); if(!b) return; TAB=b.dataset.t; OPEN_TEAM=null; document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b)); render(); };
+const VIEWS={teams:viewTeams,accounts:viewAccounts,settings:viewSettings,admins:viewAdmins,audit:viewAudit};
+async function render(){ $('main').innerHTML='<div class="muted">Loading…</div>'; try{ await VIEWS[TAB](); }catch(e){ $('main').innerHTML=`<div class="card">Couldn’t load: ${esc(e.message)}</div>`; } }
+
+/* ---------------- teams ---------------- */
+async function viewTeams(){
+  if(OPEN_TEAM) return viewTeam(OPEN_TEAM);
+  const teams=await rpc('admin_teams');
+  $('main').innerHTML=`<div class="card"><h2>Teams <span>${teams.length}</span></h2>${teams.length?`<table><tr><th>Team</th><th>Join code</th><th>People</th><th class="hide">Races</th><th class="hide">Events</th><th>Last activity</th></tr>${teams.map(t=>`<tr class="click" data-team="${esc(t.team_id)}"><td><b>${esc(t.name)}</b></td><td class="code">${esc(t.join_code)}</td><td>${t.members}</td><td class="hide">${t.races}</td><td class="hide">${t.events}</td><td class="muted">${when(t.last_event||t.created_at)}</td></tr>`).join('')}</table>`:'<div class="muted">No teams yet. Teams appear here when someone creates one in the app.</div>'}</div>`;
+  $('main').querySelectorAll('[data-team]').forEach(r=>r.onclick=()=>{ OPEN_TEAM=r.dataset.team; render(); });
+}
+async function viewTeam(id){
+  const d=await rpc('admin_team_detail',{p_team:id}); if(!d){ OPEN_TEAM=null; return render(); }
+  const t=d.team, roles=['owner','pitwall','crew','viewer'];
+  $('main').innerHTML=`<p><button class="btn" id="back">← All teams</button></p>
+  <div class="card"><h2>Team <span class="code">${esc(t.join_code)}</span></h2>
+    <div class="row"><input id="tName" value="${esc(t.name)}" style="flex:1;min-width:200px"><button class="btn" id="rename">Rename</button>
+      <button class="btn" id="rotate">New join code</button><button class="btn" id="joinMe">Add me as pit wall</button><button class="btn dng" id="delTeam">Delete team</button></div>
+    <div class="muted small" style="margin-top:8px">Created ${when(t.created_at)} · roster/cars document updated ${when(t.doc_updated_at)}</div></div>
+  <div class="card"><h2>People <span>${d.members.length}</span></h2><table><tr><th>Account</th><th>Role</th><th class="hide">Device</th><th class="hide">Joined</th><th></th></tr>
+    ${d.members.map(m=>`<tr><td>${esc(m.email||m.user_id)}</td><td><select data-role="${esc(m.user_id)}">${roles.map(r=>`<option ${r===m.role?'selected':''}>${r}</option>`).join('')}</select></td><td class="hide muted">${esc(m.device||'')}</td><td class="hide muted">${when(m.joined_at)}</td><td><button class="btn dng" data-rm="${esc(m.user_id)}">Remove</button></td></tr>`).join('')}</table></div>
+  <div class="card"><h2>Races <span>${d.races.length}</span></h2>${d.races.map(r=>`<details data-race="${esc(r.id)}"><summary>${esc((r.settings&&(r.settings.name||(r.settings.rules||{}).name))||'Race')} <span class="muted small">· ${r.events} events · updated ${when(r.updated_at)}</span></summary>
+      <div class="grid2"><div><div class="muted small">Race settings (JSON). Saving overrides what the team’s devices have; they pick it up on next sync.</div><textarea data-set="${esc(r.id)}">${esc(JSON.stringify(r.settings,null,2))}</textarea><div class="row"><button class="btn pri" data-save="${esc(r.id)}">Save override</button></div></div>
+      <div><div class="muted small">Race log (append-only). “Void” adds a cancelling entry; nothing is deleted.</div><div class="ev" data-events="${esc(r.id)}">Open to load…</div></div></div></details>`).join('')||'<div class="muted">No races.</div>'}</div>`;
+  $('back').onclick=()=>{ OPEN_TEAM=null; render(); };
+  $('rename').onclick=async()=>{ await rpc('admin_update_team',{p_team:id,p_name:$('tName').value.trim()}); toast('Renamed'); render(); };
+  $('rotate').onclick=async()=>{ if(!confirm('Issue a new join code? The old one stops working; people already in the team stay in.')) return; await rpc('admin_rotate_code',{p_team:id}); toast('New code issued'); render(); };
+  $('joinMe').onclick=async()=>{ await rpc('admin_join_team',{p_team:id,p_role:'pitwall'}); toast('You’re in this team as pit wall'); render(); };
+  $('delTeam').onclick=async()=>{ if(!confirmTyped('Delete this team, its races and race logs for good.',t.name)) return; await rpc('admin_delete_team',{p_team:id}); toast('Team deleted'); OPEN_TEAM=null; render(); };
+  $('main').querySelectorAll('[data-role]').forEach(s=>s.onchange=async()=>{ await rpc('admin_set_role',{p_team:id,p_user:s.dataset.role,p_role:s.value}); toast('Role changed'); });
+  $('main').querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{ if(!confirm('Remove this person from the team?')) return; await rpc('admin_remove_member',{p_team:id,p_user:b.dataset.rm}); toast('Removed'); render(); });
+  $('main').querySelectorAll('[data-save]').forEach(b=>b.onclick=async()=>{ let v; try{ v=JSON.parse($('main').querySelector(`[data-set="${b.dataset.save}"]`).value); }catch(e){ toast('That isn’t valid JSON: '+e.message,true); return; }
+    await rpc('admin_update_race',{p_race:b.dataset.save,p_settings:v}); toast('Race settings overridden'); });
+  $('main').querySelectorAll('details[data-race]').forEach(dt=>dt.ontoggle=()=>{ if(dt.open) loadEvents(dt.dataset.race); });
+}
+async function loadEvents(race){
+  const box=$('main').querySelector(`[data-events="${race}"]`); const ev=await rpc('admin_race_events',{p_race:race});
+  const voided=new Set(ev.filter(e=>e.type==='void').map(e=>e.payload&&e.payload.target));
+  box.innerHTML=ev.length?`<table>${ev.map(e=>`<tr class="${voided.has(e.id)?'voided':''}"><td>${new Date(+e.t).toLocaleTimeString()}</td><td><b>${esc(e.type)}</b> ${esc(JSON.stringify(e.payload))}</td><td class="muted">${esc(e.device||'')}</td><td>${e.type!=='void'&&!voided.has(e.id)?`<button class="btn" data-void="${esc(e.id)}">Void</button>`:''}</td></tr>`).join('')}</table>`:'<span class="muted">No events.</span>';
+  box.querySelectorAll('[data-void]').forEach(b=>b.onclick=async()=>{ const why=prompt('Why void this entry? (kept in the audit log)'); if(why==null) return; await rpc('admin_void_event',{p_event:b.dataset.void,p_reason:why}); toast('Voided'); loadEvents(race); });
+}
+
+/* ---------------- accounts ---------------- */
+async function viewAccounts(){
+  const us=await rpc('admin_users');
+  const status=u=>u.banned_until&&new Date(u.banned_until)>new Date()?`<span class="tag bad">suspended until ${when(u.banned_until)}</span>`:'<span class="tag ok">active</span>';
+  $('main').innerHTML=`<div class="card"><h2>Accounts <span>${us.length}</span></h2><table><tr><th>Account</th><th>Status</th><th>Teams</th><th class="hide">Sign-in</th><th class="hide">Last seen</th><th></th></tr>
+  ${us.map(u=>`<tr><td><b>${esc(u.email||u.user_id)}</b>${u.is_admin?' <span class="tag adm">admin</span>':''}</td><td>${status(u)}</td><td>${(u.teams||[]).map(t=>`<span class="tag">${esc(t.name)} · ${esc(t.role)}</span>`).join('')||'<span class="muted">–</span>'}</td><td class="hide muted">${esc(u.provider)}</td><td class="hide muted">${when(u.last_sign_in_at)}</td>
+    <td><div class="row">${u.user_id===ME.user_id?'<span class="muted small">you</span>':(u.banned_until&&new Date(u.banned_until)>new Date()?`<button class="btn" data-restore="${esc(u.user_id)}">Restore</button>`:`<select data-susp="${esc(u.user_id)}"><option value="">Suspend…</option><option value="1">1 day</option><option value="7">7 days</option><option value="30">30 days</option><option value="36500">Indefinitely</option></select>`)+` <button class="btn dng" data-del="${esc(u.user_id)}" data-email="${esc(u.email||'')}">Delete</button>`}</div></td></tr>`).join('')}</table>
+  <div class="muted small" style="margin-top:8px">Suspending signs the account out at its next token refresh (within an hour) and blocks new sign-ins. Deleting removes the account and its team memberships; race logs it wrote stay.</div></div>`;
+  $('main').querySelectorAll('[data-susp]').forEach(s=>s.onchange=async()=>{ if(!s.value) return; const until=new Date(Date.now()+s.value*86400000).toISOString(); await rpc('admin_set_banned',{p_user:s.dataset.susp,p_until:until}); toast('Suspended'); render(); });
+  $('main').querySelectorAll('[data-restore]').forEach(b=>b.onclick=async()=>{ await rpc('admin_set_banned',{p_user:b.dataset.restore,p_until:null}); toast('Restored'); render(); });
+  $('main').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{ if(!confirmTyped('Delete this account for good.',b.dataset.email||'delete')) return; await rpc('admin_delete_user',{p_user:b.dataset.del}); toast('Account deleted'); render(); });
+}
+
+/* ---------------- app settings ---------------- */
+async function viewSettings(){
+  const {data:rows,error}=await sb.from('app_settings').select('*').order('key'); if(error) throw error;
+  $('main').innerHTML=`<div class="card"><h2>App settings &amp; overrides</h2><div class="muted small" style="margin-bottom:10px">These apply to every team and device the next time it syncs. Values are JSON.</div>
+  ${rows.map(r=>`<div style="border-top:1px solid var(--line);padding:12px 0"><div class="row" style="justify-content:space-between"><b class="code" style="letter-spacing:0">${esc(r.key)}</b><span class="muted small">updated ${when(r.updated_at)}</span></div>
+    <div class="muted small">${esc(r.note||'')}</div><textarea data-key="${esc(r.key)}" style="min-height:70px">${esc(JSON.stringify(r.value,null,2))}</textarea><div class="row"><button class="btn pri" data-savekey="${esc(r.key)}">Save</button></div></div>`).join('')}
+  <div style="border-top:1px solid var(--line);padding-top:12px"><div class="row"><input id="newKey" placeholder="new_key (a-z 0-9 . _ -)"><input id="newVal" placeholder='value, e.g. true or {"a":1}' style="flex:1"><button class="btn" id="addKey">Add setting</button></div></div></div>`;
+  const save=async(k,txt)=>{ let v; try{ v=JSON.parse(txt); }catch(e){ toast('That isn’t valid JSON: '+e.message,true); return; } await rpc('admin_set_setting',{p_key:k,p_value:v}); toast('Saved'); render(); };
+  $('main').querySelectorAll('[data-savekey]').forEach(b=>b.onclick=()=>save(b.dataset.savekey,$('main').querySelector(`[data-key="${b.dataset.savekey}"]`).value));
+  $('addKey').onclick=()=>save($('newKey').value.trim(),$('newVal').value);
+}
+
+/* ---------------- admins ---------------- */
+async function viewAdmins(){
+  const ad=await rpc('admin_list_admins');
+  $('main').innerHTML=`<div class="card"><h2>Platform admins <span>${ad.length}</span></h2><div class="muted small" style="margin-bottom:10px">An admin signs in with Google; admin rights apply only when that account’s verified email is on this list.</div>
+  <table><tr><th>Email</th><th>Note</th><th class="hide">Added</th><th></th></tr>${ad.map(a=>`<tr><td><b>${esc(a.email)}</b></td><td class="muted">${esc(a.note||'')}</td><td class="hide muted">${when(a.added_at)}</td><td><button class="btn dng" data-rmadmin="${esc(a.email)}" ${ad.length<=1?'disabled title="The last admin can’t be removed"':''}>Remove</button></td></tr>`).join('')}</table>
+  <div class="row" style="margin-top:12px"><input id="adEmail" placeholder="email@example.com" style="flex:1;min-width:200px"><input id="adNote" placeholder="note (who / why)" style="flex:1;min-width:160px"><button class="btn pri" id="addAdmin">Add admin</button></div></div>`;
+  $('addAdmin').onclick=async()=>{ await rpc('admin_add_admin',{p_email:$('adEmail').value.trim(),p_note:$('adNote').value.trim()||null}); toast('Admin added'); render(); };
+  $('main').querySelectorAll('[data-rmadmin]').forEach(b=>b.onclick=async()=>{ if(!confirmTyped('Remove this admin.',b.dataset.rmadmin)) return; await rpc('admin_remove_admin',{p_email:b.dataset.rmadmin}); toast('Admin removed'); render(); });
+}
+
+/* ---------------- audit ---------------- */
+async function viewAudit(){
+  const log=await rpc('admin_audit_log',{p_limit:300});
+  $('main').innerHTML=`<div class="card"><h2>Audit log <span>last ${log.length}</span></h2>${log.length?`<table><tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th><th class="hide">Detail</th></tr>${log.map(a=>`<tr><td class="muted">${when(a.at)}</td><td>${esc(a.admin_email||'')}</td><td><b>${esc(a.action)}</b></td><td class="ev">${esc(a.target||'')}</td><td class="hide ev muted">${esc(a.detail?JSON.stringify(a.detail):'')}</td></tr>`).join('')}</table>`:'<div class="muted">No admin actions yet.</div>'}</div>`;
+}
+
+window.addEventListener('load',()=>{ init().catch(e=>{ $('gate').innerHTML=`<h2>Something went wrong</h2><p class="muted">${esc(e.message)}</p>`; }); });
+</script>
+</body>
+</html>

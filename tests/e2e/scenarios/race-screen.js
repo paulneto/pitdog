@@ -19,6 +19,15 @@ __run(() => {
   const seen = new Set();
   for (let m = 0; m < 25 && !seen.has('bad'); m++) { adv(1); const c = $('fuelFact').className.split(' ')[1]; if (c) seen.add(c); }
   expect(seen.has('warn') && seen.has('bad'), 'fuel goes amber, then red on reserve: ' + [...seen].join(','));
+  // every tab scrolls far enough: the last card ends above the fixed tab bar (the --tab token went missing once)
+  for (const tab of ['race', 'team', 'plan', 'lab', 'log']) {
+    show(tab); window.scrollTo(0, document.documentElement.scrollHeight);
+    const cards = [...document.querySelectorAll('#tab-' + tab + ' .card')].filter(c => c.offsetParent);
+    const last = cards[cards.length - 1].getBoundingClientRect(), bar = document.querySelector('.tabbar').getBoundingClientRect();
+    const action = tab === 'race' ? $('actionBar').getBoundingClientRect().top : bar.top;
+    expect(last.bottom <= Math.min(bar.top, action) + 1, `${tab} tab scrolls clear of the bottom bars (card ends ${Math.round(last.bottom)}, bar at ${Math.round(Math.min(bar.top, action))})`);
+  }
+  window.scrollTo(0, 0);
   // icons, not emoji, across the race screen, plan and log
   show('plan'); show('log');
   const emoji = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{26FF}\u{2B00}-\u{2BFF}]/u;

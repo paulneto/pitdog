@@ -9,7 +9,8 @@ fail=0; n=0
 for sc in "$HERE"/scenarios/*.js; do
   name="$(basename "$sc" .js)"; [[ -n "${1:-}" && "$name" != *"$1"* ]] && continue
   win="$(grep -m1 '^// @window' "$sc" | awk '{print $3}')"; win="${win:-500,900}"
-  python3 -I - "$ROOT/app/index.html" "$HERE/harness.js" "$sc" "$OUT/$name.html" <<'PY'
+  page="$(grep -m1 '^// @page' "$sc" | awk '{print $3}')"; page="${page:-index.html}"   # default: the main app
+  python3 -I - "$ROOT/app/$page" "$HERE/harness.js" "$sc" "$OUT/$name.html" <<'PY'
 import sys; app,h,sc,out=sys.argv[1:]
 s=open(app).read(); inj='<script>\n'+open(h).read()+'\n'+open(sc).read()+'\n</script>'
 i=s.rindex('</body>'); open(out,'w').write(s[:i]+inj+s[i:])
