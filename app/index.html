@@ -130,6 +130,7 @@
   .fact.bad{background:var(--red);border-color:var(--red);color:var(--on-fill);font-size:17px;padding:10px 14px}
   .fact.warn small,.fact.bad small{color:inherit;opacity:.85}
   .tmap{display:block;width:76px;height:52px;flex:0 0 auto !important;color:var(--text)}
+  .msel{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:8px;font:inherit;font-size:14px;flex:0 0 auto}
   .tmap.lg{width:118px;height:82px}
   .tmap .tl{fill:none;stroke:currentColor;stroke-width:3px;stroke-linejoin:round;stroke-linecap:round;opacity:.9}
   .tmap .tp{fill:none;stroke:var(--muted);stroke-width:2px;stroke-dasharray:4 3;stroke-linecap:round}
@@ -2568,7 +2569,7 @@ function startSync(){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline()) re
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'teams',filter:'id=eq.'+DB.team.sid},p=>applyRemoteTeam(p.new))
     .subscribe(); }catch(e){}
   SYNC.timer=setInterval(()=>{ if(pendingCount()||Date.now()-SYNC.pulledAt>120000) pushAll().then(()=>{ if(Date.now()-SYNC.pulledAt>120000) pull(false); }); },15000); }
-function stopSync(){ clearInterval(SYNC.timer); SYNC.timer=null; try{ if(SYNC.ch&&SYNC.sb) SYNC.sb.removeChannel(SYNC.ch); }catch(e){} SYNC.ch=null; }
+function stopSync(){ SYNC.members=null; SYNC.membersAt=0; clearInterval(SYNC.timer); SYNC.timer=null; try{ if(SYNC.ch&&SYNC.sb) SYNC.sb.removeChannel(SYNC.ch); }catch(e){} SYNC.ch=null; }
 window.addEventListener('online',()=>{ if(!teamOnline()) return; if(SYNC.user) pushAll().then(()=>pull(false)); else restoreSession(); });
 window.addEventListener('offline',()=>{ if(teamOnline()) setSync('offline'); });
 function toast2(m){ let t=$('toast2'); if(!t){ t=document.createElement('div'); t.id='toast2'; t.className='toast2'; document.body.appendChild(t); } t.textContent=m; t.classList.add('on'); clearTimeout(toast2.h); toast2.h=setTimeout(()=>t.classList.remove('on'),3500); }
@@ -2592,9 +2593,27 @@ function renderSyncCard(){ const box=$('syncBody'); if(!box) return;
       <button class="btn full" id="syncInvite">Send the invite link</button>`:''}
     ${SYNC.err&&SYNC.status!=='live'?`<div class="w w-warn">${esc(SYNC.err)}</div>`:''}${Math.abs(SYNC.skew||0)>2000?`<div class="w w-warn">This device’s clock is ${Math.round(Math.abs(SYNC.skew)/1000)} s ${SYNC.skew>0?'behind':'ahead of'} the server; PitDog corrects for it, but check the phone’s date &amp; time settings.</div>`:''}
     <div class="row" style="margin-top:10px;gap:8px"><button class="btn" id="syncNow">Sync now</button><button class="btn" id="syncLeave">Stop syncing here</button><button class="btn" id="syncOut2">Sign out</button></div>
-    <div class="hint">Roles: owner and pit wall can change the plan; crew can log pit stops and flags; viewers watch. Owners change roles in the admin console.</div>`;
+    <div id="syncMembers">${membersHTML()}</div>
+    <div class="hint">Roles: owner and pit wall can change the plan; crew can log pit stops and flags; viewers watch.${role==='owner'?' Change anyone’s role above.':''}</div>`;
   const inv=$('syncInvite'); if(inv) inv.onclick=()=>{ const txt='Join our PitDog team: '+link; try{ if(navigator.share){ navigator.share({title:'PitDog team',text:txt,url:link}).catch(()=>{}); return; } navigator.clipboard.writeText(link).then(()=>toast2('Invite link copied'),()=>prompt('Invite link:',link)); }catch(e){ prompt('Invite link:',link); } };
-  $('syncNow').onclick=()=>pushAll().then(()=>pull(false)); $('syncLeave').onclick=leaveTeam; $('syncOut2').onclick=signOut; }
+  $('syncNow').onclick=()=>pushAll().then(()=>pull(false)); $('syncLeave').onclick=leaveTeam; $('syncOut2').onclick=signOut;
+  bindMembers(); if(Date.now()-(SYNC.membersAt||0)>30000) loadMembers(); }
+// ---- members (who's signed in to this team); owners change roles, remove people and let them back in
+const ROLE_LBL={owner:'Owner',pitwall:'Pit wall',crew:'Crew',viewer:'Viewer'};
+async function loadMembers(){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline()) return; SYNC.membersAt=Date.now();
+  try{ const {data,error}=await sb.rpc('team_members',{p_team:DB.team.sid}); if(error) return; SYNC.members=data||[]; const b=$('syncMembers'); if(b){ b.innerHTML=membersHTML(); bindMembers(); } }catch(e){} }
+function membersHTML(){ const ms=SYNC.members||[]; if(!ms.length) return ''; const own=DB.team.role==='owner', cur=ms.filter(m=>!m.removed), gone=ms.filter(m=>m.removed);
+  const row=m=>`<div class="lrow" style="cursor:default"><div class="lmain"><b>${esc(m.name)}${m.is_me?' <span class="sub" style="margin:0">(you)</span>':''}</b><small>${[m.email,m.device].filter(Boolean).map(esc).join(' · ')}</small></div>${own&&!m.is_me
+    ?`<select class="msel" data-role="${esc(m.user_id)}" aria-label="Role">${Object.entries(ROLE_LBL).map(([k,v])=>`<option value="${k}" ${k===m.role?'selected':''}>${v}</option>`).join('')}</select><button class="mini" data-rmm="${esc(m.user_id)}" aria-label="Remove ${esc(m.name)}">✕</button>`
+    :`<span class="sub" style="margin:0">${ROLE_LBL[m.role]||esc(m.role)}</span>`}</div>`;
+  return `<div class="sub" style="margin:14px 0 2px">On this team (${cur.length})</div>${cur.map(row).join('')}`+
+    (own&&gone.length?`<div class="sub" style="margin:12px 0 2px">Removed</div>${gone.map(m=>`<div class="lrow" style="cursor:default"><div class="lmain"><b>${esc(m.name)}</b><small>${esc(m.email||'')}</small></div><button class="mini" data-back="${esc(m.user_id)}">Let back in</button></div>`).join('')}`:''); }
+function bindMembers(){ const box=$('syncMembers'); if(!box) return; const sb=sbClient(), tid=DB&&DB.team.sid;
+  box.querySelectorAll('[data-role]').forEach(el=>el.onchange=async()=>{ const {error}=await sb.rpc('set_member_role',{p_team:tid,p_user:el.dataset.role,p_role:el.value});
+    toast2(error?(/needs an owner/.test(error.message)?'A team needs an owner: make someone else owner first.':error.message):'Role changed'); loadMembers(); });
+  box.querySelectorAll('[data-rmm]').forEach(el=>el.onclick=async()=>{ const m=(SYNC.members||[]).find(x=>x.user_id===el.dataset.rmm); if(!confirm(`Remove ${m?m.name:'this person'} from the team? They stop syncing and can’t re-join with the code until you let them back in.`)) return;
+    const {error}=await sb.from('memberships').delete().eq('team_id',tid).eq('user_id',el.dataset.rmm); toast2(error?error.message:'Removed'); loadMembers(); });
+  box.querySelectorAll('[data-back]').forEach(el=>el.onclick=async()=>{ const {error}=await sb.rpc('allow_rejoin',{p_team:tid,p_user:el.dataset.back}); toast2(error?error.message:'They can join again with the code'); loadMembers(); }); }
 
 /* ================= WEATHER RADAR ================= */
 // RainViewer radar (free for personal use, attribution required; the free tier serves radar up to zoom 6) over

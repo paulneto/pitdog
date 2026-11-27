@@ -58,3 +58,7 @@ project is linked. Each applied version is recorded in `supabase_migrations.sche
 The account allows **two active free projects**. PitDog took the slot of LotAgent's **Deal-agent-staging**, which was
 **paused** on 27 Nov 2026 (data kept; restore from the Supabase dashboard when needed; that would need PitDog or
 another project paused, or a paid plan).
+
+## Members in the app (migration 0500)
+
+Owners manage members from the app's Team tab: `team_members(team)` lists everyone (names and roles for all members; emails and removed people for owners only), `set_member_role(team, user, role)` changes a role (the last owner can't be demoted), removal is a plain delete under the `memberships_remove` policy, and `allow_rejoin` lets a removed person join again with the code. The direct UPDATE policy on `memberships` is gone, so roles change only through `set_member_role`.

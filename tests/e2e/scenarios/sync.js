@@ -52,6 +52,13 @@ window.PITDOG_SB = {
         if (h && h.removed) return { data: null, error: { message: 'removed from this team: ask the owner to add you back' } };
         SRV.memberships.push({ team_id: c.team_id, user_id: SRV.user.id, role: h ? (h.last_role === 'owner' ? 'pitwall' : h.last_role) : 'crew' }); }
       return { data: c.team_id, error: null }; }
+    if (fn === 'team_members') { const r = roleOf(a.p_team); if (!r) return { data: null, error: { message: 'not a member of this team' } }; const own = r === 'owner';
+      const em = id => Object.values(U).find(u => u.id === id).email, last = {}; SRV.history.filter(h => h.team_id === a.p_team).forEach(h => { last[h.user_id] = h; });
+      const cur = SRV.memberships.filter(m => m.team_id === a.p_team).map(m => ({ user_id: m.user_id, name: em(m.user_id).split('@')[0], email: own || m.user_id === SRV.user.id ? em(m.user_id) : null, role: m.role, device: 'phone', removed: false, is_me: m.user_id === SRV.user.id }));
+      const gone = own ? Object.values(last).filter(h => h.removed && !cur.some(c => c.user_id === h.user_id)).map(h => ({ user_id: h.user_id, name: em(h.user_id).split('@')[0], email: em(h.user_id), role: h.last_role, removed: true, is_me: false })) : [];
+      return { data: cur.concat(gone), error: null }; }
+    if (fn === 'set_member_role') { if (roleOf(a.p_team) !== 'owner') return { data: null, error: { message: 'owner only' } }; SRV.memberships.find(m => m.team_id === a.p_team && m.user_id === a.p_user).role = a.p_role; return { data: null, error: null }; }
+    if (fn === 'allow_rejoin') { if (roleOf(a.p_team) !== 'owner') return { data: null, error: { message: 'owner only' } }; SRV.history.filter(h => h.team_id === a.p_team && h.user_id === a.p_user).forEach(h => { h.removed = false; }); return { data: null, error: null }; }
   },
   from: t => Q(t),
   channel: () => { const ch = { on(ev, f, cb) { SRV.subs.push({ table: f.table, cb }); return ch; }, subscribe() { return ch; } }; return ch; },
@@ -177,6 +184,22 @@ setTimeout(async () => {
     park('B');
     become('A'); const ownerRows = SRV.memberships.filter(m => m.user_id === U.A.id).length; await leaveTeam();
     expect(teamOnline() && SRV.memberships.filter(m => m.user_id === U.A.id).length === ownerRows, 'the only owner can’t leave (the team keeps its owner)');
+
+    // --- the owner manages members in the app (no admin console needed)
+    const tid = DB.team.sid, mB = () => SRV.memberships.find(m => m.team_id === tid && m.user_id === U.B.id);
+    show('team'); SYNC.membersAt = 0; renderTeamTab(); await wait(30);
+    expect(/On this team \(2\)/.test(txt('syncMembers')) && /luc@example\.com/.test(txt('syncMembers')) && /\(you\)/.test(txt('syncMembers')), 'the owner sees both members, with emails');
+    const sel = document.querySelector('#syncMembers [data-role]'); sel.value = 'pitwall'; await sel.onchange(); await wait(30);
+    expect(mB().role === 'pitwall', 'the owner promotes B to pit wall from the Team tab');
+    await document.querySelector('#syncMembers [data-rmm]').onclick(); await wait(30);
+    expect(!mB() && /Removed/.test(txt('syncMembers')) && document.querySelector('#syncMembers [data-back]'), 'the owner removes B, who is listed under Removed');
+    await document.querySelector('#syncMembers [data-back]').onclick(); await wait(30);
+    expect(SRV.history.filter(h => h.team_id === tid && h.user_id === U.B.id).every(h => !h.removed) && !/Removed/.test(txt('syncMembers')), '“Let back in” clears the mark');
+    park('A'); become('B'); SYNC.user = U.B; await joinTeam('K7QM3XPA');
+    expect(mB() && mB().role === 'pitwall' && DB.team.role === 'pitwall', 'B re-joins with the code and gets the pit wall role back');
+    SYNC.membersAt = 0; show('team'); renderTeamTab(); await wait(30);
+    expect(!document.querySelector('#syncMembers [data-role]') && !/paul@neto\.me/.test(txt('syncMembers')), 'non-owners see names and roles, no controls, no one else’s email');
+    park('B'); become('A');
 
     // --- session died elsewhere: keep everything, say signed out (finding #2)
     SRV.dead = true; click('yBtn'); await pull(false);

@@ -45,7 +45,14 @@ CHECKS = [
   ("crew can't read the join code", 'B', "select * from team_codes", 'rows:0'),
   ('owner can read the join code', 'A', f"select * from team_codes where team_id={TEAM}", 'rows:1'),
   ("the last owner can't leave", 'A', f"delete from memberships where team_id={TEAM} and user_id=auth.uid() returning user_id", 'rows:0'),
-  ("the last owner can't demote themselves", 'A', f"update memberships set role='crew' where team_id={TEAM} and user_id=auth.uid() returning user_id", 'denied'),
+  ("the last owner can't demote themselves", 'A', f"select public.set_member_role({TEAM},auth.uid(),'crew')", 'denied'),
+  ('members see who is on the team', 'B', f"select * from public.team_members({TEAM})", 'rows:2'),
+  ("crew see names, not teammates' emails (only their own)", 'B', f"select * from public.team_members({TEAM}) where email is not null", 'rows:1'),
+  ('the owner sees everyone\'s email', 'A', f"select * from public.team_members({TEAM}) where email is not null", 'rows:2'),
+  ("a non-member can't list the members", 'D', f"select * from public.team_members({TEAM})", 'denied'),
+  ("crew can't change roles", 'B', f"select public.set_member_role({TEAM},auth.uid(),'owner')", 'denied'),
+  ("owners can't rewrite membership rows directly (roles go through set_member_role)", 'A', f"update memberships set role='viewer' where team_id={TEAM} and user_id={ID('userB')} returning user_id", 'rows:0'),
+  ("an unknown role is refused", 'A', f"select public.set_member_role({TEAM},{ID('userB')},'boss')", 'denied'),
   ('server clock is readable', 'B', "select 1 where public.server_now() > 1700000000000", 'rows:1'),
   ('crew can log PIT IN', 'B', f"insert into events(id,race_id,team_id,t,type) values (gen_random_uuid(),{RACE},{TEAM},3,'in') returning id", 'rows:1'),
   ("crew can't forge an event as someone else", 'B', f"insert into events(id,race_id,team_id,t,type,created_by) values (gen_random_uuid(),{RACE},{TEAM},4,'out',{ID('userA')}) returning id", 'denied'),
@@ -54,15 +61,16 @@ CHECKS = [
   ("events are append-only: the owner can't delete one", 'A', "delete from events returning id", 'rows:0'),
   ("events are append-only: no edits (UNDO is a void event)", 'A', "update events set type='out' returning id", 'rows:0'),
   ('UNDO is logged as a void event', 'A', "insert into events(id,race_id,team_id,t,type,payload) select gen_random_uuid(),race_id,team_id,5,'void',jsonb_build_object('target',id) from events where type='in' limit 1 returning id", 'rows:1'),
-  ('owner demotes the teammate to viewer', 'A', f"update memberships set role='viewer' where user_id={ID('userB')} and team_id={TEAM} returning user_id", 'rows:1'),
+  ('owner demotes the teammate to viewer', 'A', f"select public.set_member_role({TEAM},{ID('userB')},'viewer')", 'ok'),
   ('a viewer can leave', 'B', f"delete from memberships where team_id={TEAM} and user_id=auth.uid() returning user_id", 'rows:1'),
   ('the viewer re-joins with the code', 'B', "select public.join_team((select code from pg_temp.ids where k='team'))", 'ok'),
   ('…and gets the old role back (viewer, not crew)', 'B', "select 1 from memberships where user_id=auth.uid() and team_id=(select id from pg_temp.ids where k='team') and role='viewer'", 'rows:1'),
-  ('owner promotes the teammate to pit wall', 'A', f"update memberships set role='pitwall' where user_id={ID('userB')} returning user_id", 'rows:1'),
+  ('owner promotes the teammate to pit wall', 'A', f"select public.set_member_role({TEAM},{ID('userB')},'pitwall')", 'ok'),
   ('pit wall can change the plan', 'B', "update races set settings='{\"name\":\"Sat v2\"}' returning id", 'rows:1'),
   ('setup: E joins team 2 as crew', 'E', "select public.join_team((select code from pg_temp.ids where k='team2'))", 'ok'),
   ('owner removes a member', 'A', f"delete from memberships where team_id={TEAM2} and user_id={ID('userE')} returning user_id", 'rows:1'),
   ("a removed member can't re-join with the code", 'E', "select public.join_team((select code from pg_temp.ids where k='team2'))", 'denied'),
+  ('the owner sees the removed member in the list', 'A', f"select * from public.team_members({TEAM2}) where removed", 'rows:1'),
   ('owner can let them back in', 'A', f"select public.allow_rejoin({TEAM2},{ID('userE')})", 'ok'),
   ('…and then they can re-join', 'E', "select public.join_team((select code from pg_temp.ids where k='team2'))", 'ok'),
   ("an event can't point at another team's race", 'A', f"insert into events(id,race_id,team_id,t,type) values (gen_random_uuid(),{RACE},{TEAM2},6,'in') returning id", 'denied'),
@@ -131,7 +139,7 @@ insert into ids values ('userA', gen_random_uuid(), null), ('userB', gen_random_
 insert into public.platform_admins(email, note) values ('rls-admin@pitdog.test', 'rls_check'), ('rls-unverified@pitdog.test', 'rls_check');
 insert into auth.users(id, aud, role, instance_id, email, email_confirmed_at)
   select id, 'authenticated', 'authenticated', '00000000-0000-0000-0000-000000000000',
-    case k when 'userC' then 'rls-admin@pitdog.test' when 'userD' then 'rls-unverified@pitdog.test' end,
+    case k when 'userC' then 'rls-admin@pitdog.test' when 'userD' then 'rls-unverified@pitdog.test' else 'rls-'||lower(k)||'@pitdog.test' end,
     case k when 'userC' then now() end from ids;
 do $t$ declare n int; ok boolean; detail text; begin
 """ + ''.join(block(i, *c) for i, c in enumerate(CHECKS)) + """
