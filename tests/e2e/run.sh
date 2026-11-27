@@ -10,6 +10,7 @@ for sc in "$HERE"/scenarios/*.js; do
   name="$(basename "$sc" .js)"; [[ -n "${1:-}" && "$name" != *"$1"* ]] && continue
   win="$(grep -m1 '^// @window' "$sc" | awk '{print $3}')"; win="${win:-500,900}"
   page="$(grep -m1 '^// @page' "$sc" | awk '{print $3}')"; page="${page:-index.html}"   # default: the main app
+  budget="$(grep -m1 '^// @budget' "$sc" | awk '{print $3}')"; budget="${budget:-4000}"   # virtual ms the page may run
   python3 -I - "$ROOT/app/$page" "$HERE/harness.js" "$sc" "$OUT/$name.html" <<'PY'
 import sys; app,h,sc,out=sys.argv[1:]
 s=open(app).read(); inj='<script>\n'+open(h).read()+'\n'+open(sc).read()+'\n</script>'
@@ -18,7 +19,7 @@ PY
   rm -rf "$OUT/profile-$name"
   # shellcheck disable=SC2086  (CHROME_FLAGS is a list, e.g. --no-sandbox on CI)
   "$CHROME" --headless=new --disable-gpu --no-first-run ${CHROME_FLAGS:-} --user-data-dir="$OUT/profile-$name" --window-size="$win" \
-    --virtual-time-budget=4000 --dump-dom "file://$OUT/$name.html" 2>/dev/null > "$OUT/$name.dom.html"
+    --virtual-time-budget="$budget" --dump-dom "file://$OUT/$name.html" 2>/dev/null > "$OUT/$name.dom.html"
   res="$(python3 -I -c "
 import re,html,json,sys
 s=open('$OUT/$name.dom.html').read(); m=re.search(r'<pre id=\"RESULT\">(.*?)</pre>',s,re.S)
