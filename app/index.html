@@ -64,8 +64,9 @@
   .big.amber{background:color-mix(in srgb,var(--amber) 14%,var(--bg));color:var(--amber);border:2px solid var(--amber)}
   .big.grey{background:var(--btn);color:var(--muted)}
   .side{width:92px;display:flex;flex-direction:column;gap:6px}
-  .side button{flex:1;border-radius:14px;border:1px solid var(--line);background:var(--btn);color:var(--text);font:inherit;font-weight:800;font-size:12px;cursor:pointer;letter-spacing:.5px}
+  .side button{flex:2;border-radius:14px;border:1px solid var(--line);background:var(--btn);color:var(--text);font:inherit;font-weight:800;font-size:12px;cursor:pointer;letter-spacing:.5px}
   .side button.yon{background:var(--yellow);color:var(--on-yellow);border-color:var(--yellow)}
+  .side #undoBtn{flex:1;margin-top:8px;font-size:11px;color:var(--muted)}
   .side button.ron{background:var(--red);color:var(--on-fill);border-color:var(--red)}
   .tabbar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--tab) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:var(--bar);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;z-index:7}
   .tabbar button{flex:1;background:none;border:0;color:var(--muted);font:inherit;font-size:11px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
@@ -82,6 +83,10 @@
   .i{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em;flex:none}
   .i .f{fill:currentColor;stroke:none}
   /* status strip: the most urgent alert big, the rest as one-line chips */
+  .banner.logged{background:var(--panel);color:var(--text);border:1px solid var(--line);font-weight:600}
+  .fixbtn{margin-left:auto;flex:none;font-size:13px;padding:6px 14px}
+  .fulltgl{flex:1}.fulltgl.sel{--c:var(--text)}
+  .fixh{font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin:12px 0 6px}
   .strip{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:800;padding:14px 16px;min-height:58px;letter-spacing:.2px}
   .strip .i{width:26px;height:26px}
   .strips2{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 10px}
@@ -90,7 +95,7 @@
   .aclock{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-weight:800;font-size:20px;letter-spacing:-.3px;white-space:nowrap}
   .hero-l{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
   .hero-n{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:92px;font-weight:800;line-height:1;letter-spacing:-3px;margin:4px 0 6px}
-  .hero-n.warn{color:var(--amber)}.hero-n.bad{color:var(--red)}
+  .hero-n.warn{color:var(--amber)}.hero-n.bad{color:var(--red)}.hero-n.go{color:var(--green);letter-spacing:-2px}
   .hero-s{font-size:16px;color:var(--muted);margin-bottom:12px}.hero-s b{color:var(--text);font-size:20px;font-weight:800}
   #trackCard .driver{margin:12px 0 10px}
   .facts{display:flex;gap:8px;flex-wrap:wrap}
@@ -218,8 +223,9 @@
   .cc-go.red{background:var(--red);box-shadow:0 0 30px color-mix(in srgb,var(--red) 35%,transparent)}
   .cc-go.amber{background:color-mix(in srgb,var(--amber) 14%,var(--cc-bg));color:var(--amber);box-shadow:inset 0 0 0 2px var(--amber)}
   .cc-go.grey{background:var(--cc-deep);color:var(--cc-dim)}
-  .cc-side{display:flex;flex-direction:column;gap:6px;width:92px}
-  .cc-side button{flex:1;border-radius:10px;border:1px solid var(--cc-line2);background:var(--cc-deep);color:var(--cc-text);font:inherit;font-weight:800;font-size:12px;letter-spacing:1px;cursor:pointer}
+  .cc-side{display:flex;flex-direction:column;gap:6px;width:110px}
+  .cc-side button{flex:2;border-radius:10px;border:1px solid var(--cc-line2);background:var(--cc-deep);color:var(--cc-text);font:inherit;font-weight:800;font-size:12px;letter-spacing:1px;cursor:pointer}
+  .cc-side #ccU{flex:1;margin-top:10px;font-size:11px;color:var(--cc-dim)}
   .cc-side button.yon{background:var(--yellow);color:var(--on-yellow)}.cc-side button.ron{background:var(--red);color:var(--on-fill)}
   .cc-ring{position:relative;width:min(25vh,210px);height:min(25vh,210px);margin:2px auto}
   .cc-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
@@ -247,6 +253,7 @@
   .cc-a.warn{background:color-mix(in srgb,var(--amber) 12%,transparent);border-color:var(--amber);color:var(--amber)}
   .cc-a.info{background:color-mix(in srgb,var(--blue) 12%,transparent);border-color:var(--blue);color:var(--info)}
   .cc-a.go{background:color-mix(in srgb,var(--green) 12%,transparent);border-color:var(--green);color:var(--green)}
+  .cc-a.logged,.cc-topalert.logged{background:var(--cc-kv);border-color:var(--cc-mid);color:var(--cc-hi);box-shadow:inset 0 0 0 1px var(--cc-line2)}
   .cc-a.ok{background:color-mix(in srgb,var(--cc-acc) 6%,transparent);border-color:var(--cc-acc3);color:var(--cc-mid);font-weight:600}
   .cc-log{font-size:11.5px;color:var(--cc-dim);border-top:1px solid var(--cc-line2);margin-top:6px;padding-top:6px;line-height:1.6}
   .cc-log b{color:var(--cc-accl);font-weight:700}
@@ -494,7 +501,7 @@
         <div class="cc-ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" style="stroke:var(--cc-line2)" stroke-width="8"/><circle id="ccRingArc" cx="50" cy="50" r="44" fill="none" style="stroke:var(--red)" stroke-width="8" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="276.5"/></svg>
           <div class="t"><div class="cc-mid mono" id="ccPitT">0:00</div><div class="cc-lbl" id="ccPitMin"></div></div></div>
         <div class="cc-lbl">Stop type</div><div class="cc-chips" id="ccKinds"></div>
-        <div id="ccJugBox"><div class="cc-lbl">Fuel added <span id="ccJugPlan" style="color:var(--amber)"></span></div><div class="stepper" id="ccJugs"></div></div>
+        <div id="ccJugBox"><div class="cc-lbl">Fuel added <span id="ccJugPlan" style="color:var(--amber)"></span></div><div class="stepper" id="ccJugs"></div><div class="cc-chips" id="ccFull"></div></div>
         <div class="cc-lbl">Next driver</div><div class="cc-chips" id="ccDrvs"></div>
       </div>
       <div class="cc-ctl">
@@ -558,7 +565,7 @@
     <div class="hero-s" id="heroSub"></div>
     <div class="bar"><i id="stintBar" style="width:0"></i></div>
     <div class="driver"><div class="sw" id="drvSw"></div><div style="flex:1;min-width:0"><div class="n" id="drvName">–</div><div class="m" id="drvMeta">–</div></div></div>
-    <div class="facts"><span class="fact" id="fuelFact"><span data-ic="fuel"></span><b id="fuelLeft">–</b><small id="fuelFactL">in tank</small></span><span class="fact"><span data-ic="flag"></span><b id="lapsDone">–</b><small>stint laps</small></span></div>
+    <div class="facts"><span class="fact" id="fuelFact"><span data-ic="fuel"></span><b id="fuelLeft">–</b><small id="fuelFactL">in tank (est)</small></span><span class="fact"><span data-ic="flag"></span><b id="lapsDone">–</b><small>laps (est)</small></span></div>
   </div>
 
   <div class="card" id="pitCard" style="display:none">
@@ -571,6 +578,7 @@
     <div id="fuelBox">
       <h2><span>Fuel added</span><span id="fuelPlan"></span></h2>
       <div class="stepper" id="jugChips"></div>
+      <div class="chips" id="fullTgl"></div>
     </div>
     <h2>Next driver</h2>
     <div class="chips" id="nextDrv"></div>
@@ -599,7 +607,7 @@
       <div class="stat"><div class="v" id="fuelNeed">–</div><div class="l">Still to add</div></div>
     </div>
     <label class="f" style="margin-top:8px">Re-plan with measured burn <select id="useMeasured"><option value="1">Yes</option><option value="0">No</option></select></label>
-    <div class="hint">Measured burn assumes you top the tank up to the same level at every fuel stop, so log the fuel added each time at PIT OUT.</div>
+    <div class="hint">Burn is measured only between full tanks: the car starts full, and each stop logged "filled to full" closes a stretch. Until one is measured, the plan adds the safety margin (Car settings) to your burn estimate.</div>
   </div>
 </section>
 
@@ -679,6 +687,8 @@
     <label class="f">Fill rate (per min) <input id="fillRate" type="number" inputmode="decimal" min="0.1" step="0.1"></label>
     <label class="f">Driver change (s) <input id="changeSec" type="number" inputmode="numeric" min="0"></label>
     <label class="f">Jug size <input id="jug" type="number" inputmode="decimal" min="0.5" step="0.5"></label>
+    <label class="f">Fuel stops <select id="fill"><option value="full">Fill to full</option><option value="need">Only what's needed</option></select></label>
+    <label class="f">Safety margin on your burn (%) <input id="margin" type="number" inputmode="numeric" min="0" max="50" step="1"></label>
     <div class="hint">Pit-lane loss is the time lost driving through the pit lane compared with a racing lap. Edits here change this car for every race.</div>
   </div>
   <div class="card">
@@ -749,6 +759,10 @@
     <h2>Share &amp; reset</h2>
     <button class="btn full" id="share">Send plan to teammates</button>
     <button class="btn full" id="print">Print plan</button>
+    <button class="btn full" id="exportDb"><span data-ic="pitout"></span> Export all data (file)</button>
+    <button class="btn full" id="importDb"><span data-ic="pitin"></span> Import data from a file</button>
+    <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+    <button class="btn full" id="restoreBk" style="display:none"></button>
     <button class="btn full" id="endRace" style="color:var(--red)">Clear this race log</button>
     <button class="btn full" id="reset" style="color:var(--muted)">Reset everything</button>
     <div class="hint">Add to your home screen (iPhone: Share → Add to Home Screen; Android: ⋮ → Add to Home screen) to run it full-screen. The race keeps running even if you close the app. One phone runs the pit wall; the share link sends the plan to the others.</div>
@@ -818,12 +832,17 @@ const SERIES={
 };
 const DEFAULT={series:'luckydog',
   race:Object.assign({weighting:'even',track:'none',lat:0,lon:0,name:'Saturday',start:'10:00',end:'17:00',len:120,startG:'13:00'},SERIES.luckydog.race),
-  car:{unit:'gal',cap:16.4,burn:0.38,reserve:1,lap:'2:20',pitLoss:45,fillRate:4,changeSec:60,jug:5,useMeasured:1},
+  car:{unit:'gal',cap:16.4,burn:0.38,reserve:1,lap:'2:20',pitLoss:45,fillRate:4,changeSec:60,jug:5,useMeasured:1,fill:'full',margin:15},
   drivers:[{name:'Driver A',max:120},{name:'Driver B',max:120},{name:'Driver C',max:120},{name:'Driver D',max:120}],
   events:[],archive:[]};
 const clone=o=>JSON.parse(JSON.stringify(o));
 let S;
-const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
+/* storage never fails silently: a failed save raises a red banner until a save works again */
+let SAVE_FAIL=false, OTHER_TAB=false;
+const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},
+  set(k,v){ try{ localStorage.setItem(k,v); if(k==='pitdog_db') SAVE_FAIL=false; return true; }catch(e){ if(k==='pitdog_db') SAVE_FAIL=true; return false; } }};
+/* a copy of the whole database before anything destructive (clear log, reset, import), restorable from the Log tab */
+function backupDB(why){ if(!DB||SIM.on) return; try{ localStorage.setItem('pitdog_backup',JSON.stringify({at:Date.now(),why,db:DB})); }catch(e){} }
 const save=()=>dbSave();
 const $=id=>document.getElementById(id);
 const buzz=(p=30)=>{try{navigator.vibrate&&navigator.vibrate(p);}catch(e){}};
@@ -852,15 +871,15 @@ function clockAt(min){ const t=T0(); if(t) return wall(t+min*60000); const base=
 /* ================= events -> live state ================= */
 function live(now=nowMs()){
   const t0=T0(); const L=raceLen();
-  const st={started:!!t0,now:t0?(now-t0)/60000:0,L,stops:[],inPit:false,yellow:false,red:false,finished:false,added:0};
+  const st={started:!!t0,now:t0?(now-t0)/60000:0,L,stops:[],flags:[],inPit:false,yellow:false,red:false,finished:false,added:0};
   if(!t0) return st;
   let cur=null;
   for(const e of S.events){
     const m=(e.t-t0)/60000;
     if(e.type==='in'){ cur={in:m,kind:'fuel'}; st.stops.push(cur); }
-    if(e.type==='out'&&cur){ cur.out=m; cur.next=e.driver; cur.kind=e.kind||'fuel'; cur.fuel=e.fuel||0; st.added+=cur.fuel; cur=null; }
-    if(e.type==='yellow') st.yellow=e.on;
-    if(e.type==='red') st.red=e.on;
+    if(e.type==='out'&&cur){ cur.out=m; cur.next=e.driver; cur.kind=e.kind||'fuel'; cur.fuel=e.fuel||0; cur.full=!!e.full; st.added+=cur.fuel; cur=null; }
+    if(e.type==='yellow'){ if(e.on&&!st.yellow) st.flags.push({type:'yellow',from:m,to:null}); if(!e.on&&st.yellow){ const f=st.flags.filter(x=>x.type==='yellow').pop(); if(f) f.to=m; } st.yellow=e.on; }
+    if(e.type==='red'){ if(e.on&&!st.red) st.flags.push({type:'red',from:m,to:null}); if(!e.on&&st.red){ const f=st.flags.filter(x=>x.type==='red').pop(); if(f) f.to=m; } st.red=e.on; }
   }
   st.inPit=!!cur;
   if(st.now>=L) st.finished=true;
@@ -868,13 +887,20 @@ function live(now=nowMs()){
 }
 
 /* ================= planner ================= */
+/* Measured burn, from FULL-to-FULL stretches only: the car starts the race full*, and a stop logged
+   "filled to full" means the fuel poured since the last full tank = fuel burned in between. Time on track is
+   converted to green-flag laps: red-flag time burns nothing, yellow time counts at YELLOW_BURN of green*.
+   (* assumptions; YELLOW_BURN is deliberately low so any error over-reads the burn, the safe side.)
+   Returns {v: burn per green lap, n: stretches used} or null. */
+const YELLOW_BURN=0.3;
+function greenMin(lv,a,b){ let m=Math.max(0,b-a); lv.flags.forEach(f=>{ const lo=Math.max(a,f.from), hi=Math.min(b,f.to==null?lv.now:f.to); if(hi>lo) m-=(hi-lo)*(f.type==='red'?1:1-YELLOW_BURN); }); return Math.max(0,m); }
 function measuredBurn(lv,lap){
-  // fuel added at completed stops / laps driven before the last fuel stop (top-up-to-same-level assumption)
-  const fs=lv.stops.filter(s=>s.out!=null&&s.fuel>0); if(!fs.length) return null;
-  const last=fs[fs.length-1];
-  let onTrack=0, t=0; for(const s of lv.stops){ if(s.in>last.in) break; onTrack+=s.in-t; t=s.out!=null?s.out:s.in; }
-  const added=fs.reduce((a,s)=>a+s.fuel,0);
-  if(onTrack<20) return null; return added/(onTrack/lap);
+  let fuel=0, eq=0, tot=0, totEq=0, n=0, t=0;
+  for(const s of lv.stops){ if(s.out==null) break;
+    eq+=greenMin(lv,t,s.in); t=s.out;
+    if(s.kind==='fuel') fuel+=s.fuel||0;
+    if(s.kind==='fuel'&&s.full){ if(eq>=20&&fuel>0){ tot+=fuel; totEq+=eq; n++; } fuel=0; eq=0; } }
+  if(!n) return null; return {v:tot/(totEq/lap),n};
 }
 function plan(lv){
   const R=S.race, C=S.car, W=[], nd=S.drivers.length;
@@ -882,7 +908,11 @@ function plan(lv){
   if(!(lap>0)) return {err:'Enter a lap time as m:ss, e.g. 2:20'};
   if(!nd) return {err:'Add at least one driver.'};
   lv=lv||{stops:[],now:0,started:false};
-  const meas=measuredBurn(lv,lap); const burn=(C.useMeasured&&meas)?meas:C.burn;
+  // the burn the plan uses, cautious until it's been measured: guess + margin, then max(guess, measured) + 5%, then measured + 3%
+  const mb=measuredBurn(lv,lap), meas=mb?mb.v:null, margin=(C.margin??15)/100;
+  const burn=!(C.useMeasured&&mb)?C.burn*(1+margin):mb.n>=2?mb.v*1.03:Math.max(C.burn,mb.v)*1.05;
+  const burnBasis=!(C.useMeasured&&mb)?`your ${C.burn} ${C.unit}/lap + ${Math.round(margin*100)}% margin`:mb.n>=2?`measured over ${mb.n} full-to-full stints + 3%`:'one measured stint (cautious) + 5%';
+  const fillFull=(C.fill||'full')==='full';
   const refuel = R.refuelOver ? L>R.refuelOver : true;
   const fuelRangeMin=(C.cap - C.reserve*burn)/burn*lap;
   const lapOf=i=>lap*(1+prof(i).pace), burnOf=i=>burn*prof(i).ff, rangeOf=i=>(C.cap-C.reserve*burnOf(i))/burnOf(i)*lapOf(i);
@@ -905,7 +935,7 @@ function plan(lv){
     if(green<=0) return {err:'Too many stops for the race length. Check the stop time and pit-lane loss.'};
     // the next stint can't outrun the fuel actually in the tank, or the next mandatory 5-min stop
     let fuelT=C.cap; stints.forEach(s=>{ fuelT-=(s.end-s.start)/lapOf(s.driver)*burnOf(s.driver); const a=s.actual;
-      if(a.kind==='fuel'&&refuel) fuelT = a.out!=null ? Math.min(C.cap,fuelT+(a.fuel||0)) : C.cap; });
+      if(a.kind==='fuel'&&refuel) fuelT = a.out!=null&&!a.full ? Math.min(C.cap,fuelT+(a.fuel||0)) : C.cap; });
     let lastMand=0; lv.stops.forEach(a=>{ if(a.out!=null&&a.out-a.in>=R.minStop-1e-6) lastMand=a.out; else if(a.out==null&&a.kind==='fuel') lastMand=t; });
     const d0=di%nd; const firstCap=Math.min(cap, refuel?(fuelT-C.reserve*burnOf(d0))/burnOf(d0)*lapOf(d0):Infinity, R.mandEvery?lastMand+R.mandEvery-1-t:Infinity);
     let first=green;
@@ -947,11 +977,13 @@ function plan(lv){
     if(i<stints.length-1){
       const nx=stints[i+1]; const need=((nx.end-nx.start)/lapOf(nx.driver) + C.reserve)*burnOf(nx.driver);
       const kind=s.actual?s.actual.kind:'fuel';
-      let add = (refuel&&kind==='fuel') ? Math.max(0, Math.min(C.cap,need)-fuel) : 0;
-      if(s.actual&&s.actual.out!=null&&s.actual.fuel!=null&&kind==='fuel') add=s.actual.fuel||add;
-      const sout=s.actual&&s.actual.out!=null? s.actual.out : (s.locked? nx.start : s.end+stopCost);
-      s.stop={in:s.end,out:sout,dur:stopDur,add,jugs:Math.ceil(add/(C.jug/2)-1e-9)/2,kind};
-      fuel=Math.min(C.cap,fuel+add);
+      // default: fill to full (the measured burn depends on it, and a 5-min stop has time). 'need' mode pours only enough + reserve
+      let add = (refuel&&kind==='fuel') ? Math.max(0, (fillFull?C.cap:Math.min(C.cap,need))-fuel) : 0, full=refuel&&kind==='fuel'&&(fillFull||add>=C.cap-fuel-1e-9);
+      const done=s.actual&&s.actual.out!=null;
+      if(done&&kind==='fuel'){ full=!!s.actual.full; if(s.actual.fuel!=null) add=s.actual.fuel; }   // a logged 0 means 0 (it used to fall back to the plan)
+      const sout=done? s.actual.out : (s.locked? nx.start : s.end+stopCost);
+      s.stop={in:s.end,out:sout,dur:stopDur,add,jugs:Math.ceil(add/(C.jug/2)-1e-9)/2,kind,full};
+      fuel=full?C.cap:Math.min(C.cap,fuel+add);
     }
   });
   // checks
@@ -972,9 +1004,10 @@ function plan(lv){
   if(R.refuelOver&&!refuel) W.push(['warn',`This race is ${R.refuelOver} min or shorter, so refuelling isn't allowed.`]);
   if(R.fuelMax&&C.cap>R.fuelMax) W.push(['bad',`${(SERIES[S.series]||{}).label} limits total onboard fuel to ${R.fuelMax} ${C.unit}.`]);
   if(R.mandPer) W.push(['ok',`${mandCount(R,L)} mandatory stops for a ${fmt(L)} race (race minutes ÷ ${R.mandPer} − 1).`]);
-  if(meas) W.push(['ok',`Measured burn ${r1(meas*100)/100} ${C.unit}/lap (planned ${C.burn}).${C.useMeasured?' The plan is using the measured figure.':''}`]);
+  if(meas) W.push(['ok',`Measured burn ${Math.round(meas*1000)/1000} ${C.unit}/lap over ${mb.n} full-to-full stint${mb.n===1?'':'s'} (your estimate ${C.burn}).`]);
+  W.push(['ok',`Fuel planned at ${Math.round(burn*1000)/1000} ${C.unit}/lap: ${burnBasis}. ${fillFull?'Every fuel stop fills to full.':'Fuel stops pour only what the next stint needs.'}`]);
   if(!W.some(w=>w[0]==='bad')) W.unshift(['ok',`Plan is legal: ${stints.length-1} stops. Stints are limited by ${capWhy}.`]);
-  return {lapOf,burnOf,stints,W,L,lap,laps,stopCost,stopDur,refuel,fuelRangeMin,lastStart,burn,meas};
+  return {lapOf,burnOf,stints,W,L,lap,laps,stopCost,stopDur,refuel,fuelRangeMin,lastStart,burn,meas,mb,burnBasis,fillFull};
 }
 
 /* ================= live helpers ================= */
@@ -992,8 +1025,8 @@ function driverStatus(lv,P){
 
 /* ================= render: plan tab ================= */
 const raceFields=['weighting','mandPer','minApplies','track','lat','lon','name','start','end','len','startG','maxStint','rest','minStop','mandEvery','mandatory','earliest','latest','pitsUnderYellow','yellowWindow','onDeck'];
-const carFields=['unit','cap','burn','reserve','lap','pitLoss','fillRate','changeSec','jug'];
-const TXT=['weighting','minApplies','track','name','start','end','startG','unit','lap'];
+const carFields=['unit','cap','burn','reserve','lap','pitLoss','fillRate','changeSec','jug','fill','margin'];
+const TXT=['weighting','minApplies','track','name','start','end','startG','unit','lap','fill'];
 const num=(f,v)=>TXT.includes(f)?v:parseFloat(v)||0;
 function bind(){
   if(!$('track').options.length) $('track').innerHTML=Object.entries(TRACKS).map(([k,[n]])=>`<option value="${k}">${n}</option>`).join('');
@@ -1060,21 +1093,26 @@ function renderPlan(P,lv){
 }
 
 /* ================= render: race tab ================= */
-let P=null, pend={driver:null,kind:null,jugs:null};
+let P=null, pend={driver:null,kind:null,jugs:null,full:null}, TAP_AT=0;
 const KINDS={fuel:{ic:'fuel',t:'Fuel',s:'+ driver'},driver:{ic:'swap',t:'Driver',s:'only'},mech:{ic:'wrench',t:'Fix',s:'mechanical'},black:{ic:'flag',t:'Black flag',s:'hold'}};
 /* alerts are [class, short html, icon?]: a shape, a colour and a number, not a sentence */
-const ALERT_RANK={redf:0,box:1,go:2,yellow:3,warn:4,info:5,ok:6};   // 'pit NOW under yellow' is the decision; the yellow itself is ambient
-const ALERT_IC={redf:'stop',box:'stop',yellow:'alert',go:'bolt',warn:'clock',info:'clock',ok:'check'};
+const ALERT_RANK={redf:0,box:1,go:2,yellow:3,warn:4,logged:5,info:6,ok:7};   // 'pit NOW under yellow' is the decision; the yellow itself is ambient
+const ALERT_IC={redf:'stop',box:'stop',yellow:'alert',go:'bolt',warn:'clock',logged:'check',info:'clock',ok:'check'};
 const alertIc=a=>ic(a[2]||ALERT_IC[a[0]]||'clock');
 const byRank=A=>A.map((a,i)=>[a,i]).sort((x,y)=>(ALERT_RANK[x[0][0]]??9)-(ALERT_RANK[y[0][0]]??9)||x[1]-y[1]).map(x=>x[0]);
 function computeAlerts(lv,P){
   const R=S.race, A=[];
+  if(SAVE_FAIL) A.push(['box','NOT SAVING · device storage is full or blocked (private tab?). Export from the Log tab now.','stop']);
+  if(OTHER_TAB) A.push(['warn','PitDog is open in another tab or window · close one, or their logs will overwrite each other']);
   if(lv.red) A.push(['redf','RED FLAG · stop work, cap fuel, step back']);
   if(lv.yellow&&!lv.red) A.push(['yellow',`FULL COURSE YELLOW${R.pitsUnderYellow?'':' · pits closed'}`]);
   if(!P||P.err){ A.push(['warn',`${P?P.err:''} Fix it in the Plan tab.`]); return A; }
+  const ar=activeRace(); if(ar&&ar.copy&&!lv.started&&!SIM.on) A.push(['info','Plan copy from a teammate · the pit wall logs this race on its own device · this copy doesn\'t update','user']);
   if(!lv.started||lv.finished) return A;
   const st=P.stints, ci=curIdx(P);
   if(lv.inPit){ if(lv.red) A.push(['warn','Red flag · work stops · timer still counts, check with the marshal']); return A; }
+  // what PIT OUT just logged, for 3 minutes, with a one-tap fix: silent defaults are how bad fuel data gets in
+  const lo=lastOut(); if(lo&&lv.now-lo.m<3) A.push(['logged',`Logged: ${outSummary(lo.e)}`,'check','fix']);
   const s=st[ci]||st[st.length-1]; const inSeat=lv.now-s.start, last=st.indexOf(s)===st.length-1, tt=s.end-lv.now;
   const nm=i=>esc(S.drivers[i]?.name||'');
   if(!last){
@@ -1090,14 +1128,21 @@ function computeAlerts(lv,P){
   if(R.latest&&lv.now>P.lastStart&&done<mandCount(R,lv.L)) A.push(['box','Mandatory stop window CLOSED']);
   return A;
 }
+function lastOut(){ const t0=T0(); for(let i=S.events.length-1;i>=0;i--){ const e=S.events[i]; if(e.type==='out') return {e,i,m:t0?(e.t-t0)/60000:0}; if(e.type==='in') return null; } return null; }
+function outSummary(e){ const C=S.car, K=KINDS[e.kind||'fuel'];
+  return `${K.t}${e.kind==='fuel'&&e.fuel!=null?` · ${e.fuel?jugLbl(e.fuel/C.jug)+' jug'+(e.fuel/C.jug>1?'s':'')+' ('+r1(e.fuel)+' '+C.unit+')':'no fuel'}${e.full?' · full':' · not full'}`:''} · <b>${esc(S.drivers[e.driver]?.name||'?')}</b> out`; }
+const fixBtn=a=>a[3]==='fix'?`<button class="mini fixbtn" data-act="fix">Fix</button>`:'';
 function stripHTML(A){ if(!A.length) return ''; const [t,...rest]=byRank(A);
-  return `<div class="banner strip ${t[0]}">${alertIc(t)}<span>${t[1]}</span></div>`+(rest.length?`<div class="strips2">${rest.map(a=>`<div class="banner strip2 ${a[0]}">${alertIc(a)}<span>${a[1]}</span></div>`).join('')}</div>`:''); }
+  return `<div class="banner strip ${t[0]}">${alertIc(t)}<span>${t[1]}</span>${fixBtn(t)}</div>`+(rest.length?`<div class="strips2">${rest.map(a=>`<div class="banner strip2 ${a[0]}">${alertIc(a)}<span>${a[1]}</span>${fixBtn(a)}</div>`).join('')}</div>`:''); }
 // half-jug logging: the last jug is usually only partly poured
 const jugSteps=C=>{ const out=[]; const mx=Math.min(6,Math.ceil(C.cap/C.jug)); for(let j=0;j<=mx+1e-9;j+=0.5) out.push(j); return out; };
 const jugLbl=j=>j===0?'0':(Math.floor(j)||'')+(j%1?'½':'');
 const planJugs=()=>{ if(!P||P.err) return 0; const ps=P.stints[curIdx(P)-1]; return ps&&ps.stop?ps.stop.jugs:0; };
 const curJugs=()=>pend.jugs!=null?pend.jugs:planJugs();
-function stepJugs(d){ const mx=jugSteps(S.car).slice(-1)[0]; pend.jugs=Math.max(0,Math.min(mx,curJugs()+d)); buzz(10); }
+const planFull=()=>{ if(!P||P.err) return true; const ps=P.stints[curIdx(P)-1]; return ps&&ps.stop?!!ps.stop.full:true; };
+const curFull=()=>pend.full!=null?pend.full:(planFull()&&curJugs()>0);   // 'no fuel' can't be a full tank
+const fullBtn=()=>`<button class="chipbtn fulltgl ${curFull()?'sel':''}" data-full="1" aria-pressed="${curFull()}">${ic(curFull()?'check':'drop')} ${curFull()?'Filled to full':'Not full'}<small>${curFull()?'tap if the tank isn\'t full':'tap when the tank is full'}</small></button>`;
+function stepJugs(d){ const mx=jugSteps(S.car).slice(-1)[0]; pend.jugs=Math.max(0,Math.min(mx,curJugs()+d)); if(pend.jugs===0) pend.full=false; buzz(10); }
 function jugStepper(C){ const j=curJugs(), pj=planJugs(), mx=jugSteps(C).slice(-1)[0];
   return `<button class="stp" data-step="-0.5" aria-label="Less fuel" ${j<=0?'disabled':''}>−</button><div class="sv" data-j="${j}"><b>${j===0?'No fuel':jugLbl(j)+' jug'+(j>1?'s':'')}</b><small>${r1(j*C.jug)} ${C.unit}${j!==pj?' · plan '+jugLbl(pj):' · as planned'}</small></div><button class="stp" data-step="0.5" aria-label="More fuel" ${j>=mx?'disabled':''}>+</button>`; }
 const PROF0={pace:0,cons:0.015,ff:1,fade:0.005};
@@ -1136,7 +1181,7 @@ function renderRace(){
   else if(lv.inPit){
     pill.className='pill pit'; pill.textContent='IN PITS';
     const a=lv.stops[lv.stops.length-1]; const el=lv.now-a.in;
-    const kind=pend.kind||(()=>{ const s=st[ci-1]; return 'fuel'; })();
+    const kind=pend.kind||'fuel';
     const mn=minFor(kind); const target=mn?mn+5/60:0; const ok=el>=target;
     $('pitNo').textContent='#'+lv.stops.length; $('pitKindLbl').innerHTML=ic(KINDS[kind].ic)+' '+KINDS[kind].t;
     $('pitTimer').textContent=fmt(el); $('pitTimer').className='timer '+(ok?'ok':'wait');
@@ -1148,7 +1193,8 @@ function renderRace(){
     $('fuelBox').style.display=kind==='fuel'&&P.refuel?'block':'none';
     $('fuelPlan').textContent=ps?`plan ${r1(ps.add)} ${C.unit}`:'';
     const jsel=pend.jugs!=null?pend.jugs:planJ;
-    $('jugChips').innerHTML=jugStepper(C);
+    $('jugChips').innerHTML=jugStepper(C); $('fullTgl').innerHTML=fullBtn();
+    $('fullTgl').querySelector('button').onclick=()=>{ pend.full=!curFull(); buzz(10); renderRace(); };
     $('jugChips').querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{ stepJugs(+b.dataset.step); renderRace(); });
     const defD=cur?cur.driver:0; const dsel=pend.driver!=null?pend.driver:defD;
     $('nextDrv').innerHTML=S.drivers.map((d,i)=>{ const o=ds[i]; const restLeft=o.lastEnd!=null&&R.rest?R.rest-(a.in-o.lastEnd)-el:0; const tired=restLeft>0;
@@ -1166,6 +1212,7 @@ function renderRace(){
     $('upNextBody').innerHTML=nx.length?nx.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><span class="dot" style="background:${dcol(s.driver)}"></span>${esc(S.drivers[s.driver]?.name)}</span><span>${clockAt(s.start)} → ${clockAt(s.end)} <span style="color:var(--muted)">(${fmt(s.dur)})</span></span></div>`).join(''):'Last stint: bring it home';
   } else $('upNextBody').textContent='—';
 }
+const pitNow=(lv,tt)=>lv.started&&lv.yellow&&!lv.red&&S.race.pitsUnderYellow&&tt>0&&tt<=(S.race.yellowWindow||0);
 function renderTrack(s,lv,ds){
   const R=S.race,C=S.car; const d=S.drivers[s.driver]||{name:'?',max:0};
   const inSeat=lv.started?Math.max(0,lv.now-s.start):0; const last=P.stints.indexOf(s)===P.stints.length-1;
@@ -1181,14 +1228,15 @@ function renderTrack(s,lv,ds){
   else { const tt=s.end-lv.now, nx=P.stints[P.stints.indexOf(s)+1];
     hn.textContent=lv.started?fmt(tt).replace(/^-/,'−'):clockAt(s.end); $('nextStopL').textContent=lv.started?(tt<0?'Box overdue':'Next stop in'):'First stop';
     if(lv.started) tone=tt<=0?'bad':tt<=3?'warn':'';
-    $('heroSub').innerHTML=`${lv.started?'box '+clockAt(s.end)+' · ':''}then <b>${esc(S.drivers[nx.driver]?.name||'?')}</b>`; }
+    $('heroSub').innerHTML=`${lv.started?'box '+clockAt(s.end)+' · ':''}then <b>${esc(S.drivers[nx.driver]?.name||'?')}</b>`;
+    if(pitNow(lv,tt)){ hn.textContent='PIT NOW'; tone='go'; $('nextStopL').textContent='Yellow: cheap stop'; $('heroSub').innerHTML=`stop due in ${fmt(tt)} anyway · then <b>${esc(S.drivers[nx.driver]?.name||'?')}</b>`; } }
   hn.className='hero-n'+(tone?' '+tone:'');
   // fuel only shouts when it's low
   const fuelNow=s.fuelStart-inSeat/P.lapOf(s.driver)*P.burnOf(s.driver), resv=C.reserve*P.burnOf(s.driver), rangeMin=(fuelNow-resv)/P.burnOf(s.driver)*P.lapOf(s.driver);
   $('fuelLeft').textContent=r1(Math.max(0,fuelNow))+' '+C.unit;
   const low=lv.started&&!last&&P.refuel&&rangeMin<s.end-lv.now-1e-6, vlow=lv.started&&fuelNow<=resv;
   $('fuelFact').className='fact'+(vlow?' bad':low||(lv.started&&rangeMin<10)?' warn':'');
-  $('fuelFactL').textContent=vlow?'on reserve':(lv.started&&rangeMin<10)?`in tank · ${fmt(Math.max(0,rangeMin))} range`:low?'short of the planned stop':'in tank';
+  $('fuelFactL').textContent=vlow?'on reserve':(lv.started&&rangeMin<10)?`in tank · ${fmt(Math.max(0,rangeMin))} range`:low?'short of the planned stop':'in tank (est)';
   $('lapsDone').textContent=Math.floor(inSeat/P.lapOf(s.driver));
 }
 
@@ -1221,21 +1269,25 @@ function renderLog(){
 /* ================= actions ================= */
 function addEvent(e){ S.events.push({t:nowMs(),...e}); save(); update(); }
 $('bigBtn').onclick=()=>{
+  // a gloved double-tap must not log PIT OUT and then PIT IN: ignore repeat taps for 1.5 s
+  const nowT=Date.now(); if(nowT-TAP_AT<1500&&nowT>=TAP_AT) return; TAP_AT=nowT;
   const lv=live();
   if(lv.finished){ show('log'); return; }
-  if(!lv.started){ buzz(60); addEvent({type:'green'}); return; }
+  if(!lv.started){ const r=activeRace();
+    if(r&&r.copy&&!SIM.on){ if(!confirm('This plan came from a teammate\'s link. The pit wall logs the race on its own device, and this copy doesn\'t sync. Log the race on THIS device anyway?')) return; r.copy=false; }
+    buzz(60); addEvent({type:'green'}); return; }
   if(lv.inPit){
     const a=lv.stops[lv.stops.length-1]; const el=lv.now-a.in; const kind=pend.kind||'fuel'; const mn=minFor(kind);
     if(el<mn && !confirm(`Only ${fmt(el)} in the pits. Leaving before the ${fmt(mn)} minimum on a ${KINDS[kind].t.toLowerCase()} stop means a penalty. Leave anyway?`)) return;
     const ci=curIdx(P); const def=P.stints[ci]?P.stints[ci].driver:0;
     const ps=P.stints[ci-1]&&P.stints[ci-1].stop; const jugs=pend.jugs!=null?pend.jugs:(ps?ps.jugs:0);
-    const fuel=kind==='fuel'&&P.refuel?jugs*S.car.jug:0;
-    buzz([40,40,40]); addEvent({type:'out',driver:pend.driver!=null?pend.driver:def,stopLen:el,kind,fuel}); pend={driver:null,kind:null,jugs:null}; return;
+    const fuelStop=kind==='fuel'&&P.refuel, fuel=fuelStop?jugs*S.car.jug:0, full=fuelStop&&curFull();
+    buzz([40,40,40]); addEvent({type:'out',driver:pend.driver!=null?pend.driver:def,stopLen:el,kind,fuel,full}); pend={driver:null,kind:null,jugs:null,full:null}; return;
   }
   if(lv.red && !confirm('Red flag is out. Log PIT IN anyway?')) return;
   if(lv.yellow && !S.race.pitsUnderYellow && !confirm('Pits are closed under full-course yellow in this series. Log PIT IN anyway?')) return;
   if(S.race.earliest && lv.now<S.race.earliest && !confirm(`The stop window opens at ${S.race.earliest}:00. Log PIT IN anyway?`)) return;
-  buzz(80); pend={driver:null,kind:null,jugs:null}; addEvent({type:'in'});
+  buzz(80); pend={driver:null,kind:null,jugs:null,full:null}; addEvent({type:'in'});
 };
 $('yBtn').onclick=()=>{ const lv=live(); if(!lv.started) return; buzz(20); addEvent({type:'yellow',on:!lv.yellow}); };
 $('rBtn').onclick=()=>{ const lv=live(); if(!lv.started) return; if(!lv.red&&!confirm('Log a RED FLAG?')) return; buzz(60); addEvent({type:'red',on:!lv.red}); };
@@ -1243,12 +1295,40 @@ $('undoBtn').onclick=()=>{ if(!S.events.length) return; const e=S.events[S.event
   if(confirm('Undo '+nm+'?')){ S.events.pop(); save(); buzz(15); update(); } };
 $('finishRace').onclick=()=>{ if(SIM.on){ alert('Simulations aren\'t saved. Use End sim.'); return; } if(DB) finishRace(); };
 $('sameDay').onclick=()=>{ if(DB&&!SIM.on) newRaceSheet(activeRace()); };
-$('endRace').onclick=()=>{ if(confirm('Clear the race log and clock? Your plan stays.')){ S.events=[]; save(); update(); } };
-$('reset').onclick=()=>{ if(SIM.on) return; if(confirm('Delete the team and ALL races on this device?')){ try{ localStorage.removeItem('pitdog_db'); localStorage.removeItem('pitdog'); }catch(e){} DB=null; S=clone(DEFAULT); bind(); update(); startOnboarding(); } };
+$('endRace').onclick=()=>{ if(confirm('Clear the race log and clock? Your plan stays. (A backup is kept: Log → Restore.)')){ backupDB('before clearing the race log'); S.events=[]; save(); update(); renderBackup(); } };
+$('reset').onclick=()=>{ if(SIM.on) return; if(confirm('Delete the team and ALL races on this device? (A backup is kept: Log → Restore.)')){ backupDB('before reset'); try{ localStorage.removeItem('pitdog_db'); localStorage.removeItem('pitdog'); }catch(e){} DB=null; S=clone(DEFAULT); bind(); update(); startOnboarding(); } };
 $('print').onclick=()=>window.print();
+$('exportDb').onclick=()=>{ if(!DB) return; dbSave(); const blob=new Blob([JSON.stringify({app:'pitdog',v:DB.v||2,exported:new Date().toISOString(),db:DB},null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`pitdog-${(DB.team.name||'team').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); };
+$('importDb').onclick=()=>{ if(SIM.on) return; $('importFile').value=''; $('importFile').click(); };
+$('importFile').onchange=()=>{ const f=$('importFile').files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload=()=>{ let j=null; try{ j=JSON.parse(rd.result); }catch(e){} importDbObject(j&&j.db?j.db:j); }; rd.readAsText(f); };
+function importDbObject(raw){ const db=normalizeDB(raw?JSON.parse(JSON.stringify(raw)):null); if(!db){ alert('That file isn\'t a PitDog export.'); return false; }
+  if(!confirm(`Replace everything on this device with "${db.team.name}" (${db.races.length} race${db.races.length===1?'':'s'})? A backup of the current data is kept.`)) return false;
+  dbSave(); backupDB('before import'); DB=db; if(!activeRace()) DB.activeRaceId=(DB.races.find(r=>r.status!=='done')||DB.races[0]||{}).id; reloadActive(); renderBackup(); show('team'); return true; }
+function renderBackup(){ const b=$('restoreBk'); let bk=null; try{ bk=JSON.parse(localStorage.getItem('pitdog_backup')||'null'); }catch(e){}
+  if(!bk||!bk.db){ b.style.display='none'; return; } b.style.display='';
+  b.innerHTML=`${ic('clock')} Restore backup (${new Date(bk.at).toLocaleString([], {weekday:'short',hour:'2-digit',minute:'2-digit'})}, ${esc(bk.why||'')})`;
+  b.onclick=()=>{ const db=normalizeDB(bk.db); if(!db) return; if(!confirm('Restore the backup? What\'s on this device now is kept as the new backup.')) return;
+    const cur=DB; if(cur){ dbSave(); try{ localStorage.setItem('pitdog_backup',JSON.stringify({at:Date.now(),why:'before restoring',db:cur})); }catch(e){} }
+    closeSheet(); DB=db; if(!activeRace()) DB.activeRaceId=(DB.races.find(r=>r.status!=='done')||DB.races[0]||{}).id; reloadActive(); renderBackup(); show('team'); }; }
 $('share').onclick=()=>{ const s=clone(S); delete s.events; delete s.archive; const url=location.href.split('#')[0]+'#'+btoa(unescape(encodeURIComponent(JSON.stringify(s))));
   const done=()=>{ $('share').textContent='Link copied ✓'; setTimeout(()=>$('share').textContent='Send plan to teammates',1500); };
   try{ if(navigator.share){ navigator.share({title:'PitDog plan',text:'Our stint plan',url}).catch(()=>{}); return; } navigator.clipboard.writeText(url).then(done,()=>prompt('Copy this link:',url)); }catch(e){ prompt('Copy this link:',url); } };
+function fixStopSheet(){
+  const lo=lastOut(); if(!lo) return; const e=lo.e, C=S.car; const st={kind:e.kind||'fuel',jugs:(e.fuel||0)/C.jug,full:!!e.full,driver:e.driver};
+  const mx=jugSteps(C).slice(-1)[0];
+  const draw=()=>{ $('sheetB').innerHTML=`<div class="hint" style="margin:0 0 10px">Correct what PIT OUT logged for stop ${lv0().stops.length}. The plan and fuel estimate update straight away.</div>
+    <h2 class="fixh">Stop type</h2><div class="chips">${Object.entries(KINDS).map(([k,K])=>`<button class="chipbtn ${k===st.kind?'sel':''}" data-k="${k}">${ic(K.ic)} ${K.t}</button>`).join('')}</div>
+    ${st.kind==='fuel'?`<h2 class="fixh">Fuel added</h2><div class="stepper"><button class="stp" data-step="-0.5" ${st.jugs<=0?'disabled':''}>−</button><div class="sv"><b>${st.jugs?jugLbl(st.jugs)+' jug'+(st.jugs>1?'s':''):'No fuel'}</b><small>${r1(st.jugs*C.jug)} ${C.unit}</small></div><button class="stp" data-step="0.5" ${st.jugs>=mx?'disabled':''}>+</button></div>
+    <div class="chips"><button class="chipbtn fulltgl ${st.full?'sel':''}" data-full="1">${ic(st.full?'check':'drop')} ${st.full?'Filled to full':'Not full'}</button></div>`:''}
+    <h2 class="fixh">Went out</h2><div class="chips">${S.drivers.map((d,i)=>`<button class="chipbtn ${i===st.driver?'sel':''}" style="--c:${dcol(i)}" data-d="${i}">${esc(d.name)}</button>`).join('')}</div>`;
+    $('sheetB').querySelectorAll('button').forEach(b=>b.onclick=()=>{ if(b.dataset.k) st.kind=b.dataset.k; if(b.dataset.step) st.jugs=Math.max(0,Math.min(mx,st.jugs+(+b.dataset.step))); if(b.dataset.full) st.full=!st.full; if(b.dataset.d!=null) st.driver=+b.dataset.d; buzz(10); draw(); }); };
+  openSheet('Fix last stop','',[{label:'Cancel',fn:closeSheet},{label:'Save',cls:'pri',id:'fixSave',fn:()=>{ const fuelStop=st.kind==='fuel'; Object.assign(e,{kind:st.kind,fuel:fuelStop?st.jugs*C.jug:0,full:fuelStop&&st.full,driver:st.driver}); closeSheet(); save(); update(); }}]);
+  draw();
+}
+const lv0=()=>live();
+document.addEventListener('click',ev=>{ const b=ev.target.closest('[data-act="fix"]'); if(b){ ev.stopPropagation(); fixStopSheet(); } });
 function show(tab){ document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+tab)); document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab)); $('actionBar').style.display=tab==='race'?'block':'none'; window.scrollTo(0,0); }
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); show(b.dataset.tab); if(b.dataset.tab==='lab') renderLab(); });
 
@@ -1310,8 +1390,8 @@ function renderCC(){
   // the most urgent non-flag alert rides in the flag bar (the flag itself is already the bar); the rest list above the next stops
   const A=byRank(computeAlerts(lv,P).filter(a=>a[0]!=='yellow'&&a[0]!=='redf')), top=A[0], more=A.slice(1);
   $('ccFlagBar').classList.toggle('has',!!top);
-  $('ccTopAlert').className='cc-topalert'+(top?' '+top[0]:''); $('ccTopAlert').innerHTML=top?`${alertIc(top)}<span>${top[1]}</span>${more.length?`<span class="more">+${more.length} more</span>`:''}`:'';
-  $('ccAlerts').innerHTML=more.map(a=>`<div class="cc-a ${a[0]}">${alertIc(a)}<span>${a[1]}</span></div>`).join('');
+  $('ccTopAlert').className='cc-topalert'+(top?' '+top[0]:''); $('ccTopAlert').innerHTML=top?`${alertIc(top)}<span>${top[1]}</span>${fixBtn(top)}${more.length?`<span class="more">+${more.length} more</span>`:''}`:'';
+  $('ccAlerts').innerHTML=more.map(a=>`<div class="cc-a ${a[0]}">${alertIc(a)}<span>${a[1]}</span>${fixBtn(a)}</div>`).join('');
   $('ccAlertN').textContent=A.length?A.length+' alert'+(A.length===1?'':'s'):'';
   const t0=T0(); const ev=[...S.events].reverse().slice(0,4);
   $('ccLog').innerHTML=ev.map(e=>{ const m=t0?fmt((e.t-t0)/60000):''; let l={green:'GREEN',in:'PIT IN',out:'PIT OUT'}[e.type]||''; if(e.type==='yellow') l=e.on?'YELLOW':'YELLOW CLEAR'; if(e.type==='red') l=e.on?'RED':'RED CLEAR';
@@ -1339,7 +1419,7 @@ function renderCC(){
     $('ccKinds').innerHTML=Object.entries(KINDS).map(([k,K])=>`<button class="${k===kind?'sel':''}" data-k="${k}">${ic(K.ic)} ${K.t}</button>`).join('');
     const ps=st[ci-1]&&st[ci-1].stop; const jsel=pend.jugs!=null?pend.jugs:(ps?ps.jugs:0);
     $('ccJugBox').style.display=kind==='fuel'&&P.refuel?'block':'none'; $('ccJugPlan').textContent=ps?`plan ${r1(ps.add)} ${C.unit}`:'';
-    $('ccJugs').innerHTML=jugStepper(C);
+    $('ccJugs').innerHTML=jugStepper(C); $('ccFull').innerHTML=fullBtn().replace('chipbtn ','');
     const dsel=pend.driver!=null?pend.driver:(cur?cur.driver:0);
     $('ccDrvs').innerHTML=S.drivers.map((d,i)=>{ const o=ds[i]; const restLeft=o.lastEnd!=null&&R.rest?R.rest-(a.in-o.lastEnd)-el:0; return `<button class="${i===dsel?'sel':''} ${restLeft>0?'dim':''}" style="--c:${dcol(i)}" data-d="${i}">${esc(d.name)}${restLeft>0?' · rest':''}</button>`; }).join('');
     go.className='cc-go '+(ok?'green':'amber'); go.innerHTML=ok?'PIT OUT<small>car leaving pit lane</small>':`PIT OUT<small>too early · ${fmt(target-el)}</small>`;
@@ -1356,6 +1436,7 @@ function renderCC(){
     if(last){ $('ccNextL').textContent='To checkered'; $('ccNext').textContent=lv.started?hms(L-lv.now):'–'; $('ccNextSub').textContent='last stint: bring it home'; $('ccNext').style.color='var(--cc-hi)'; }
     else { const tt=s.end-lv.now; $('ccNextL').textContent=lv.started?(tt<0?'Box overdue':'Next stop in'):'First stop'; $('ccNext').textContent=lv.started?fmt(tt).replace(/^-/,'−'):clockAt(s.end);
       $('ccNext').style.color=lv.started&&tt<=0?'var(--red)':lv.started&&tt<=3?'var(--amber)':'var(--cc-hi)';
+      if(pitNow(lv,tt)){ $('ccNext').textContent='PIT NOW'; $('ccNext').style.color='var(--green)'; $('ccNextL').textContent='Yellow: cheap stop'; }
       const nx=st[st.indexOf(s)+1]; $('ccNextSub').textContent=`box ${clockAt(s.end)} · then ${S.drivers[nx.driver]?.name||''}`; }
     go.className='cc-go '+(lv.started?'red':'green'); go.innerHTML=lv.started?'PIT IN<small>car stopping at pit in</small>':'GREEN FLAG<small>race is green</small>';
   }
@@ -1405,7 +1486,7 @@ function renderCC(){
   $('ccTl').innerHTML=`<div class="tl-track">${tl}</div><div class="tl-axis">${ax}</div>`; $('ccTlSum').textContent=`${st.length} stints · ${st.length-1} stops · ~${Math.floor(P.laps)} laps`;
 }
 $('ccGo').onclick=()=>$('bigBtn').onclick(); $('ccY').onclick=()=>$('yBtn').onclick(); $('ccR').onclick=()=>$('rBtn').onclick(); $('ccU').onclick=()=>$('undoBtn').onclick();
-$('ccCar').addEventListener('click',e=>{ const b=e.target.closest('button[data-k],button[data-step],button[data-d]'); if(!b||b.disabled) return; if(b.dataset.step){ stepJugs(+b.dataset.step); renderCC(); renderRace(); return; }
+$('ccCar').addEventListener('click',e=>{ const b=e.target.closest('button[data-k],button[data-step],button[data-d],button[data-full]'); if(!b||b.disabled) return; if(b.dataset.full){ pend.full=!curFull(); buzz(10); renderCC(); renderRace(); return; } if(b.dataset.step){ stepJugs(+b.dataset.step); renderCC(); renderRace(); return; }
   if(b.dataset.k) pend.kind=b.dataset.k; if(b.dataset.j!=null&&b.dataset.j!=='') pend.jugs=+b.dataset.j; if(b.dataset.d!=null&&b.dataset.d!=='') pend.driver=+b.dataset.d; buzz(10); renderCC(); renderRace(); });
 $('ccSetup').onclick=()=>{ store.set('pitdog_view','phone'); applyView(); show('plan'); };
 $('ccOpen').onclick=()=>{ store.set('pitdog_view','cc'); applyView(); };
@@ -1414,7 +1495,7 @@ setInterval(()=>fetchWx(),5*60000);
 /* ================= TEAM DATABASE (local-first; same shape as the future Supabase tables) ================= */
 const ROLES={owner:'Owner · driver',driver:'Driver',crew:'Crew',viewer:'Viewer'};
 const isDriverRole=r=>r==='owner'||r==='driver';
-const CAR_FIELDS=['unit','cap','burn','reserve','lap','pitLoss','fillRate','changeSec','jug','useMeasured'];
+const CAR_FIELDS=['unit','cap','burn','reserve','lap','pitLoss','fillRate','changeSec','jug','useMeasured','fill','margin'];
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
 /* ---- input hygiene: share links and stored data are untrusted. Free text (names) is escaped when rendered;
@@ -1426,7 +1507,7 @@ const safeSeries=k=>typeof k==='string'&&own(SERIES,k)?k:'luckydog';
 const str=(v,max)=>String(v==null?'':v).replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,max);
 const nonneg=(v,d)=>{ const x=+v; return v!==null&&v!==''&&isFinite(x)&&x>=0?x:d; };
 const safeId=v=>typeof v==='string'&&IDRX.test(v)?v:uid();
-const ENUMS={weighting:['even','pace'],minApplies:['fuel','mand','mandfuel','all'],unit:['gal','L']};
+const ENUMS={weighting:['even','pace'],minApplies:['fuel','mand','mandfuel','all'],unit:['gal','L'],fill:['full','need']};
 function cleanRules(r){ const out=clone(DEFAULT.race); r=r&&typeof r==='object'?r:{};
   for(const k of Object.keys(out)){ if(!own(r,k)) continue; const v=r[k];
     if(ENUMS[k]) out[k]=ENUMS[k].includes(v)?v:out[k];
@@ -1438,14 +1519,14 @@ function cleanRules(r){ const out=clone(DEFAULT.race); r=r&&typeof r==='object'?
   return out; }
 function cleanCar(c){ c=c&&typeof c==='object'?c:{}; const out=clone(DEFAULT.car);
   for(const k of Object.keys(out)){ if(!own(c,k)) continue; const v=c[k];
-    if(k==='unit') out[k]=ENUMS.unit.includes(v)?v:out[k];
+    if(k==='unit'||k==='fill') out[k]=ENUMS[k].includes(v)?v:out[k];
     else if(k==='lap'){ const t=str(v,12); out[k]=/^[0-9:.]+$/.test(t)?t:out[k]; }
     else if(k==='useMeasured') out[k]=v?1:0;
     else out[k]=nonneg(v,out[k]); }
   return out; }
 function cleanEvents(ev){ return (Array.isArray(ev)?ev:[]).filter(e=>e&&typeof e==='object'&&['green','in','out','yellow','red'].includes(e.type)&&isFinite(+e.t)).map(e=>{
   const o={t:+e.t,type:e.type}; if(e.type==='yellow'||e.type==='red') o.on=!!e.on;
-  if(e.type==='out'){ o.kind=own(KINDS,e.kind)?e.kind:'fuel'; o.fuel=nonneg(e.fuel,0); o.stopLen=nonneg(e.stopLen,0); if(Number.isInteger(e.driver)&&e.driver>=0) o.driver=e.driver; }
+  if(e.type==='out'){ o.kind=own(KINDS,e.kind)?e.kind:'fuel'; o.fuel=nonneg(e.fuel,0); o.full=!!e.full; o.stopLen=nonneg(e.stopLen,0); if(Number.isInteger(e.driver)&&e.driver>=0) o.driver=e.driver; }
   return o; }); }
 /* a plan from a share link → {series, race, car, drivers} with every field typed, or null */
 function cleanShared(o){ if(!o||typeof o!=='object'||!o.race||typeof o.race!=='object'||!Array.isArray(o.drivers)) return null;
@@ -1463,7 +1544,7 @@ function normalizeDB(db){
     Object.assign(c,cleanCar(c),{id:safeId(c.id),name:str(c.name,40)||'Car',measured:meas}); });
   db.races=db.races.filter(r=>r&&typeof r==='object'); db.races.forEach(r=>{ r.id=safeId(r.id); r.series=safeSeries(r.series); r.rules=cleanRules(r.rules); r.events=cleanEvents(r.events);
     r.drivers=(Array.isArray(r.drivers)?r.drivers:[]).filter(d=>d&&typeof d==='object'&&typeof d.mid==='string').map(d=>({mid:d.mid,max:nonneg(d.max,120)}));
-    if(!['planned','live','done'].includes(r.status)) r.status='planned'; });
+    if(!['planned','live','done'].includes(r.status)) r.status='planned'; r.copy=r.copy===true; });
   return db; }
 let DB=null;
 const activeRace=()=>DB&&DB.races.find(r=>r.id===DB.activeRaceId);
@@ -1499,7 +1580,7 @@ function loadDB(){
   try{ DB=normalizeDB(JSON.parse(store.get('pitdog_db')||'null')); }catch(e){ DB=null; }
   if(!DB){ let old=null; try{ old=JSON.parse(store.get('pitdog')||'null'); }catch(e){} if(old&&old.race&&Array.isArray(old.drivers)) DB=normalizeDB(dbFromS(old,'My team')); }
   // a shared plan starts a team only if this device has none; otherwise it waits for the crew to say yes (shareSheet)
-  if(shared){ if(!DB) DB=normalizeDB(dbFromS(Object.assign({},shared,{events:[]}),'Shared team')); else PENDING_SHARE=shared; }
+  if(shared){ if(!DB){ DB=normalizeDB(dbFromS(Object.assign({},shared,{events:[]}),'Shared team')); if(DB) DB.races.forEach(r=>{ r.copy=true; }); } else PENDING_SHARE=shared; }
   if(DB&&!activeRace()) DB.activeRaceId=(DB.races.find(r=>r.status!=='done')||DB.races[DB.races.length-1]||{}).id;
   if(DB&&!activeRace()){ const r=newRaceObj({series:DB.team.series,rules:Object.assign(clone(DEFAULT.race),SERIES[DB.team.series].race||{}),carId:DB.team.cars[0].id,drivers:DB.team.members.filter(m=>isDriverRole(m.role)).map(m=>({mid:m.id,max:m.maxStint}))}); DB.races.push(r); DB.activeRaceId=r.id; }
   if(DB) store.set('pitdog_db',JSON.stringify(DB));
@@ -1509,7 +1590,7 @@ function importShared(sh,open){
   const ids=sh.drivers.map(d=>{ let m=DB.team.members.find(x=>x.name.toLowerCase()===d.name.toLowerCase());
     if(!m){ m={id:uid(),name:d.name,role:'driver',maxStint:d.max||120,color:d.color}; DB.team.members.push(m); } return {mid:m.id,max:d.max||m.maxStint}; });
   const car=Object.assign({},sh.car,{id:uid(),measured:{}}); DB.team.cars.push(car);
-  const r=newRaceObj({series:sh.series,rules:Object.assign(clone(sh.race),{name:sh.race.name||'Shared plan'}),carId:car.id,drivers:ids}); DB.races.push(r);
+  const r=newRaceObj({series:sh.series,rules:Object.assign(clone(sh.race),{name:sh.race.name||'Shared plan'}),carId:car.id,drivers:ids,copy:true}); DB.races.push(r);
   if(open){ DB.activeRaceId=r.id; reloadActive(); show('plan'); } else { dbSave(); update(); show('team'); }
   return r;
 }
@@ -1523,7 +1604,7 @@ function shareSheet(){
 }
 /* adopt an S-shaped object as a brand-new local team (tests, demo) */
 function adoptS(s,name){ closeSheet(); DB=dbFromS(s,name||'My team'); hydrate(); dbSave(); bind(); update(); if(typeof applyView==='function') applyView(); }
-function reloadActive(){ hydrate(); dbSave(); pend={driver:null,kind:null,jugs:null}; bind(); update(); }   // callers dbSave() BEFORE changing DB
+function reloadActive(){ hydrate(); dbSave(); pend={driver:null,kind:null,jugs:null,full:null}; bind(); update(); }   // callers dbSave() BEFORE changing DB
 
 /* ================= sheets ================= */
 function openSheet(title,body,buttons){
@@ -1682,7 +1763,7 @@ function startSim(opt){
   SIM.flags=[]; let t=15+g()*40/cond.yMul; while(t<L-10){ const d=3+g()*5; SIM.flags.push({type:'yellow',at:t,dur:d}); t+=d+(30-Math.log(1-g())*55)/cond.yMul; }
   if(g()<cond.redP){ SIM.flags.push({type:'red',at:40+g()*(L-80),dur:8+g()*8}); }
   SIM.flags.forEach(f=>{ f.on=false; f.off=false; });
-  pend={driver:null,kind:null,jugs:null}; if(HL) return;
+  pend={driver:null,kind:null,jugs:null,full:null}; if(HL) return;
   document.body.classList.add('sim-on'); closeSheet();
   bind(); update(); if(typeof applyView==='function') applyView(); show('race'); simHud();
   clearInterval(SIM.timer); SIM.last=Date.now(); SIM.timer=setInterval(simTick,250);
@@ -1715,26 +1796,31 @@ function simStep(dtMin,headless){
   }
   if(!headless){ update(); simHud(); }
 }
+/* The auto-crew does what a real crew can: follow the app. It pours the planned fuel (or fills until the tank is
+   visibly full when the plan says so), logs it to the nearest half jug, and pits when the app says BOX or on a
+   cheap yellow. It never looks at the true fuel level, so a sim that runs dry means the APP got it wrong. */
 function simCrew(lv){
-  const R=S.race, T=SIM.t; const P2=plan(lv); if(P2.err) return; const st=P2.stints, ci=curIdx(P2);
+  const R=S.race, T=SIM.t, C=S.car; const P2=plan(lv); if(P2.err) return; const st=P2.stints, ci=curIdx(P2);
   if(lv.inPit){
     if(lv.red) return;                                                   // work stops under red
-    const a=lv.stops[lv.stops.length-1], el=lv.now-a.in, mn=minFor('fuel');
-    if(SIM.stopTarget==null){ const work=(S.car.changeSec||0)/60+(P2.refuel?Math.max(0,S.car.cap-T.fuel)/(S.car.fillRate||4):0); SIM.stopTarget=(mn&&SIM.rng()<0.03)? mn-0.3 : Math.max(mn+5/60,work)+0.05+SIM.rng()*0.45; }
+    const a=lv.stops[lv.stops.length-1], el=lv.now-a.in, mn=minFor('fuel'), ps=st[ci-1]&&st[ci-1].stop;
+    const planAdd=P2.refuel&&ps?(ps.full?C.cap:ps.jugs*C.jug):0;
+    if(SIM.stopTarget==null){ const work=(C.changeSec||0)/60+Math.min(planAdd,C.cap)/(C.fillRate||4); SIM.stopTarget=(mn&&SIM.rng()<0.03)? mn-0.3 : Math.max(mn+5/60,work)+0.05+SIM.rng()*0.45; }
     if(el>=SIM.stopTarget){
-      const need=Math.max(0,S.car.cap-T.fuel); const jugs=P2.refuel?Math.ceil(need/(S.car.jug/2)-1e-9)/2:0; /* crew logs to the nearest half jug */ const add=Math.min(need,jugs*S.car.jug);
-      T.fuel+=add; T.added+=add; T.oof=false;
-      simEmit({type:'out',driver:st[ci]?st[ci].driver:0,stopLen:el,kind:'fuel',fuel:jugs*S.car.jug});
-      SIM.stopTarget=null; SIM.late=null; SIM.after=(S.car.pitLoss||0)/60;
+      const space=Math.max(0,C.cap-T.fuel), add=Math.min(space,planAdd), full=P2.refuel&&add>=space-1e-9&&planAdd>0;
+      const jugs=Math.round(add/(C.jug/2))/2;                           // the crew's eyeball: nearest half jug
+      T.fuel+=add; T.added+=add;
+      simEmit({type:'out',driver:st[ci]?st[ci].driver:0,stopLen:el,kind:'fuel',fuel:jugs*C.jug,full});
+      SIM.stopTarget=null; SIM.late=null; SIM.after=(C.pitLoss||0)/60;
     }
     return;
   }
+  if(T.oof) return;                                                      // stranded on track: nothing the crew can do
   const cur=st[ci]; if(!cur) return; const last=ci===st.length-1; const tt=cur.end-lv.now;
   if(lv.red||(lv.yellow&&!R.pitsUnderYellow)||(R.earliest&&lv.now<R.earliest)) return;
   if(SIM.late==null) SIM.late=SIM.rng()<0.15?SIM.rng()*2:0;              // sometimes the crew is a bit late
-  const lowFuel=T.fuel<T.burn*1.5&&lv.L-lv.now>5;
   const yellowPit=lv.yellow&&R.pitsUnderYellow&&!last&&tt>0&&tt<=(R.yellowWindow||0);
-  if((!last&&tt<=-SIM.late)||yellowPit||lowFuel||T.oof) simEmit({type:'in'});
+  if((!last&&tt<=-SIM.late)||yellowPit) simEmit({type:'in'});
 }
 function simHud(){
   if(!SIM.on) return;
@@ -1767,7 +1853,7 @@ function endSim(quiet){
   clearInterval(SIM.timer); SIM.on=false; SIM.done=false; document.body.classList.remove('sim-on'); if(!quiet) closeSheet();
   DB=null; S=null; loadDB();
   if(DB){ hydrate(); } else { S=clone(DEFAULT); }
-  pend={driver:null,kind:null,jugs:null};
+  pend={driver:null,kind:null,jugs:null,full:null};
   if(!quiet){ bind(); update(); if(typeof applyView==='function') applyView(); if(!DB) startOnboarding(); else show('team'); }
 }
 const SIM_SPEEDS=[1,10,30,60];
@@ -1883,7 +1969,11 @@ setSkin(document.documentElement.dataset.skin||'night');
 
 try{ loadDB(); }catch(e){ DB=null; }
 if(DB) hydrate(); else S=clone(DEFAULT);
-bind(); update(); keepAwake();
+bind(); update(); keepAwake(); renderBackup();
+// ask the browser not to evict our data (iOS clears storage for sites it thinks are unused)
+try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
+// another tab writing the same database means two logs overwriting each other: say so
+window.addEventListener('storage',e=>{ if(e.key==='pitdog_db'&&!SIM.on){ OTHER_TAB=true; update(); } });
 if(!DB) startOnboarding(); else if(PENDING_SHARE) shareSheet();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
 setInterval(()=>{ try{ const lv=live(); P=plan(lv); renderRace(); if($('tab-race').classList.contains('on')) renderTeam(lv); if($('tab-plan').classList.contains('on')) renderPlan(P,lv); }catch(e){} },500);

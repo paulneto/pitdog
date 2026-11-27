@@ -50,3 +50,8 @@ The F1 skins are colour-inspired only (no team logos or marks). Team colours go 
 **Type:** Inter is bundled in `app/fonts/` (OFL) and precached by the service worker, so it renders the same on every device with no signal. F1 skins italicise driver names only.
 
 Everything visual runs on tokens (`--bg`, `--cc-*`, `--font-*`, `--r-*`, `--livery`). A new skin is one `[data-skin="x"]{…}` block plus an entry in `SKINS` and `SKIN_BAR`.
+
+## Independent review, 27 Nov 2026: findings and fixes
+An outside review (code, rules, tests, screenshots; not anchored on this doc) found the race-day **interaction model sound but the fuel numbers untrustworthy**: with a crew that follows the app, the car ran dry in **39 of 40** simulated Lucky Dog races. The measured burn assumed every stop filled to the top while the planner recommended partial fills, and the simulator's crew filled from the true tank, so the tests couldn't see it. Fixed: fill-to-full by default, a "filled to full" flag, full-to-full green-time measurement, cautious margins, a follow-the-app sim crew and the `fuel-truth` gate (0 of 80 dry; measured burn within ±9%). Also fixed from the same review: logged-zero fuel fell back to the planned amount; silent PIT OUT defaults (now a "Logged" confirmation + Fix); double taps; silent storage failures; no export/backup; second devices logging a copied plan; the service worker hanging on one bar of signal; deploys not running the tests; "PIT NOW" now takes over the hero on a cheap yellow; bigger YELLOW/RED, UNDO set apart.
+
+The review's point on priorities stands: polish (skins) went in before the fuel model was validated. Logic first.

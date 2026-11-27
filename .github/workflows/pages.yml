@@ -2,7 +2,7 @@ name: Deploy app to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ['app/**', '.github/workflows/pages.yml']
+    paths: ['app/**', 'tests/**', '.github/workflows/pages.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -12,7 +12,19 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
+  # the live app is what the crew uses on race day: nothing deploys unless every e2e scenario passes
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run e2e scenarios (headless Chrome, fake clock)
+        env:
+          CHROME: google-chrome
+          CHROME_FLAGS: --no-sandbox
+        run: google-chrome --version && tests/e2e/run.sh
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     environment:
       name: github-pages

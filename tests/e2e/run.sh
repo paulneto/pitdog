@@ -15,7 +15,8 @@ s=open(app).read(); inj='<script>\n'+open(h).read()+'\n'+open(sc).read()+'\n</sc
 i=s.rindex('</body>'); open(out,'w').write(s[:i]+inj+s[i:])
 PY
   rm -rf "$OUT/profile-$name"
-  "$CHROME" --headless=new --disable-gpu --no-first-run --user-data-dir="$OUT/profile-$name" --window-size="$win" \
+  # shellcheck disable=SC2086  (CHROME_FLAGS is a list, e.g. --no-sandbox on CI)
+  "$CHROME" --headless=new --disable-gpu --no-first-run ${CHROME_FLAGS:-} --user-data-dir="$OUT/profile-$name" --window-size="$win" \
     --virtual-time-budget=4000 --dump-dom "file://$OUT/$name.html" 2>/dev/null > "$OUT/$name.dom.html"
   res="$(python3 -I -c "
 import re,html,json,sys

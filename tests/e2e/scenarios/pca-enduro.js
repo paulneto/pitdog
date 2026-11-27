@@ -2,7 +2,7 @@
 // PCA Club Racing 2-hour enduro: one mandatory 5:00 stop inside the 15-min / last-10-min window.
 __run(() => {
   fresh(s => { s.series = 'pca'; Object.assign(s.race, SERIES.pca.race, { len: 120 });
-    s.car = Object.assign(s.car, { cap: 16.9, burn: 0.55, lap: '2:05', pitLoss: 40, changeSec: 45 });
+    s.car = Object.assign(s.car, { cap: 16.9, burn: 0.55, lap: '2:05', pitLoss: 40, changeSec: 45, margin: 5 });   // burn known from practice
     s.drivers = [{name:'A',max:60},{name:'B',max:60}]; });
   expect(P.stints.length === 2, 'one planned stop: ' + (P.stints.length - 1));
   const stopAt = P.stints[0].end; expect(stopAt > 15 && stopAt < 110, 'stop inside window: ' + stopAt.toFixed(1));
