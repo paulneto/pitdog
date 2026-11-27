@@ -63,6 +63,26 @@
   .big.green{background:var(--green);color:var(--go-ink)}
   .big.red{background:var(--red)}
   .big.amber{background:color-mix(in srgb,var(--amber) 14%,var(--bg));color:var(--amber);border:2px solid var(--amber)}
+  /* phone on its side: the race screen goes side by side (cards left, the big button and flags right), slim tab bar */
+  body.land{--tab:44px;--landw:min(38vw,330px)}
+  body.land .appbar{padding:6px calc(14px + env(safe-area-inset-right)) 6px calc(14px + env(safe-area-inset-left))}
+  body.land .appbar h1{font-size:18px}
+  body.land main{max-width:none;padding:10px calc(10px + env(safe-area-inset-right)) calc(var(--tab) + 16px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left))}
+  body.land[data-tab="race"] main{padding-right:calc(var(--landw) + 18px + env(safe-area-inset-right))}
+  body.land .action{left:auto;right:0;top:calc(env(safe-area-inset-top) + 50px);width:var(--landw);padding:8px calc(10px + env(safe-area-inset-right)) 8px 4px;background:none}
+  body.land .action .inner{height:100%;max-width:none}
+  body.land .big{height:auto;font-size:clamp(20px,4.4vw,30px)}
+  body.land .side{width:84px}
+  body.land .tabbar button{flex-direction:row;gap:6px;font-size:12px}
+  body.land .tabbar button .ic{font-size:18px}
+  body.land .hero-n{font-size:clamp(48px,11vh,84px)}
+  body.land .sheet{max-height:96vh}
+  body.land #pitCard{grid-template-columns:minmax(140px,30%) 1fr;gap:14px;padding:12px}
+  body.land #pitCard[style*="block"]{display:grid !important}
+  body.land #pitCard .timer{font-size:clamp(44px,8vw,64px)}
+  body.land #pitCard .chips,body.land #pitCard .stepper{margin-bottom:8px}
+  body.land #pitCard h2{margin-bottom:6px}
+  body.land #pitCard .chipbtn{padding:8px 6px;min-width:56px}
   .big.racenow{display:block;width:100%;height:auto;padding:22px 16px;margin:0 0 14px}
   #tab-race.fin #upNextCard,#tab-race.fin #fuelCard,.action.fin .side{display:none}
   body.nodb main,body.nodb .action,body.nodb .tabbar,body.nodb #statusPill,body.nodb .aclock{visibility:hidden}
@@ -654,10 +674,12 @@
   </div>
 
   <div class="card" id="pitCard" style="display:none">
+    <div class="pitL">
     <h2><span>Pit stop <span id="pitNo"></span></span><span id="pitKindLbl"></span></h2>
     <div class="timer wait" id="pitTimer">0:00</div>
     <div class="center sub" id="pitTarget"></div>
     <div class="bar" style="margin-top:12px"><i id="pitBar" style="width:0;background:var(--red)"></i></div>
+    </div><div class="pitR">
     <h2>Stop type</h2>
     <div class="chips" id="kindChips"></div>
     <div id="fuelBox">
@@ -668,7 +690,7 @@
     <h2>Next driver</h2>
     <div class="chips" id="nextDrv"></div>
     <div class="rem" id="pitRem"></div>
-  </div>
+  </div></div>
 
   <div class="card rstrip">
     <h2><span id="clockLabel">Race clock</span><span id="clockWall"></span></h2>
@@ -1466,7 +1488,7 @@ function fixStopSheet(){
 const lv0=()=>live();
 document.addEventListener('click',ev=>{ const b=ev.target.closest('[data-act="fix"]'); if(b){ ev.stopPropagation(); fixStopSheet(); return; } const rd=ev.target.closest('[data-radar]'); if(rd){ ev.stopPropagation(); if(rd.closest('#homeBody')){ const nr=nextRace(); if(nr&&nr.id!==DB.activeRaceId){ dbSave(); DB.activeRaceId=nr.id; reloadActive(); } } radarSheet(); } });
 const TAB_PARENT={lab:'plan',log:'race',debrief:'home',records:'home'};
-function show(tab){ const par=TAB_PARENT[tab]||tab; document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+tab)); document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===par)); $('actionBar').style.display=tab==='race'?'block':'none'; window.scrollTo(0,0); }
+function show(tab){ const par=TAB_PARENT[tab]||tab; document.body.dataset.tab=tab; document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+tab)); document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===par)); $('actionBar').style.display=tab==='race'?'block':'none'; window.scrollTo(0,0); }
 function go(tab){ show(tab); if(tab==='records') renderRecords(); if(tab==='lab') renderLab(); if(tab==='home') renderHome(); if(tab==='log') renderLog(); if(tab==='team') renderTeamTab(); }
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); go(b.dataset.tab); });
 document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>go(b.dataset.back));
@@ -1516,7 +1538,10 @@ function renderCCWx(){
 }
 const ccView=()=>store.get('pitdog_view')||'auto';
 function ccWanted(){ const v=ccView(); if(v==='cc') return true; if(v==='phone') return false; return window.innerWidth>=1000&&window.innerWidth>window.innerHeight; }
-function applyView(){ const on=ccWanted(); document.body.classList.toggle('cc-on',on); const b=$('ccOpen'); if(b) b.style.display=(!on&&window.innerWidth>=900)?'inline-block':'none'; if(on){ renderCC(); fetchWx(); } }
+// the command center needs an iPad-sized screen: on a phone (either way up) it never shows, whatever was picked
+const ccFits=()=>window.innerWidth>=900&&window.innerHeight>=600;
+function applyView(){ const on=ccFits()&&ccWanted(); document.body.classList.toggle('cc-on',on); const b=$('ccOpen'); if(b) b.style.display=(!on&&ccFits())?'inline-block':'none';
+  document.body.classList.toggle('land',!on&&window.innerWidth>window.innerHeight&&window.innerHeight<560); if(on){ renderCC(); fetchWx(); } }
 window.addEventListener('resize',applyView); window.addEventListener('orientationchange',()=>setTimeout(applyView,200));
 function renderCC(){
   if(!document.body.classList.contains('cc-on')) return;

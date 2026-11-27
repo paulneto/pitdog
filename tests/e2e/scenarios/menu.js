@@ -35,15 +35,6 @@ __run(() => {
   expect(!$('sheetBg').classList.contains('on'), 'Esc closes the menu');
   setHelp(true); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
   expect(!HELP_ON, 'Esc leaves help mode');
-  // command center: one tap back to Home, and the button to return is there
-  store.set('pitdog_view', 'cc'); applyView();
-  expect(document.body.classList.contains('cc-on'), 'command center on');
-  click('ccHome');
-  expect(!document.body.classList.contains('cc-on') && $('tab-home').classList.contains('on'), 'HOME in the command center goes to the Home screen');
-  store.set('pitdog_view', 'cc'); applyView(); click('ccMenu');
-  expect(items().includes('Home') && items().includes('Phone view'), 'command center menu offers Home and Phone view');
-  item('Home').click();
-  expect(!document.body.classList.contains('cc-on') && $('tab-home').classList.contains('on'), 'menu → Home leaves the command center');
   // simulator: end it from the menu
   startSim({ speed: 0 }); click('menuBtn');
   expect(items()[0] === 'End the simulation' && !items().includes('Abandon this race'), 'in the simulator the menu offers to end it');

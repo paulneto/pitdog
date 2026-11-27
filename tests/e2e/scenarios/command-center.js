@@ -26,4 +26,13 @@ __run(() => {
     expect(/brief/i.test(b) && b.includes(S.drivers[nx.driver].name) && (cur.stop.add > 0 ? /jug/.test(b) : /none/.test(b)), 'stop brief names the next driver and the fuel in jugs: ' + b);
     expect(document.getElementById('ccGo').getBoundingClientRect().bottom <= document.getElementById('ccCar').getBoundingClientRect().bottom + 1, 'PIT button stays inside the car panel: ' + Math.round(document.getElementById('ccGo').getBoundingClientRect().bottom) + ' vs ' + Math.round(document.getElementById('ccCar').getBoundingClientRect().bottom) + ' win ' + innerWidth + 'x' + innerHeight);
   }
+  // command center: one tap back to Home, and the button to return is there
+  store.set('pitdog_view', 'cc'); applyView();
+  expect(document.body.classList.contains('cc-on'), 'command center on');
+  click('ccHome');
+  expect(!document.body.classList.contains('cc-on') && $('tab-home').classList.contains('on'), 'HOME in the command center goes to the Home screen');
+  store.set('pitdog_view', 'cc'); applyView(); click('ccMenu');
+  expect([...document.querySelectorAll('#sheetB .mrow b')].map(b => b.textContent).join().includes('Home') && [...document.querySelectorAll('#sheetB .mrow b')].map(b => b.textContent).join().includes('Phone view'), 'command center menu offers Home and Phone view');
+  [...document.querySelectorAll('#sheetB .mrow')].find(b => b.textContent.includes('Home')).click();
+  expect(!document.body.classList.contains('cc-on') && $('tab-home').classList.contains('on'), 'menu → Home leaves the command center');
 });
