@@ -34,7 +34,7 @@
 - **Weather** needs signal; without it the command center shows the last reading.
 
 ## Screenshots
-`docs/screenshots/` (Night skin): race screen with the next-stop hero, a pit stop (fuel stepper, filled-to-full), the iPad command center on track and in the pits, help mode, the skin list, the radar, Home, a debrief and team sync.
+`docs/screenshots/` (Night skin): race screen with the next-stop hero, a pit stop (fuel stepper, filled-to-full), the iPad command center on track (with the stop brief and track map) and in the pits, help mode, the skin list, the radar, Home, a debrief, team sync, Race now with presets, team records, a phone on its side (on track and in the pits), the command center on an iPad in portrait, and the menu.
 
 ## Project layout
 ```
