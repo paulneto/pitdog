@@ -20,7 +20,8 @@ PY
   rm -rf "$OUT/profile-$name"
   # shellcheck disable=SC2086  (CHROME_FLAGS is a list, e.g. --no-sandbox on CI)
   # a stalled network request freezes Chrome's virtual clock; cap each scenario so one hang can't hold the suite
-  $TO "$CHROME" --headless=new --disable-gpu --no-first-run ${CHROME_FLAGS:-} --user-data-dir="$OUT/profile-$name" --window-size="$win" \
+  # no internet in tests: every scenario uses fakes, and an external request (weather, radar, Google) could stall the clock
+  $TO "$CHROME" --headless=new --disable-gpu --no-first-run --host-resolver-rules="MAP * ~NOTFOUND" ${CHROME_FLAGS:-} --user-data-dir="$OUT/profile-$name" --window-size="$win" \
     --virtual-time-budget="$budget" --dump-dom "file://$OUT/$name.html" 2>/dev/null > "$OUT/$name.dom.html"
   res="$(python3 -I -c "
 import re,html,json,sys

@@ -524,6 +524,7 @@
     <div class="cc-flagbar" id="ccFlagBar"><div class="cc-flag n" id="ccFlag">PRE-RACE</div><div class="cc-topalert" id="ccTopAlert"></div></div>
     <div class="cc-wall mono" id="ccWall">--:--:--</div>
     <button class="cc-tbtn" id="ccHelp" aria-pressed="false">HELP</button>
+    <button class="cc-tbtn" id="ccHome">HOME</button>
     <button class="cc-tbtn" id="ccMenu">MENU</button>
     <button class="cc-tbtn" id="ccSkin">SKIN</button>
     <button class="cc-tbtn" id="ccSetup">SETUP</button>
@@ -1954,13 +1955,14 @@ function menuSheet(){
   if(liveR) items.push(['finish','End the race now','Checkered flag now: saves the race and opens the debrief',()=>{ if(!confirm(`End ${r.rules.name||'the race'} now and save it?`)) return; addEvent({type:'end'}); finishRace(true); }]);
   if(r&&!SIM.on&&r.status!=='done'&&started) items.push(['userx','Abandon this race','Throw it away: no debrief, not in the history',()=>abandonRace()]);
   if(DB&&!SIM.on&&!liveR) items.push(['race','Race now','Set up and start a new race',()=>raceNow()]);
-  if(DB&&!cc) items.push(['home','Home','Next race, last race, your team',()=>{ show('home'); renderHome(); }]);
-  if(cc) items.push(['user','Phone view','Leave the command center on this device',()=>{ store.set('pitdog_view','phone'); applyView(); }]);
+  if(DB) items.push(['home','Home','Next race, last race, your team'+(cc?' (leaves the command center; ⊞ COMMAND CENTER brings it back)':''),()=>leaveCC('home')]);
+  if(cc) items.push(['user','Phone view','The race screen in the phone layout',()=>leaveCC('race')]);
   items.push(['alert','Start over on this device','Delete the team and races here (a backup is kept)',()=>$('reset').click()]);
   SHEET_LOCK=false;
   openSheet('Menu',items.map((it,i)=>`<button class="mrow${['userx','alert'].includes(it[0])?' dng':''}" data-i="${i}">${ic(it[0])}<span><b>${it[1]}</b><small>${it[2]}</small></span></button>`).join(''),[{label:'Close',cls:'pri',fn:closeSheet}]);
   $('sheetB').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{ closeSheet(); items[+b.dataset.i][3](); }); }
-$('menuBtn').onclick=menuSheet; $('ccMenu').onclick=menuSheet;
+function leaveCC(tab){ if(document.body.classList.contains('cc-on')){ store.set('pitdog_view','phone'); applyView(); } go(tab); }
+$('menuBtn').onclick=menuSheet; $('ccMenu').onclick=menuSheet; $('ccHome').onclick=()=>leaveCC('home');
 document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return; if($('sheetBg').classList.contains('on')){ if(!SHEET_LOCK) closeSheet(); } else if(HELP_ON) setHelp(false); });
 
 /* ================= HOME ================= */
