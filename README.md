@@ -12,6 +12,7 @@
 - **Race (phone):** one big button (GREEN → PIT IN → PIT OUT), stop-type and jug logging, next-driver picker with rest timers, BOX / on-deck / stint-limit / yellow-window alerts, YELLOW / RED / UNDO
 - **Command center (iPad landscape):** flag bar, race clock, car/pit panel with ring timer, crew rotation, fuel gauge, track weather, alerts and the full race timeline on one screen
 - **Team / Log:** seat time, rest status, measured fuel burn, event log, multi-day archive, share-a-plan link
+- **Skins:** Night race, Sunlight (for midday glare), Timing tower and Stint sheet, chosen per device (Log → Look, or SKIN on the command center). See `docs/design-review.md`
 - **Offline-first:** installs to the home screen and runs with no signal (service worker); race state survives reloads
 
 ## Platform notes
@@ -33,7 +34,7 @@ tests/e2e/           headless-Chrome scenarios with a fake race clock
   run.sh             run all scenarios (or: run.sh <name-filter>)
   harness.js         fake clock + helpers injected into the app
   scenarios/*.js     luckydog-full-day, pca-enduro, command-center, team-flow, migration,
-                     simulator, sim-sweep (25 races), series-sweep (5 races × every series), strategy-lab
+                     simulator, sim-sweep (25 races), series-sweep (5 races × every series), strategy-lab, skins
 docs/
   roadmap-live-sync-sim.md   live timing research, team sync and simulator plan
   rules-comparison.md        all series side by side, with sources
