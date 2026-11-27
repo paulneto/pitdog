@@ -1,21 +1,26 @@
 // @window 1180,820
-// Skins: picker tiles, persistence, command-center cycle button, tokens actually change, bundled fonts.
+// Skins: the Look list (Log tab and the command-center SKIN sheet), persistence, tokens actually change, bundled fonts.
 __run(() => {
   fresh();
   const bg = () => getComputedStyle(document.getElementById('cc')).backgroundColor;
   const order = SKINS.map(x => x.k);
   setSkin('night'); const nightBg = bg();
-  expect(document.querySelectorAll('#skinTiles .skin-tile').length === 8, 'eight skin tiles');
+  expect(document.querySelectorAll('#skinTiles .skin-row').length === 8, 'Look card lists eight skins');
   expect(order.join() === 'night,sunlight,ferrari,mclaren,mercedes,redbull,aston,williams', 'skin order');
-  click('ccSkin'); expect(document.documentElement.dataset.skin === 'sunlight', 'SKIN cycles night → sunlight');
+  click('ccSkin');
+  expect($('sheetBg').classList.contains('on') && document.querySelectorAll('#skinSheetList .skin-row').length === 8, 'SKIN on the command center opens the list');
+  tap('#skinSheetList [data-k="sunlight"]');
+  expect(document.documentElement.dataset.skin === 'sunlight', 'picking from the list applies the skin');
   expect(bg() !== nightBg, 'command center background changes with skin');
   expect(localStorage.getItem('pitdog_skin') === 'sunlight', 'skin saved on device');
+  expect(document.querySelector('#skinSheetList .sel').dataset.k === 'sunlight' && document.querySelectorAll('#skinSheetList .sel').length === 1, 'list marks only the chosen skin');
   const seen = new Set();
-  for (let i = 2; i < order.length; i++) { click('ccSkin'); expect(document.documentElement.dataset.skin === order[i], 'cycles to ' + order[i]); seen.add(bg()); }
+  for (const k of order.slice(2)) { tap(`#skinSheetList [data-k="${k}"]`); expect(document.documentElement.dataset.skin === k, 'list selects ' + k); seen.add(bg()); }
   expect(seen.size === order.length - 2, 'every F1 skin has its own command center background');
-  click('ccSkin'); expect(document.documentElement.dataset.skin === 'night', 'wraps back to night');
-  document.querySelector('#skinTiles [data-skin="mclaren"]').click();
-  expect(document.documentElement.dataset.skin === 'mclaren' && document.querySelector('#skinTiles .sel').dataset.skin === 'mclaren', 'tile click selects mclaren');
+  tap('#sheetF button'); expect(!$('sheetBg').classList.contains('on'), 'Done closes the list');
+  expect(getComputedStyle(document.querySelector('#skinTiles [data-k="ferrari"] .skin-pv')).backgroundColor !== getComputedStyle(document.querySelector('#skinTiles [data-k="sunlight"] .skin-pv')).backgroundColor, 'each row previews its own skin');
+  document.querySelector('#skinTiles [data-k="mclaren"]').click();
+  expect(document.documentElement.dataset.skin === 'mclaren' && document.querySelector('#skinTiles .sel').dataset.k === 'mclaren', 'Look card row selects mclaren');
   expect(getComputedStyle(document.querySelector('.appbar'), '::after').backgroundImage.includes('gradient'), 'F1 skin shows the livery stripe');
   setSkin('night'); expect(getComputedStyle(document.querySelector('.appbar'), '::after').backgroundImage === 'none', 'night has no livery stripe');
   // status colours mean status only: identical across F1 skins

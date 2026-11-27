@@ -363,10 +363,10 @@
     --livery:linear-gradient(90deg,#00a0de 0 72%,#ffffff 72% 82%,#041e42 82%);
   }
   /* livery stripe (only skins that set --livery show it) */
-  .appbar::after,.cc-top::after,.skin-tile::before{content:"";position:absolute;left:0;right:0;height:3px;background:var(--livery);pointer-events:none}
+  .appbar::after,.cc-top::after,.skin-pv::before{content:"";position:absolute;left:0;right:0;height:3px;background:var(--livery);pointer-events:none}
   .appbar::after{bottom:-1px;height:4px}
   .cc-top{position:relative}.cc-top::after{bottom:-5px;border-radius:2px}
-  .skin-tile::before{top:0;height:5px}
+  .skin-pv::before{top:0;height:4px}
   /* skin-specific character */
   [data-skin="sunlight"] #cc::after{display:none}
   [data-skin="sunlight"] .cc-p::before,[data-skin="sunlight"] .cc-p::after{display:none}
@@ -383,14 +383,15 @@
   :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .card{border-top:3px solid var(--cc-acc)}
   :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .card h2{color:var(--cc-acc2);font-weight:800}
   /* skin picker tiles */
-  .skins{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .skin-tile{background:var(--bg);color:var(--text);border:2px solid var(--line);border-radius:var(--r-card);padding:12px;cursor:pointer;text-align:left;font:inherit;font-family:var(--font-ui);position:relative;overflow:hidden}
-  .skin-tile.sel{outline:3px solid var(--brand);outline-offset:2px}
-  .skin-tile .n{font-family:var(--font-num);font-size:30px;font-weight:700;line-height:1;color:var(--cc-hi)}
-  [data-skin="night"].skin-tile .n{color:#fff}
-  .skin-tile .t{font-family:var(--font-head);font-weight:700;font-size:15px;margin-top:6px}
-  .skin-tile .d{font-size:11px;color:var(--muted);margin-top:2px}
-  .skin-tile .sw{display:flex;gap:4px;margin-top:8px}.skin-tile .sw i{width:16px;height:16px;border-radius:3px}
+  /* skin picker: a list. Each row's preview chip renders in its own skin's tokens (data-skin on the chip). */
+  .skinlist{display:flex;flex-direction:column;gap:6px}
+  .skin-row{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:8px 12px;border-radius:var(--r-btn);border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+  .skin-row.sel{border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+  .skin-pv{position:relative;flex:none;width:72px;height:42px;border-radius:6px;overflow:hidden;background:var(--bg);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:5px;
+    font-family:var(--font-num);font-variant-numeric:tabular-nums;font-weight:800;font-size:16px;color:var(--text)}
+  .skin-pv i{width:6px;height:16px;border-radius:2px;background:var(--brand)}
+  .skin-row .nm{flex:1;min-width:0}.skin-row .nm b{display:block;font-size:16px}.skin-row .nm small{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .skin-row .ck{flex:none;width:24px;text-align:center;font-size:18px;font-weight:900;color:var(--brand);visibility:hidden}.skin-row.sel .ck{visibility:visible}
 </style>
 </head>
 <body>
@@ -693,8 +694,8 @@
   </div>
   <div class="card">
     <h2>Look</h2>
-    <div class="skins" id="skinTiles"></div>
-    <div class="hint">Each phone and iPad keeps its own look. On the iPad command center, the SKIN button cycles through them.</div>
+    <div class="skinlist" id="skinTiles" role="radiogroup" aria-label="Look"></div>
+    <div class="hint">Each phone and iPad keeps its own look. On the iPad command center, the SKIN button opens this list.</div>
   </div>
   <div class="card">
     <h2>Share &amp; reset</h2>
@@ -908,9 +909,9 @@ function plan(lv){
     if(s.stop&&!s.locked&&R.latest){ if(s.stop.in>lastStart) W.push(['bad',`Stop ${i+1} is planned at ${fmt(s.stop.in)}, after the window closes.`]); }
     if(!s.locked&&s.fuelEnd<-1e-6) W.push(['bad',`Stint ${i+1}: runs out of fuel (${r1(s.fuelEnd)} ${C.unit}).`]);
     else if(!s.locked&&s.fuelEnd<C.reserve*burn-0.05) W.push(['warn',`Stint ${i+1}: finishes on reserve (${r1(s.fuelEnd)} ${C.unit} left).`]);
-    const d=S.drivers[s.driver]; if(d&&s.dur>d.max+1e-6) W.push(['warn',`Stint ${i+1}: ${d.name} is planned for ${fmt(s.dur)}, over their ${d.max}-min max.`]);
+    const d=S.drivers[s.driver]; if(d&&s.dur>d.max+1e-6) W.push(['warn',`Stint ${i+1}: ${esc(d.name)} is planned for ${fmt(s.dur)}, over their ${d.max}-min max.`]);
     if(R.maxStint&&s.dur>R.maxStint+1e-6) W.push([s.locked?'bad':'warn',`Stint ${i+1} is ${fmt(s.dur)}, over the ${R.maxStint}-min series limit.`]);
-    if(R.rest){ for(let j=i-1;j>=0;j--){ if(stints[j].driver===s.driver){ const gap=s.start-stints[j].end; if(gap<R.rest-1e-6) W.push(['bad',`${d?d.name:'Driver'} gets only ${fmt(gap)} rest before stint ${i+1}. ${R.rest} min required.`]); break; } } }
+    if(R.rest){ for(let j=i-1;j>=0;j--){ if(stints[j].driver===s.driver){ const gap=s.start-stints[j].end; if(gap<R.rest-1e-6) W.push(['bad',`${d?esc(d.name):'Driver'} gets only ${fmt(gap)} rest before stint ${i+1}. ${R.rest} min required.`]); break; } } }
   });
   lv.stops.forEach((a,i)=>{ if(a.out==null||a.kind==='black'||!R.minStop) return; const len=a.out-a.in; if(len>=R.minStop-1e-6) return;
     const ap=R.minApplies||'fuel'; const required=ap==='all'||(a.kind==='fuel'&&ap!=='mand');
@@ -990,7 +991,7 @@ function renderPlan(P,lv){
   let tl='';
   if(S.race.earliest) tl+=`<div class="closed" style="left:0;width:${pct(S.race.earliest)}"></div>`;
   if(S.race.latest) tl+=`<div class="closed" style="left:${pct(L-S.race.latest)};width:${pct(S.race.latest)}"></div>`;
-  stints.forEach(s=>{ tl+=`<div class="seg" style="left:${pct(s.start)};width:calc(${pct(s.end)} - ${pct(s.start)});background:${dcol(s.driver)};opacity:${s.locked?.5:1}">${(S.drivers[s.driver]?.name||'').split(' ').pop()}</div>`;
+  stints.forEach(s=>{ tl+=`<div class="seg" style="left:${pct(s.start)};width:calc(${pct(s.end)} - ${pct(s.start)});background:${dcol(s.driver)};opacity:${s.locked?.5:1}">${esc((S.drivers[s.driver]?.name||'').split(' ').pop())}</div>`;
     if(s.stop) tl+=`<div class="seg stopseg" style="left:${pct(s.stop.in)};width:calc(${pct(s.stop.out)} - ${pct(s.stop.in)})"></div>`; });
   if(lv.started) tl+=`<div class="now" style="left:${pct(lv.now)}"></div>`;
   $('timeline').innerHTML=tl;
@@ -1000,7 +1001,7 @@ function renderPlan(P,lv){
   let h=`<tr><th>#</th><th class="l">Driver</th><th>Out</th><th>In</th><th>Length</th><th>Laps</th><th>Fuel in</th></tr>`;
   stints.forEach((s,i)=>{
     const cur=lv.started&&!lv.finished&&!lv.inPit&&i===ci;
-    h+=`<tr class="${cur?'cur':''}"><td>${i+1}${s.locked?' ✓':''}</td><td class="l"><span class="dot" style="background:${dcol(s.driver)}"></span>${S.drivers[s.driver]?.name||'?'}</td><td>${clockAt(s.start)}<br><span style="color:var(--muted);font-size:11px">${fmt(s.start)}</span></td><td>${clockAt(s.end)}<br><span style="color:var(--muted);font-size:11px">${fmt(s.end)}</span></td><td>${fmt(s.dur)}</td><td>${r1(s.laps)}</td><td>${r1(s.fuelEnd)}</td></tr>`;
+    h+=`<tr class="${cur?'cur':''}"><td>${i+1}${s.locked?' ✓':''}</td><td class="l"><span class="dot" style="background:${dcol(s.driver)}"></span>${esc(S.drivers[s.driver]?.name||'?')}</td><td>${clockAt(s.start)}<br><span style="color:var(--muted);font-size:11px">${fmt(s.start)}</span></td><td>${clockAt(s.end)}<br><span style="color:var(--muted);font-size:11px">${fmt(s.end)}</span></td><td>${fmt(s.dur)}</td><td>${r1(s.laps)}</td><td>${r1(s.fuelEnd)}</td></tr>`;
     if(s.stop) h+=`<tr class="stoprow"><td></td><td class="l" colspan="6">${s.stop.kind==='fuel'?'⛽':s.stop.kind==='black'?'🏴':s.stop.kind==='mech'?'🔧':'🔁'} Stop ${i+1} at ${clockAt(s.stop.in)}${s.stop.kind==='fuel'?` · hold ≥ ${fmt(S.race.minStop)}${refuel?` · ${r1(s.stop.add)} ${S.car.unit} (${s.stop.jugs} jug${s.stop.jugs===1?'':'s'})`:''}`:''}</td></tr>`;
   });
   $('plan').innerHTML=h;
@@ -1021,10 +1022,10 @@ function computeAlerts(lv,P){
   if(!last){
     if(tt<=0) A.push(['box',`BOX BOX BOX: stop ${st.indexOf(s)+1} is due now`]);
     else if(tt<=3) A.push(['warn',`Box in ${fmt(tt)}. Fueler and fire bottle ready.`]);
-    const nx=st[st.indexOf(s)+1]; if(nx&&tt<=(R.onDeck||0)&&tt>0) A.push(['info',`🪖 On deck: <b>${S.drivers[nx.driver]?.name}</b>. Gear up, wristband on, out in ${fmt(tt)}`]);
+    const nx=st[st.indexOf(s)+1]; if(nx&&tt<=(R.onDeck||0)&&tt>0) A.push(['info',`🪖 On deck: <b>${esc(S.drivers[nx.driver]?.name)}</b>. Gear up, wristband on, out in ${fmt(tt)}`]);
     if(lv.yellow&&R.pitsUnderYellow&&tt>0&&tt<=(R.yellowWindow||0)&&!lv.red) A.push(['go',`💡 Yellow + stop due in ${fmt(tt)}: pit NOW to lose less time`]);
   }
-  if(R.maxStint){ if(inSeat>R.maxStint) A.push(['box',`${S.drivers[s.driver]?.name} is OVER the ${R.maxStint/60}-hour stint limit`]); else if(inSeat>R.maxStint-10) A.push(['warn',`${fmt(R.maxStint-inSeat)} left on ${S.drivers[s.driver]?.name}'s ${R.maxStint}-min max stint`]); }
+  if(R.maxStint){ if(inSeat>R.maxStint) A.push(['box',`${esc(S.drivers[s.driver]?.name)} is OVER the ${R.maxStint/60}-hour stint limit`]); else if(inSeat>R.maxStint-10) A.push(['warn',`${fmt(R.maxStint-inSeat)} left on ${esc(S.drivers[s.driver]?.name)}'s ${R.maxStint}-min max stint`]); }
   if(R.mandEvery){ const due=lastMandStop(lv)+R.mandEvery-lv.now; if(due<0) A.push(['box','Mandatory 5-min stop OVERDUE']); else if(due<10) A.push(['warn',`Mandatory 5-min stop due within ${fmt(due)}`]); }
   if(R.earliest&&lv.now<R.earliest) A.push(['info',`Stop window opens in ${fmt(R.earliest-lv.now)}`]);
   if(R.latest&&lv.now>P.lastStart&&lv.stops.length<mandCount(R,lv.L)) A.push(['box','Mandatory stop window has CLOSED']);
@@ -1085,7 +1086,7 @@ function renderRace(){
     $('jugChips').querySelectorAll('button').forEach(b=>b.onclick=()=>{ pend.jugs=+b.dataset.j; buzz(10); renderRace(); });
     const defD=cur?cur.driver:0; const dsel=pend.driver!=null?pend.driver:defD;
     $('nextDrv').innerHTML=S.drivers.map((d,i)=>{ const o=ds[i]; const restLeft=o.lastEnd!=null&&R.rest?R.rest-(a.in-o.lastEnd)-el:0; const tired=restLeft>0;
-      return `<button class="chipbtn ${i===dsel?'sel':''} ${tired?'dim':''}" style="--c:${dcol(i)}" data-d="${i}">${d.name}<small>${tired?'rest '+fmt(restLeft):fmt(o.seat)+' driven'}</small></button>`; }).join('');
+      return `<button class="chipbtn ${i===dsel?'sel':''} ${tired?'dim':''}" style="--c:${dcol(i)}" data-d="${i}">${esc(d.name)}<small>${tired?'rest '+fmt(restLeft):fmt(o.seat)+' driven'}</small></button>`; }).join('');
     $('nextDrv').querySelectorAll('button').forEach(b=>b.onclick=()=>{ pend.driver=+b.dataset.d; buzz(10); renderRace(); });
     $('pitRem').innerHTML=(SERIES[S.series]||{}).pit||'';
     big.className='big '+(ok?'green':'amber'); big.innerHTML=ok?'PIT OUT<small>Car leaving pit lane</small>':`PIT OUT<small>Too early: ${fmt(target-el)} to go</small>`;
@@ -1096,7 +1097,7 @@ function renderRace(){
   }
   $('banners').innerHTML=ban;
   if(!lv.finished){ const nx=st.slice(ci+(lv.inPit?0:1)).slice(0,3);
-    $('upNextBody').innerHTML=nx.length?nx.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><span class="dot" style="background:${dcol(s.driver)}"></span>${S.drivers[s.driver]?.name}</span><span>${clockAt(s.start)} → ${clockAt(s.end)} <span style="color:var(--muted)">(${fmt(s.dur)})</span></span></div>`).join(''):'Last stint: bring it home 🏁';
+    $('upNextBody').innerHTML=nx.length?nx.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><span class="dot" style="background:${dcol(s.driver)}"></span>${esc(S.drivers[s.driver]?.name)}</span><span>${clockAt(s.start)} → ${clockAt(s.end)} <span style="color:var(--muted)">(${fmt(s.dur)})</span></span></div>`).join(''):'Last stint: bring it home 🏁';
   } else $('upNextBody').textContent='—';
 }
 function renderTrack(s,lv,ds){
@@ -1125,7 +1126,7 @@ function renderTeam(lv){
     else if(o.lastEnd!=null&&R.rest&&lv.now-o.lastEnd<R.rest) tag=`<span class="tag rest">RESTING ${fmt(R.rest-(lv.now-o.lastEnd))}</span>`;
     else tag='<span class="tag ready">READY</span>';
     const planned=P.stints.filter(s=>s.driver===o.i).reduce((a,s)=>a+s.dur,0);
-    return `<div class="tcard"><div class="sw" style="background:${dcol(o.i)}"></div><div><div class="nm">${o.name}</div><div class="meta">${o.stints} stint${o.stints===1?'':'s'} · ${fmt(o.seat)} driven · ${fmt(planned)} planned</div></div><div class="st">${tag}<div class="meta" style="margin-top:4px">${o.next!=null?'next out '+clockAt(o.next):''}</div></div></div>`; }).join('');
+    return `<div class="tcard"><div class="sw" style="background:${dcol(o.i)}"></div><div><div class="nm">${esc(o.name)}</div><div class="meta">${o.stints} stint${o.stints===1?'':'s'} · ${fmt(o.seat)} driven · ${fmt(planned)} planned</div></div><div class="st">${tag}<div class="meta" style="margin-top:4px">${o.next!=null?'next out '+clockAt(o.next):''}</div></div></div>`; }).join('');
   $('fuelUsed').textContent=r1(lv.added)+' '+S.car.unit;
   $('burnMeas').textContent=P.meas?(Math.round(P.meas*100)/100):'–';
   const still=P.stints.filter(s=>!s.locked&&s.stop).reduce((a,s)=>a+s.stop.add,0)+(lv.inPit&&P.stints[curIdx(P)-1]?.stop?P.stints[curIdx(P)-1].stop.add:0);
@@ -1137,7 +1138,7 @@ function renderLog(){
   else $('logList').innerHTML=[...S.events].reverse().map(e=>{ const m=t0?(e.t-t0)/60000:0; const [i,bg]=ic[e.type]||['•','#222'];
     let label={green:'Green flag',in:'Pit in',out:'Pit out'}[e.type]||'';
     if(e.type==='yellow') label=e.on?'Full course yellow':'Yellow cleared'; if(e.type==='red') label=e.on?'Red flag':'Red flag cleared';
-    if(e.type==='out'){ label=`${KINDS[e.kind||'fuel'][0]} · ${fmt(e.stopLen||0)}`; if(e.fuel) label+=` · ${r1(e.fuel)} ${S.car.unit}`; if(e.driver!=null) label+=` · ${S.drivers[e.driver]?.name||''} out`; }
+    if(e.type==='out'){ label=`${KINDS[e.kind||'fuel'][0]} · ${fmt(e.stopLen||0)}`; if(e.fuel) label+=` · ${r1(e.fuel)} ${S.car.unit}`; if(e.driver!=null) label+=` · ${esc(S.drivers[e.driver]?.name||'')} out`; }
     return `<li><div class="ico" style="background:${bg}">${i}</div><div class="t">${fmt(m)}</div><div class="e">${label}</div><div class="c">${wall(e.t)}</div></li>`; }).join('');
 }
 
@@ -1234,7 +1235,7 @@ function renderCC(){
   $('ccAlerts').innerHTML=A.map(([c,h])=>`<div class="cc-a ${c}">${h}</div>`).join(''); $('ccAlertN').textContent=A.filter(a=>a[0]!=='ok').length?A.filter(a=>a[0]!=='ok').length+' active':'';
   const t0=T0(); const ev=[...S.events].reverse().slice(0,4);
   $('ccLog').innerHTML=ev.map(e=>{ const m=t0?fmt((e.t-t0)/60000):''; let l={green:'GREEN',in:'PIT IN',out:'PIT OUT'}[e.type]||''; if(e.type==='yellow') l=e.on?'YELLOW':'YELLOW CLEAR'; if(e.type==='red') l=e.on?'RED':'RED CLEAR';
-    if(e.type==='out') l+=` · ${KINDS[e.kind||'fuel'][0].split(' ')[1]} ${fmt(e.stopLen||0)}${e.fuel?' · '+r1(e.fuel)+C.unit:''} · ${S.drivers[e.driver]?.name||''}`; return `<b>${m}</b> ${l}`; }).join('<br>');
+    if(e.type==='out') l+=` · ${KINDS[e.kind||'fuel'][0].split(' ')[1]} ${fmt(e.stopLen||0)}${e.fuel?' · '+r1(e.fuel)+C.unit:''} · ${esc(S.drivers[e.driver]?.name||'')}`; return `<b>${m}</b> ${l}`; }).join('<br>');
   const go=$('ccGo');
   if(!P||P.err){ go.className='cc-go grey'; go.textContent='FIX PLAN'; return; }
   const st=P.stints, ci=curIdx(P), cur=st[ci]; const ds=driverStatus(lv,P);
@@ -1255,7 +1256,7 @@ function renderCC(){
     $('ccJugBox').style.display=kind==='fuel'&&P.refuel?'block':'none'; $('ccJugPlan').textContent=ps?`plan ${r1(ps.add)} ${C.unit}`:'';
     $('ccJugs').innerHTML=jugSteps(C).map(j=>`<button class="${j===jsel?'sel':''}" style="--c:var(--amber)" data-j="${j}">${jugLbl(j)}</button>`).join('');
     const dsel=pend.driver!=null?pend.driver:(cur?cur.driver:0);
-    $('ccDrvs').innerHTML=S.drivers.map((d,i)=>{ const o=ds[i]; const restLeft=o.lastEnd!=null&&R.rest?R.rest-(a.in-o.lastEnd)-el:0; return `<button class="${i===dsel?'sel':''} ${restLeft>0?'dim':''}" style="--c:${dcol(i)}" data-d="${i}">${d.name}${restLeft>0?' ⏸':''}</button>`; }).join('');
+    $('ccDrvs').innerHTML=S.drivers.map((d,i)=>{ const o=ds[i]; const restLeft=o.lastEnd!=null&&R.rest?R.rest-(a.in-o.lastEnd)-el:0; return `<button class="${i===dsel?'sel':''} ${restLeft>0?'dim':''}" style="--c:${dcol(i)}" data-d="${i}">${esc(d.name)}${restLeft>0?' ⏸':''}</button>`; }).join('');
     go.className='cc-go '+(ok?'green':'amber'); go.innerHTML=ok?'PIT OUT<small>car leaving pit lane</small>':`PIT OUT<small>too early · ${fmt(target-el)}</small>`;
   } else {
     const s=cur||st[st.length-1]; const d=S.drivers[s.driver]||{name:'?',max:0}; const inSeat=lv.started?Math.max(0,lv.now-s.start):0; const last=st.indexOf(s)===st.length-1;
@@ -1282,7 +1283,7 @@ function renderCC(){
     else if(o.lastEnd!=null&&R.rest&&lv.now-o.lastEnd<R.rest) tag=`<div class="cc-tag r mono">REST ${fmt(R.rest-(lv.now-o.lastEnd))}</div>`;
     else tag='<div class="cc-tag k">READY</div>';
     const col=dcol(o.i);
-    return `<div class="cc-r"><div class="sw" style="background:${col}"></div><div style="min-width:0"><div class="n">${o.name}</div><div class="m mono">${fmt(o.seat)} / ${fmt(planned)}${o.next!=null?' · next '+clockAt(o.next):''}</div><div class="bar"><b style="width:${o.seat/maxSeat*100}%;background:${col}"></b></div></div>${tag}</div>`; }).join('');
+    return `<div class="cc-r"><div class="sw" style="background:${col}"></div><div style="min-width:0"><div class="n">${esc(o.name)}</div><div class="m mono">${fmt(o.seat)} / ${fmt(planned)}${o.next!=null?' · next '+clockAt(o.next):''}</div><div class="bar"><b style="width:${o.seat/maxSeat*100}%;background:${col}"></b></div></div>${tag}</div>`; }).join('');
   const tot=ds.reduce((a,o)=>a+o.seat,0); $('ccCrewSum').textContent=lv.started?fmt(tot)+' driven':'';
   // fuel
   const s=cur||st[st.length-1]; let fuelNow;
@@ -1331,11 +1332,59 @@ const isDriverRole=r=>r==='owner'||r==='driver';
 const CAR_FIELDS=['unit','cap','burn','reserve','lap','pitLoss','fillRate','changeSec','jug','useMeasured'];
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
+/* ---- input hygiene: share links and stored data are untrusted. Free text (names) is escaped when rendered;
+   everything else is forced to its expected type here, so it can't carry markup or crash a render. ---- */
+const HEX=/^#[0-9a-f]{6}$/i, HHMM=/^\d{1,2}:\d{2}$/, IDRX=/^[a-z0-9]{1,40}$/i;
+const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+const safeColor=(c,i)=>HEX.test(c)?c:COLORS[(i||0)%COLORS.length];
+const safeSeries=k=>typeof k==='string'&&own(SERIES,k)?k:'luckydog';
+const str=(v,max)=>String(v==null?'':v).replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,max);
+const nonneg=(v,d)=>{ const x=+v; return v!==null&&v!==''&&isFinite(x)&&x>=0?x:d; };
+const safeId=v=>typeof v==='string'&&IDRX.test(v)?v:uid();
+const ENUMS={weighting:['even','pace'],minApplies:['fuel','mand','mandfuel','all'],unit:['gal','L']};
+function cleanRules(r){ const out=clone(DEFAULT.race); r=r&&typeof r==='object'?r:{};
+  for(const k of Object.keys(out)){ if(!own(r,k)) continue; const v=r[k];
+    if(ENUMS[k]) out[k]=ENUMS[k].includes(v)?v:out[k];
+    else if(k==='track') out[k]=typeof v==='string'&&own(TRACKS,v)?v:'none';
+    else if(k==='name') out[k]=str(v,60);
+    else if(k==='start'||k==='end'||k==='startG') out[k]=HHMM.test(v)?v:out[k];
+    else if(k==='lat'||k==='lon'){ const x=+v; out[k]=isFinite(x)?x:0; }
+    else out[k]=nonneg(v,out[k]); }
+  return out; }
+function cleanCar(c){ c=c&&typeof c==='object'?c:{}; const out=clone(DEFAULT.car);
+  for(const k of Object.keys(out)){ if(!own(c,k)) continue; const v=c[k];
+    if(k==='unit') out[k]=ENUMS.unit.includes(v)?v:out[k];
+    else if(k==='lap'){ const t=str(v,12); out[k]=/^[0-9:.]+$/.test(t)?t:out[k]; }
+    else if(k==='useMeasured') out[k]=v?1:0;
+    else out[k]=nonneg(v,out[k]); }
+  return out; }
+function cleanEvents(ev){ return (Array.isArray(ev)?ev:[]).filter(e=>e&&typeof e==='object'&&['green','in','out','yellow','red'].includes(e.type)&&isFinite(+e.t)).map(e=>{
+  const o={t:+e.t,type:e.type}; if(e.type==='yellow'||e.type==='red') o.on=!!e.on;
+  if(e.type==='out'){ o.kind=own(KINDS,e.kind)?e.kind:'fuel'; o.fuel=nonneg(e.fuel,0); o.stopLen=nonneg(e.stopLen,0); if(Number.isInteger(e.driver)&&e.driver>=0) o.driver=e.driver; }
+  return o; }); }
+/* a plan from a share link → {series, race, car, drivers} with every field typed, or null */
+function cleanShared(o){ if(!o||typeof o!=='object'||!o.race||typeof o.race!=='object'||!Array.isArray(o.drivers)) return null;
+  const drivers=o.drivers.slice(0,12).filter(d=>d&&typeof d==='object').map((d,i)=>({name:str(d.name,40)||('Driver '+(i+1)),max:nonneg(d.max,120),color:safeColor(d.color,i)}));
+  if(!drivers.length) return null;
+  return {series:safeSeries(o.series),race:cleanRules(o.race),car:Object.assign(cleanCar(o.car),{name:str(o.car&&o.car.name,40)||'Shared car'}),drivers}; }
+/* the stored team database, repaired in place; null if it isn't a team database at all */
+function normalizeDB(db){
+  if(!db||typeof db!=='object'||!db.team||typeof db.team!=='object'||!Array.isArray(db.team.members)||!Array.isArray(db.team.cars)||!Array.isArray(db.races)) return null;
+  const T=db.team; T.name=str(T.name,60)||'My team'; T.series=safeSeries(T.series);
+  T.members=T.members.filter(m=>m&&typeof m==='object'); T.members.forEach((m,i)=>{ m.id=safeId(m.id); m.name=str(m.name,40)||'Driver'; m.color=safeColor(m.color,i); if(!own(ROLES,m.role)) m.role='driver'; m.maxStint=nonneg(m.maxStint,120);
+    ['pace','cons','ff','fade'].forEach(k=>{ if(m[k]===undefined) return; const x=+m[k]; if(m[k]===null||!isFinite(x)) delete m[k]; else m[k]=x; }); });
+  T.cars=T.cars.filter(c=>c&&typeof c==='object'); if(!T.cars.length) return null;
+  T.cars.forEach(c=>{ const meas={}; Object.entries(c.measured&&typeof c.measured==='object'?c.measured:{}).forEach(([k,v])=>{ if(own(TRACKS,k)&&isFinite(+v)&&+v>0) meas[k]=+v; });
+    Object.assign(c,cleanCar(c),{id:safeId(c.id),name:str(c.name,40)||'Car',measured:meas}); });
+  db.races=db.races.filter(r=>r&&typeof r==='object'); db.races.forEach(r=>{ r.id=safeId(r.id); r.series=safeSeries(r.series); r.rules=cleanRules(r.rules); r.events=cleanEvents(r.events);
+    r.drivers=(Array.isArray(r.drivers)?r.drivers:[]).filter(d=>d&&typeof d==='object'&&typeof d.mid==='string').map(d=>({mid:d.mid,max:nonneg(d.max,120)}));
+    if(!['planned','live','done'].includes(r.status)) r.status='planned'; });
+  return db; }
 let DB=null;
 const activeRace=()=>DB&&DB.races.find(r=>r.id===DB.activeRaceId);
 const member=id=>DB&&DB.team.members.find(m=>m.id===id);
 const carById=id=>DB&&DB.team.cars.find(c=>c.id===id);
-const dcol=i=>(S&&S.drivers[i]&&S.drivers[i].color)||COLORS[i%COLORS.length];
+const dcol=i=>safeColor(S&&S.drivers[i]&&S.drivers[i].color,i);
 function newRaceObj(o){ return Object.assign({id:uid(),status:'planned',created:nowMs(),events:[]},o); }
 function dbFromS(s,teamName){
   const members=(s.drivers||[]).map((d,i)=>({id:uid(),name:d.name||('Driver '+(i+1)),role:i===0?'owner':'driver',maxStint:d.max||120,color:d.color||COLORS[i%COLORS.length]}));
@@ -1359,22 +1408,33 @@ function syncSToDB(){
   if(r.status!=='done') r.status=S.events.some(e=>e.type==='green')?'live':'planned';
 }
 function dbSave(){ if(!DB) return; syncSToDB(); if(!SIM.on) store.set('pitdog_db',JSON.stringify(DB)); }
+let PENDING_SHARE=null;
 function loadDB(){
-  let shared=null; try{ if(location.hash.length>1) shared=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1))))); }catch(e){}
-  try{ DB=JSON.parse(store.get('pitdog_db')||'null'); }catch(e){ DB=null; }
-  if(!DB){ let old=null; try{ old=JSON.parse(store.get('pitdog')||'null'); }catch(e){} if(old&&old.race&&Array.isArray(old.drivers)) DB=dbFromS(old,'My team'); }
-  if(shared&&shared.race&&Array.isArray(shared.drivers)){
-    if(!DB) DB=dbFromS(Object.assign({},shared,{events:[]}),'Shared team');
-    else {
-      const ids=shared.drivers.map((d,i)=>{ let m=DB.team.members.find(x=>x.name.toLowerCase()===String(d.name).toLowerCase()); if(!m){ m={id:uid(),name:d.name,role:'driver',maxStint:d.max||120,color:d.color||COLORS[DB.team.members.length%COLORS.length]}; DB.team.members.push(m);} return {mid:m.id,max:d.max||m.maxStint}; });
-      const car=Object.assign({id:uid(),name:(shared.car&&shared.car.name)||'Shared car',measured:{}},clone(DEFAULT.car),shared.car||{}); car.id=uid(); DB.team.cars.push(car);
-      const r=newRaceObj({series:shared.series||DB.team.series,rules:Object.assign(clone(DEFAULT.race),shared.race),carId:car.id,drivers:ids}); DB.races.push(r); DB.activeRaceId=r.id;
-    }
-    try{ history.replaceState(null,'',location.pathname); }catch(e){}
-  }
+  let shared=null; if(location.hash.length>1){ try{ shared=cleanShared(JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(1)))))); }catch(e){} try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} }
+  try{ DB=normalizeDB(JSON.parse(store.get('pitdog_db')||'null')); }catch(e){ DB=null; }
+  if(!DB){ let old=null; try{ old=JSON.parse(store.get('pitdog')||'null'); }catch(e){} if(old&&old.race&&Array.isArray(old.drivers)) DB=normalizeDB(dbFromS(old,'My team')); }
+  // a shared plan starts a team only if this device has none; otherwise it waits for the crew to say yes (shareSheet)
+  if(shared){ if(!DB) DB=normalizeDB(dbFromS(Object.assign({},shared,{events:[]}),'Shared team')); else PENDING_SHARE=shared; }
   if(DB&&!activeRace()) DB.activeRaceId=(DB.races.find(r=>r.status!=='done')||DB.races[DB.races.length-1]||{}).id;
   if(DB&&!activeRace()){ const r=newRaceObj({series:DB.team.series,rules:Object.assign(clone(DEFAULT.race),SERIES[DB.team.series].race||{}),carId:DB.team.cars[0].id,drivers:DB.team.members.filter(m=>isDriverRole(m.role)).map(m=>({mid:m.id,max:m.maxStint}))}); DB.races.push(r); DB.activeRaceId=r.id; }
   if(DB) store.set('pitdog_db',JSON.stringify(DB));
+}
+function importShared(sh,open){
+  dbSave();                                                         // before touching DB.activeRaceId
+  const ids=sh.drivers.map(d=>{ let m=DB.team.members.find(x=>x.name.toLowerCase()===d.name.toLowerCase());
+    if(!m){ m={id:uid(),name:d.name,role:'driver',maxStint:d.max||120,color:d.color}; DB.team.members.push(m); } return {mid:m.id,max:d.max||m.maxStint}; });
+  const car=Object.assign({},sh.car,{id:uid(),measured:{}}); DB.team.cars.push(car);
+  const r=newRaceObj({series:sh.series,rules:Object.assign(clone(sh.race),{name:sh.race.name||'Shared plan'}),carId:car.id,drivers:ids}); DB.races.push(r);
+  if(open){ DB.activeRaceId=r.id; reloadActive(); show('plan'); } else { dbSave(); update(); show('team'); }
+  return r;
+}
+function shareSheet(){
+  const sh=PENDING_SHARE; PENDING_SHARE=null; if(!sh||!DB||SIM.on) return;
+  const cur=activeRace(), liveNow=!!(cur&&cur.status==='live'&&!live().finished);
+  openSheet('Shared plan',`<div class="sub" style="margin:0 0 10px">A teammate sent a plan: <b>${esc(sh.race.name||'Race')}</b> · ${esc(SERIES[sh.series].label)} · ${sh.drivers.map(d=>esc(d.name)).join(', ')}</div>`+
+    `<div class="hint">${liveNow?'<b>Your current race is live.</b> Adding this plan keeps your live race on screen. Open the shared one later from Team → Races.':'Adding it creates a new race in your team (plus any new people and a car). Your current race doesn\'t change.'}</div>`,
+    [{label:'Ignore',fn:closeSheet},{label:'Add to races',cls:liveNow?'pri':'',id:'shareAdd',fn:()=>{ closeSheet(); importShared(sh,false); }},
+     ...(liveNow?[]:[{label:'Add and open',cls:'pri',id:'shareOpen',fn:()=>{ closeSheet(); importShared(sh,true); }}])]);
 }
 /* adopt an S-shaped object as a brand-new local team (tests, demo) */
 function adoptS(s,name){ closeSheet(); DB=dbFromS(s,name||'My team'); hydrate(); dbSave(); bind(); update(); if(typeof applyView==='function') applyView(); }
@@ -1725,16 +1785,18 @@ const SKINS=[{k:'night',t:'Night race',d:'Floodlit pit lane. The default.'},{k:'
 const SKIN_BAR={night:'#0b0d11',sunlight:'#eef1f5',ferrari:'#0f0909',mclaren:'#111214',mercedes:'#060707',redbull:'#0a1128',aston:'#03201b',williams:'#03112b'};
 function setSkin(k){ if(!SKINS.some(x=>x.k===k)) k='night'; document.documentElement.dataset.skin=k; store.set('pitdog_skin',k);
   const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content=SKIN_BAR[k]; renderSkins(); }
-function renderSkins(){ const cur=document.documentElement.dataset.skin||'night'; const box=$('skinTiles'); if(!box) return;
-  box.innerHTML=SKINS.map(x=>`<button class="skin-tile ${x.k===cur?'sel':''}" data-skin="${x.k}" aria-pressed="${x.k===cur}"><div class="n">1:08:42</div><div class="t">${x.t}</div><div class="d">${x.d}</div><div class="sw"><i style="background:var(--brand)"></i><i style="background:var(--green)"></i><i style="background:var(--amber)"></i><i style="background:var(--red)"></i><i style="background:var(--panel);border:1px solid var(--line)"></i></div></button>`).join('');
-  box.querySelectorAll('.skin-tile').forEach(b=>b.onclick=()=>{ buzz(10); setSkin(b.dataset.skin); }); }
-$('ccSkin').onclick=()=>{ const cur=document.documentElement.dataset.skin||'night'; const i=SKINS.findIndex(x=>x.k===cur); setSkin(SKINS[(i+1)%SKINS.length].k); };
+const skinListHTML=cur=>SKINS.map(x=>`<button class="skin-row ${x.k===cur?'sel':''}" data-k="${x.k}" role="radio" aria-checked="${x.k===cur}"><span class="skin-pv" data-skin="${x.k}"><i></i>1:08</span><span class="nm"><b>${x.t}</b><small>${x.d}</small></span><span class="ck">✓</span></button>`).join('');
+function renderSkinList(box){ if(!box) return; box.innerHTML=skinListHTML(document.documentElement.dataset.skin||'night');
+  box.querySelectorAll('.skin-row').forEach(b=>b.onclick=()=>{ buzz(10); setSkin(b.dataset.k); }); }
+function renderSkins(){ renderSkinList($('skinTiles')); renderSkinList($('skinSheetList')); }
+function skinSheet(){ openSheet('Look','<div class="skinlist" id="skinSheetList" role="radiogroup" aria-label="Look"></div>',[{label:'Done',cls:'pri',fn:closeSheet}]); renderSkins(); }
+$('ccSkin').onclick=skinSheet;
 setSkin(document.documentElement.dataset.skin||'night');
 
 try{ loadDB(); }catch(e){ DB=null; }
 if(DB) hydrate(); else S=clone(DEFAULT);
 bind(); update(); keepAwake();
-if(!DB) startOnboarding();
+if(!DB) startOnboarding(); else if(PENDING_SHARE) shareSheet();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
 setInterval(()=>{ try{ const lv=live(); P=plan(lv); renderRace(); if($('tab-race').classList.contains('on')) renderTeam(lv); if($('tab-plan').classList.contains('on')) renderPlan(P,lv); }catch(e){} },500);
 applyView();
