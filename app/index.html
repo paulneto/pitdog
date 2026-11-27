@@ -459,7 +459,7 @@
   <div class="card">
     <h2>Race</h2>
     <label class="f">Series rules
-      <select id="series"><option value="luckydog">Lucky Dog (2026)</option><option value="pca">PCA Club Racing Enduro</option><option value="custom">Custom</option></select></label>
+      <select id="series"></select></label>
     <label class="f">Race name <input id="name" type="text" placeholder="Saturday"></label>
     <label class="f">Track (for weather) <select id="track"></select></label>
     <label class="f trk-custom">Latitude <input id="lat" type="number" inputmode="decimal" step="0.001"></label>
@@ -472,7 +472,9 @@
     <label class="f">Driver rest between stints (min) <input id="rest" type="number" inputmode="numeric" min="0"></label>
     <label class="f">Min fuel stop (min) <input id="minStop" type="number" inputmode="decimal" min="0" step="0.5"></label>
     <label class="f">5-min stop required every (min) <input id="mandEvery" type="number" inputmode="numeric" min="0"></label>
+    <label class="f mandper">Mandatory stops = race min ÷ X − 1 <input id="mandPer" type="number" inputmode="numeric" min="0"></label>
     <label class="f pcaonly">Mandatory stops <input id="mandatory" type="number" inputmode="numeric" min="0"></label>
+    <label class="f custonly">Minimum stop applies to <select id="minApplies"><option value="fuel">Fuel stops</option><option value="all">All stops</option></select></label>
     <label class="f pcaonly">No stops before (min) <input id="earliest" type="number" inputmode="numeric" min="0"></label>
     <label class="f pcaonly">Stops start before last (min) <input id="latest" type="number" inputmode="numeric" min="0"></label>
     <label class="f">Pits open under yellow <select id="pitsUnderYellow"><option value="1">Yes</option><option value="0">No</option></select></label>
@@ -502,6 +504,7 @@
   </div>
   <div class="card">
     <h2 id="rulesTitle">Rules</h2>
+    <div id="rulesGlance"></div>
     <ul class="rules" id="rulesList"></ul>
   </div>
 </section>
@@ -550,17 +553,45 @@
 <script>
 /* ================= rules & defaults ================= */
 const COLORS=['#ff3b30','#0a84ff','#30d158','#bf5af2','#ff9f0a','#64d2ff','#ff375f','#ac8e68'];
+/* Series presets. Every preset sets EVERY rule key so switching series resets cleanly.
+   minApplies: 'fuel' = minimum stop time only for fuel stops; 'all' = every stop (except black flag).
+   mandPer: AER-style mandatory stop count = ceil(race minutes / mandPer - 1). fuelMax: onboard fuel limit (0 = none). */
+const RULEKEYS={maxStint:0,rest:0,minStop:0,minApplies:'fuel',mandEvery:0,mandatory:0,mandPer:0,earliest:0,latest:0,pitsUnderYellow:1,yellowWindow:15,onDeck:15,fuelMax:0,refuelOver:0};
 const SERIES={
-  luckydog:{label:'Lucky Dog',sched:true,race:{maxStint:120,rest:60,minStop:5,mandEvery:120,mandatory:0,earliest:0,latest:0,pitsUnderYellow:1,yellowWindow:20,onDeck:15},
-    rules:['Race runs to the <b>scheduled clock</b> (e.g. 10:00–17:00), whenever the green flag falls.','Driver stints are <b>2:00 max</b> ("not 2 hours 3 minutes!"), with a <b>60-min break</b> between a driver\'s stints.','A <b>mandatory 5-min stop in every 2 hours</b>. Fuel stops are <b>5:00 min</b>. Driver-change and mechanical stops have no minimum.','Come to a full stop at Pit In for the magnetic timer; return it at Pit Out. Each fuelling infraction adds +1 min at Pit Out.','Pit stops are allowed any time <b>except red flag / all black</b>. Under red, stop all work and cap the fuel.','Fuel only from 5-gal racing jugs, <b>one jug over the wall at a time</b>, no funnels. Max 5 people over the wall. 24-gal total fuel limit.','Pit lane 25 mph. Wear driver wristbands.'],
-    src:'2026 Lucky Dog Racing League Competition Rules. Check the event supplementals.'},
-  pca:{label:'PCA Club Racing',sched:false,race:{maxStint:0,rest:0,minStop:5,mandEvery:0,mandatory:1,earliest:15,latest:10,pitsUnderYellow:0,yellowWindow:0,onDeck:10},
+  luckydog:{label:'Lucky Dog',sched:true,race:Object.assign({},RULEKEYS,{maxStint:120,rest:60,minStop:5,mandEvery:120,yellowWindow:20,fuelMax:24}),
+    glance:{stint:'2:00 max',rest:'60 min',stop:'5:00 fuel stops',mand:'5-min stop every 2 h',fcy:'pits open',clock:'scheduled times'},
+    rules:['Race runs to the <b>scheduled clock</b> (e.g. 10:00–17:00), whenever the green flag falls.','Driver stints are <b>2:00 max</b> ("not 2 hours 3 minutes!"), with a <b>60-min break</b> between a driver\'s stints.','A <b>mandatory 5-min stop in every 2 hours</b>. Fuel stops are <b>5:00 min</b>; driver-change and mechanical stops have no minimum.','Full stop at Pit In for the magnetic timer; return it at Pit Out. Each fuelling infraction adds +1 min at Pit Out.','Pit stops are allowed any time <b>except red flag / all black</b>.','Fuel only from 5-gal racing jugs, <b>one jug over the wall at a time</b>, no funnels. Max 5 over the wall. <b>24-gal</b> total fuel limit.','Pit lane 25 mph. Driver wristbands.'],
+    pit:'Full stop at Pit In for the timer · max 5 over the wall · <b>one jug at a time</b> · no funnel · fire bottle ready · return the timer at Pit Out',
+    src:'<a href="https://www.racelucky.com/wp-content/uploads/2025/10/Lucky-Dog-Rules-v1.1.pdf" target="_blank">2026 Lucky Dog Competition Rules</a> §9, §12–13'},
+  champcar:{label:'ChampCar',sched:true,race:Object.assign({},RULEKEYS,{maxStint:120,rest:60,minStop:5,yellowWindow:20}),
+    glance:{stint:'2:00 max (consecutive)',rest:'60 min',stop:'5:00 fuel stops',mand:'none (fuel forces stops)',fcy:'pits open*',clock:'scheduled times*'},
+    rules:['No driver may drive more than <b>2 hours consecutively</b>, with at least <b>60 min rest</b> between stints. The stint clock starts at the green (first driver) or when released from pit lane after a change.','Every stop that adds fuel is a <b>timed stop: 5:00 minimum</b>, pit-in to pit-out. Stops without fuel are not timed.','Fuel through a hose or dry break on 5-gal jugs, <b>one jug over the wall at a time</b>; max <b>5 people over the wall</b> while fuelling; max 25 gal stored in your pit.','Fuel capacity: the OEM tank capacity (cars under 13 gal OEM may fit a 15-gal cell).','Red flag: crew stops work until the race is back under yellow.','<i>*Not set in the rulebook: whether pits stay open under FCY and how the race clock runs. PitDog assumes pits open and scheduled times. Check the event supps.</i>'],
+    pit:'Timed stop: 5:00 pit-in → pit-out if fuel goes in · max 5 over the wall · one jug at a time · hose/dry break only',
+    src:'<a href="https://champcar.org/web/pdf/2026_BCCR/2026_BCCR_V1_4.pdf" target="_blank">2026 ChampCar BCCR v1.4</a> §7.1, §8.2, §9.10'},
+  wrl:{label:'WRL',sched:true,race:Object.assign({},RULEKEYS,{maxStint:240,rest:60,minStop:0,yellowWindow:15}),
+    glance:{stint:'4:00 max',rest:'60 min',stop:'no minimum*',mand:'none',fcy:'pits open*',clock:'scheduled times'},
+    rules:['Driving stints <b>4 hours max</b>, with a minimum <b>1 hour break</b> between stints. Officials watch for fatigue.','Fuelling on pit road during hot track only; engine off before fuelling; driver change allowed during fuelling.','Max <b>5 team members over the wall</b>; <b>one fuel jug over the wall at a time</b>, no staging; no pressurised systems; drip pan or absorbent mat required.','Non-compliant fuel jugs: 1-lap penalty per fuel stop. Fuelling/pit-road violations: 1 lap.','Checkered flag when time expires.','<i>*Only the 2022 rulebook is public: no minimum stop time is stated, and FCY pit rules aren\'t covered. Check the current WRL event info.</i>'],
+    pit:'Engine off before fuelling · max 5 over the wall · one jug at a time · drip pan/mat · no work while the fuel port is open',
+    src:'<a href="https://static1.squarespace.com/static/611fe48f61d6702c42301722/t/624778f387bf2c0dcdff5442/1648851187807/WRL-RULES-2022.2.1.docx.pdf" target="_blank">WRL Rules 2022.2.1</a> (latest public)'},
+  aer:{label:'AER',sched:true,race:Object.assign({},RULEKEYS,{minStop:3,minApplies:'all',mandPer:80,latest:10,yellowWindow:15}),
+    glance:{stint:'no limit in rulebook',rest:'—',stop:'3:00 (mandatory stops)',mand:'race min ÷ 80 − 1',fcy:'pit in OK, pit-out held',clock:'scheduled times'},
+    rules:['Mandatory stops = <b>race minutes ÷ 80 − 1</b>, rounded up (8 h → 5 stops; 14 h → 10).','Each mandatory stop is at least <b>3:00</b> from the pit-in to the pit-out RFID antenna. Shorter stops don\'t count; you can\'t combine stop time.','Stops that begin in the <b>last 10 minutes</b> of the scheduled race don\'t count.','Missed stops cost 10 min ÷ your fastest lap, in laps, per stop.','Under FCY <b>pit-out is closed</b> until the tail of the pack passes; stops of 3:00+ under FCY still count. Races start under FCY.','Pit lane 35 mph. Any fuel cell size allowed (FT-3).','<i>No driver stint limit appears in the current rulebook. Older coverage mentions one, so check with AER.</i>'],
+    pit:'3:00 minimum pit-in → pit-out antenna for it to count · pit lane 35 mph · under FCY you may pit, but pit-out is held for the pack',
+    src:'<a href="https://race.americanenduranceracing.com/rulebook" target="_blank">AER Rulebook</a> §6–7'},
+  lemons:{label:'24 Hours of Lemons',sched:true,race:Object.assign({},RULEKEYS,{minStop:0,yellowWindow:15}),
+    glance:{stint:'none official*',rest:'—',stop:'no minimum',mand:'none',fcy:'pits open*',clock:'scheduled times'},
+    rules:['Fuel in the <b>hot pits or at the track pumps</b> only, never in the paddock during the race.','While fuelling: kill switch off, <b>nobody in the car</b>, drip pan, a dedicated extinguisher person, and full safety gear for everyone in the fuelling area.','Hot pit is for fuelling, driver changes and cool-suit ice only; no staging fuel or gear there.','<i>*No official max stint or minimum stop time found. Lemons has recommended shorter stints (about 1 h). Set your own max stint here and check the race page.</i>'],
+    pit:'Kill switch off and nobody in the car while fuelling · drip pan · extinguisher person · fuel only in hot pits or at track pumps',
+    src:'<a href="https://24hoursoflemons.com/race-2/?id=451" target="_blank">Lemons race page fuelling rules</a> (no full public rulebook found)'},
+  pca:{label:'PCA Club Racing',sched:false,race:Object.assign({},RULEKEYS,{minStop:5,minApplies:'all',mandatory:1,earliest:15,latest:10,pitsUnderYellow:0,yellowWindow:0,onDeck:10,refuelOver:60}),
+    glance:{stint:'no limit',rest:'—',stop:'5:00 all stops',mand:'1 (in window)',fcy:'pits CLOSED',clock:'from green'},
     rules:['At least one mandatory stop (more if the supplementals say so), <b>5:00 min</b> check-in to check-out.','No mandatory stops in the first 15 min; they must start before the last 10 min.','Refuelling only in races over 1 hour. Every refuelling stop is 5:00 minimum (no splash and go).','Max 3 over the wall. Plastic jugs ≤5 gal over the wall. Fireman required.','<b>Pits closed under full-course yellow.</b>'],
-    src:'2026 PCA Club Racing Enduro Protocols.'},
-  custom:{label:'Custom',sched:false,race:{},rules:['Set your own rules in the Race settings above.'],src:''}
+    pit:'Max 3 over the wall · engine off, driver out while fuelling · fireman with the pin pulled',
+    src:'2026 PCA Club Racing Enduro Protocols'},
+  custom:{label:'Custom',sched:false,race:Object.assign({},RULEKEYS),glance:null,rules:['Set your own rules in the Race settings above.'],pit:'',src:''}
 };
 const DEFAULT={series:'luckydog',
-  race:{track:'none',lat:0,lon:0,name:'Saturday',start:'10:00',end:'17:00',len:120,startG:'13:00',maxStint:120,rest:60,minStop:5,mandEvery:120,mandatory:0,earliest:0,latest:0,pitsUnderYellow:1,yellowWindow:20,onDeck:15},
+  race:Object.assign({track:'none',lat:0,lon:0,name:'Saturday',start:'10:00',end:'17:00',len:120,startG:'13:00'},SERIES.luckydog.race),
   car:{unit:'gal',cap:16.4,burn:0.38,reserve:1,lap:'2:20',pitLoss:45,fillRate:4,changeSec:60,jug:5,useMeasured:1},
   drivers:[{name:'Driver A',max:120},{name:'Driver B',max:120},{name:'Driver C',max:120},{name:'Driver D',max:120}],
   events:[],archive:[]};
@@ -622,7 +653,7 @@ function plan(lv){
   if(!nd) return {err:'Add at least one driver.'};
   lv=lv||{stops:[],now:0,started:false};
   const meas=measuredBurn(lv,lap); const burn=(C.useMeasured&&meas)?meas:C.burn;
-  const refuel = S.series==='pca' ? L>60 : true;
+  const refuel = R.refuelOver ? L>R.refuelOver : true;
   const fuelRangeMin=(C.cap - C.reserve*burn)/burn*lap;
   const driverCap=Math.min(...S.drivers.map(d=>d.max||Infinity));
   const caps=[[refuel?fuelRangeMin:Infinity,'fuel range'],[driverCap,'driver max stint'],[R.maxStint||Infinity,'series max stint'],[R.mandEvery?R.mandEvery-1:Infinity,'5-min stop every '+R.mandEvery+' min']];
@@ -635,7 +666,7 @@ function plan(lv){
     t = a.out!=null ? a.out : Math.max(lv.now, a.in+(a.kind==='fuel'?stopCost:C.pitLoss/60+1));
     di = a.next!=null ? a.next : (di+1)%nd;
   });
-  const remMand=Math.max(0,(R.mandatory||0)-lv.stops.length);
+  const remMand=Math.max(0,mandCount(R,L)-lv.stops.length);
   const Rm=L-t;
   if(Rm>0){
     let n=remMand+1; while(n<80 && (Rm-(n-1)*stopCost)/n > cap+1e-9) n++;
@@ -689,8 +720,9 @@ function plan(lv){
     if(R.rest){ for(let j=i-1;j>=0;j--){ if(stints[j].driver===s.driver){ const gap=s.start-stints[j].end; if(gap<R.rest-1e-6) W.push(['bad',`${d?d.name:'Driver'} gets only ${fmt(gap)} rest before stint ${i+1}. ${R.rest} min required.`]); break; } } }
   });
   lv.stops.forEach((a,i)=>{ if(a.out!=null&&a.kind==='fuel'&&a.out-a.in<R.minStop-1e-6) W.push(['bad',`Stop ${i+1} (fuel) was only ${fmt(a.out-a.in)}, under the ${R.minStop}:00 minimum.`]); });
-  if(S.series==='pca'&&!refuel) W.push(['warn','This race is 60 min or shorter, so PCA rules don\'t allow refuelling.']);
-  if(S.series==='luckydog'&&C.cap>24) W.push(['bad','Lucky Dog limits total onboard fuel to 24 gal.']);
+  if(R.refuelOver&&!refuel) W.push(['warn',`This race is ${R.refuelOver} min or shorter, so refuelling isn't allowed.`]);
+  if(R.fuelMax&&C.cap>R.fuelMax) W.push(['bad',`${(SERIES[S.series]||{}).label} limits total onboard fuel to ${R.fuelMax} ${C.unit}.`]);
+  if(R.mandPer) W.push(['ok',`${mandCount(R,L)} mandatory stops for a ${fmt(L)} race (race minutes ÷ ${R.mandPer} − 1).`]);
   if(meas) W.push(['ok',`Measured burn ${r1(meas*100)/100} ${C.unit}/lap (planned ${C.burn}).${C.useMeasured?' The plan is using the measured figure.':''}`]);
   if(!W.some(w=>w[0]==='bad')) W.unshift(['ok',`Plan is legal: ${stints.length-1} stops. Stints are limited by ${capWhy}.`]);
   return {stints,W,L,lap,laps,stopCost,stopDur,refuel,fuelRangeMin,lastStart,burn,meas};
@@ -710,13 +742,14 @@ function driverStatus(lv,P){
 }
 
 /* ================= render: plan tab ================= */
-const raceFields=['track','lat','lon','name','start','end','len','startG','maxStint','rest','minStop','mandEvery','mandatory','earliest','latest','pitsUnderYellow','yellowWindow','onDeck'];
+const raceFields=['mandPer','minApplies','track','lat','lon','name','start','end','len','startG','maxStint','rest','minStop','mandEvery','mandatory','earliest','latest','pitsUnderYellow','yellowWindow','onDeck'];
 const carFields=['unit','cap','burn','reserve','lap','pitLoss','fillRate','changeSec','jug'];
-const TXT=['track','name','start','end','startG','unit','lap'];
+const TXT=['minApplies','track','name','start','end','startG','unit','lap'];
 const num=(f,v)=>TXT.includes(f)?v:parseFloat(v)||0;
 function bind(){
   if(!$('track').options.length) $('track').innerHTML=Object.entries(TRACKS).map(([k,[n]])=>`<option value="${k}">${n}</option>`).join('');
   if(DB){ const cs=$('carSel'); cs.innerHTML=DB.team.cars.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join(''); cs.value=(activeRace()||{}).carId; cs.onchange=()=>{ dbSave(); activeRace().carId=cs.value; hydrate(); dbSave(); bind(); update(); }; }
+  if($('series').options.length!==Object.keys(SERIES).length) $('series').innerHTML=Object.entries(SERIES).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
   $('series').value=S.series;
   $('series').onchange=()=>{ S.series=$('series').value; Object.assign(S.race,SERIES[S.series].race||{}); bind(); update(); };
   raceFields.forEach(f=>{ $(f).value=S.race[f]??''; $(f).onchange=$(f).oninput=()=>{ S.race[f]=num(f,$(f).value); if(f==='track'){ document.querySelectorAll('.trk-custom').forEach(e=>e.style.display=S.race.track==='custom'?'flex':'none'); fetchWx(true); } update(); }; });
@@ -725,8 +758,10 @@ function bind(){
   document.querySelectorAll('.trk-custom').forEach(e=>e.style.display=S.race.track==='custom'?'flex':'none');
   document.querySelectorAll('.sched').forEach(e=>e.style.display=sched()?'flex':'none');
   document.querySelectorAll('.nosched').forEach(e=>e.style.display=sched()?'none':'flex');
-  document.querySelectorAll('.pcaonly').forEach(e=>e.style.display=S.series==='luckydog'?'none':'flex');
-  const ser=SERIES[S.series]; $('serName').textContent=ser.label+(S.race.name?' · '+S.race.name:''); $('rulesTitle').textContent=ser.label+' rules'; $('rulesList').innerHTML=ser.rules.map(r=>`<li>${r}</li>`).join('')+(ser.src?`<li style="list-style:none;margin-left:-16px;font-size:12px">Source: ${ser.src}</li>`:'');
+  document.querySelectorAll('.pcaonly').forEach(e=>e.style.display=['pca','custom'].includes(S.series)?'flex':'none');
+  document.querySelectorAll('.mandper').forEach(e=>e.style.display=['aer','custom'].includes(S.series)?'flex':'none');
+  document.querySelectorAll('.custonly').forEach(e=>e.style.display=S.series==='custom'?'flex':'none');
+  const ser=SERIES[S.series]; $('serName').textContent=ser.label+(S.race.name?' · '+S.race.name:''); $('rulesTitle').textContent=ser.label+' rules'; $('rulesGlance').innerHTML=glanceHTML(ser.glance); $('rulesList').innerHTML=ser.rules.map(r=>`<li>${r}</li>`).join('')+(ser.src?`<li style="list-style:none;margin-left:-16px;font-size:12px">Source: ${ser.src}</li>`:'');
   renderDrivers();
 }
 function renderDrivers(){
@@ -796,13 +831,15 @@ function computeAlerts(lv,P){
   if(R.maxStint){ if(inSeat>R.maxStint) A.push(['box',`${S.drivers[s.driver]?.name} is OVER the ${R.maxStint/60}-hour stint limit`]); else if(inSeat>R.maxStint-10) A.push(['warn',`${fmt(R.maxStint-inSeat)} left on ${S.drivers[s.driver]?.name}'s ${R.maxStint}-min max stint`]); }
   if(R.mandEvery){ const due=lastMandStop(lv)+R.mandEvery-lv.now; if(due<0) A.push(['box','Mandatory 5-min stop OVERDUE']); else if(due<10) A.push(['warn',`Mandatory 5-min stop due within ${fmt(due)}`]); }
   if(R.earliest&&lv.now<R.earliest) A.push(['info',`Stop window opens in ${fmt(R.earliest-lv.now)}`]);
-  if(R.latest&&lv.now>P.lastStart&&lv.stops.length<(R.mandatory||0)) A.push(['box','Mandatory stop window has CLOSED']);
+  if(R.latest&&lv.now>P.lastStart&&lv.stops.length<mandCount(R,lv.L)) A.push(['box','Mandatory stop window has CLOSED']);
   return A;
 }
 // half-jug logging: the last jug is usually only partly poured
 const jugSteps=C=>{ const out=[]; const mx=Math.min(6,Math.ceil(C.cap/C.jug)); for(let j=0;j<=mx+1e-9;j+=0.5) out.push(j); return out; };
 const jugLbl=j=>j===0?'0':(Math.floor(j)||'')+(j%1?'½':'');
-function minFor(kind){ return kind==='fuel'||(S.series==='pca'&&kind!=='black')?S.race.minStop:0; }
+function minFor(kind){ const R=S.race; if(kind==='black') return 0; return (kind==='fuel'||R.minApplies==='all')?(R.minStop||0):0; }
+function mandCount(R,L){ return R.mandPer?Math.max(0,Math.ceil(L/R.mandPer-1-1e-9)):(R.mandatory||0); }
+function glanceHTML(g){ return g?`<div class="kpis" style="margin:0 0 10px">${[['Max stint',g.stint],['Driver rest',g.rest],['Min stop',g.stop],['Mandatory stops',g.mand],['Under FCY',g.fcy],['Race clock',g.clock]].map(([l,v])=>`<div class="stat"><div class="v" style="font-size:13px;white-space:normal;line-height:1.25">${v}</div><div class="l">${l}</div></div>`).join('')}</div>`:''; }
 function renderRace(){
   const lv=live(); const R=S.race, C=S.car; const pill=$('statusPill'), big=$('bigBtn');
   $('clockWall').textContent=new Date(nowMs()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -848,7 +885,7 @@ function renderRace(){
     $('nextDrv').innerHTML=S.drivers.map((d,i)=>{ const o=ds[i]; const restLeft=o.lastEnd!=null&&R.rest?R.rest-(a.in-o.lastEnd)-el:0; const tired=restLeft>0;
       return `<button class="chipbtn ${i===dsel?'sel':''} ${tired?'dim':''}" style="--c:${dcol(i)}" data-d="${i}">${d.name}<small>${tired?'rest '+fmt(restLeft):fmt(o.seat)+' driven'}</small></button>`; }).join('');
     $('nextDrv').querySelectorAll('button').forEach(b=>b.onclick=()=>{ pend.driver=+b.dataset.d; buzz(10); renderRace(); });
-    $('pitRem').innerHTML= S.series==='luckydog'?'Full stop at Pit In for the timer · max 5 over the wall · <b>one jug at a time</b> · no funnel · fire bottle ready · return the timer at Pit Out':S.series==='pca'?'Max 3 over the wall · engine off, driver out while fuelling · fireman with the pin pulled':'';
+    $('pitRem').innerHTML=(SERIES[S.series]||{}).pit||'';
     big.className='big '+(ok?'green':'amber'); big.innerHTML=ok?'PIT OUT<small>Car leaving pit lane</small>':`PIT OUT<small>Too early: ${fmt(target-el)} to go</small>`;
   } else {
     pill.className='pill track'; pill.textContent='ON TRACK';
@@ -1101,7 +1138,7 @@ function dbFromS(s,teamName){
 function hydrate(){
   const r=activeRace(); if(!r) return;
   const car=carById(r.carId)||DB.team.cars[0]; r.carId=car.id;
-  r.rules=Object.assign(clone(DEFAULT.race),r.rules); CAR_FIELDS.forEach(f=>{ if(car[f]===undefined) car[f]=DEFAULT.car[f]; });
+  r.rules=Object.assign(clone(DEFAULT.race),clone((SERIES[r.series]||SERIES.luckydog).race),r.rules); CAR_FIELDS.forEach(f=>{ if(car[f]===undefined) car[f]=DEFAULT.car[f]; });
   S={series:r.series||'luckydog',race:r.rules,car,drivers:r.drivers.filter(d=>member(d.mid)).map(d=>{ const m=member(d.mid); return {mid:d.mid,name:m.name,color:m.color,max:d.max}; }),events:r.events||[]};
 }
 function syncSToDB(){
@@ -1230,7 +1267,7 @@ function newRaceSheet(base){
   const nm=base?(/saturday/i.test(R0.name)?'Sunday':(R0.name||'Race')+' (day 2)'):'Race '+(DB.races.filter(r=>!r.sim).length+1);
   const draw=()=>{ $('rPick').innerHTML=drivers.map(m=>{ const k=sel.indexOf(m.id); return `<button class="${k>=0?'sel':''}" style="--c:${m.color}" data-m="${m.id}">${esc(m.name)}${k>=0?`<span class="n">${k+1}</span>`:''}</button>`; }).join('')||'<span class="hint">No drivers on the team yet. Add people first.</span>';
     $('rPick').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const id=b.dataset.m; sel=sel.includes(id)?sel.filter(x=>x!==id):[...sel,id]; draw(); }); };
-  openSheet(base?'Same team, new day':'New race',fld('Race name',`<input id="rName" type="text" value="${esc(nm)}">`)+fld('Series',`<select id="rSeries">${seriesOpts(series)}</select>`)+fld('Track',`<select id="rTrack">${trackOpts(R0.track||'none')}</select>`)+
+  openSheet(base?'Same team, new day':'New race',fld('Race name',`<input id="rName" type="text" value="${esc(nm)}">`)+fld('Series',`<select id="rSeries">${seriesOpts(series)}</select>`)+`<div id="rGlance" style="margin-top:8px">${glanceHTML((SERIES[series]||{}).glance)}</div>`+fld('Track',`<select id="rTrack">${trackOpts(R0.track||'none')}</select>`)+
     `<div id="rSched" style="display:${sched0?'block':'none'}">`+fld('Start',`<input id="rStart" type="time" value="${R0.start||'10:00'}">`)+fld('End',`<input id="rEnd" type="time" value="${R0.end||'17:00'}">`)+`</div><div id="rLenBox" style="display:${sched0?'none':'block'}">`+fld('Length (min)',`<input id="rLen" type="number" inputmode="numeric" step="5" value="${R0.len||120}">`)+`</div>`+
     fld('Car',`<select id="rCar">${DB.team.cars.map(c=>`<option value="${c.id}" ${base&&base.carId===c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select>`)+
     `<div class="sub" style="margin:14px 0 8px">Who's driving? Tap in rotation order.</div><div class="pick" id="rPick"></div>`,
@@ -1241,7 +1278,7 @@ function newRaceSheet(base){
       Object.assign(rules,{name:val('rName').trim()||'Race',track:val('rTrack'),start:val('rStart'),end:val('rEnd'),len:parseFloat(val('rLen'))||120});
       const r=newRaceObj({series:s,rules,carId:val('rCar'),drivers:sel.map(id=>{ const prev=base&&base.drivers.find(d=>d.mid===id); return {mid:id,max:prev?prev.max:Math.min(member(id).maxStint||120,rules.maxStint||999)}; })});
       DB.races.push(r); DB.activeRaceId=r.id; closeSheet(); reloadActive(); show('plan'); }}]);
-  $('rSeries').onchange=()=>{ const sc=!!(SERIES[val('rSeries')]||{}).sched; $('rSched').style.display=sc?'block':'none'; $('rLenBox').style.display=sc?'none':'block'; };
+  $('rSeries').onchange=()=>{ const sc=!!(SERIES[val('rSeries')]||{}).sched; $('rGlance').innerHTML=glanceHTML((SERIES[val('rSeries')]||{}).glance); $('rSched').style.display=sc?'block':'none'; $('rLenBox').style.display=sc?'none':'block'; };
   draw();
 }
 function raceSheet(id){
@@ -1322,7 +1359,7 @@ function simCrew(lv){
   if(lv.inPit){
     if(lv.red) return;                                                   // work stops under red
     const a=lv.stops[lv.stops.length-1], el=lv.now-a.in, mn=minFor('fuel');
-    if(SIM.stopTarget==null) SIM.stopTarget=SIM.rng()<0.03? mn-0.3 : mn+5/60+0.05+SIM.rng()*0.45;
+    if(SIM.stopTarget==null){ const work=(S.car.changeSec||0)/60+(P2.refuel?Math.max(0,S.car.cap-T.fuel)/(S.car.fillRate||4):0); SIM.stopTarget=(mn&&SIM.rng()<0.03)? mn-0.3 : Math.max(mn+5/60,work)+0.05+SIM.rng()*0.45; }
     if(el>=SIM.stopTarget){
       const need=Math.max(0,S.car.cap-T.fuel); const jugs=P2.refuel?Math.ceil(need/(S.car.jug/2)-1e-9)/2:0; /* crew logs to the nearest half jug */ const add=Math.min(need,jugs*S.car.jug);
       T.fuel+=add; T.added+=add; T.oof=false;

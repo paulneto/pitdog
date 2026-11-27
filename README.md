@@ -1,6 +1,6 @@
 # PitDog 🏁
 
-**Pit-wall app for endurance race teams.** Built for Lucky Dog Racing League, with a PCA Club Racing preset too. Stint and fuel planning, a one-button race-day pit wall on phones, and an iPad **command center** in landscape. Works offline.
+**Pit-wall app for endurance race teams.** Rule sets for **Lucky Dog, ChampCar, WRL, AER, 24 Hours of Lemons and PCA Club Racing**, chosen per race (see `docs/rules-comparison.md`). Stint and fuel planning, a one-button race-day pit wall on phones, and an iPad **command center** in landscape. Works offline.
 
 **Live:** https://paulneto.github.io/pitdog/
 
@@ -31,12 +31,12 @@ app/                 the app: deployed as-is, no build step
 tests/e2e/           headless-Chrome scenarios with a fake race clock
   run.sh             run all scenarios (or: run.sh <name-filter>)
   harness.js         fake clock + helpers injected into the app
-  scenarios/*.js     luckydog-full-day, pca-enduro, command-center, team-flow,
-                     migration, simulator, sim-sweep (25 seeded simulated races)
+  scenarios/*.js     luckydog-full-day, pca-enduro, command-center, team-flow, migration,
+                     simulator, sim-sweep (25 races), series-sweep (5 races × every series)
 docs/
   roadmap-live-sync-sim.md   live timing research, team sync and simulator plan
-  rules-lucky-dog-2026.md    the rules the app enforces, with source
-  rules-pca-2026.md
+  rules-comparison.md        all series side by side, with sources
+  rules-*.md                 one page per series (lucky-dog, champcar, wrl, aer, lemons, pca)
 scripts/serve.sh     local dev server (http://localhost:8765)
 .github/workflows/pages.yml  auto-deploy app/ to GitHub Pages on push to main
 ```
