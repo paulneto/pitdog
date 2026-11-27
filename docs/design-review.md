@@ -30,6 +30,7 @@ A crew reading a screen at arm's length, under time pressure, in glare or at nig
 - **Icons:** one inline-SVG set (stroke = currentColor) replaces every emoji: tab bar, stop types, log, alerts, conditions.
 - **Type:** Inter (OFL), bundled and precached; tabular digits on every number.
 - **Command center alerts live in the flag bar.** The most urgent non-flag alert sits beside the flag (action first, so a truncated line still says what to do), with "+N more". The freed panel is **Next stops**: stop number, time, countdown, fuel to add and who goes out, with any extra alerts above it. A lap/pace trace can take this space once live timing exists.
+- **No hard-coded theme colours left.** Status tints derive from each skin's own status colours (`color-mix` on `--green/--amber/--red/--blue`), ink on coloured fills uses `--on-fill` / `--on-yellow`, and the sheet backdrop is `--scrim`. Only shadows, the print sheet and the (literally black-and-white) checkered flag use fixed colours.
 - **Simulator HUD is a slim pill:** SIM · play/pause · one speed button (1×/10×/30×/60×) · auto-crew · truth readout · End. Its purple lives in `--sim*` tokens.
 
 ## Skins (Log → Look; SKIN button on the command center)
