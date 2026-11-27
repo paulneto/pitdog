@@ -739,6 +739,10 @@
     <h2><span>Races</span><button class="mini" id="newRaceBtn">+ New race</button></h2>
     <div id="raceList"></div>
   </div>
+  <div class="card" data-help="presets">
+    <h2>Race presets</h2>
+    <div id="presetList"></div>
+  </div>
   <div class="card">
     <h2>Simulator</h2>
     <div class="sub" style="margin:0 0 8px">Run a whole race at up to 200× speed with your team, car and rules. Race control throws yellows and reds, and an auto-crew can run the stops. Nothing is saved to your real races.</div>
@@ -830,7 +834,7 @@
   </div>
   <div class="card">
     <h2>Share &amp; try</h2>
-    <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="share">Send plan to teammates</button><button class="btn" id="print">Print plan</button></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="share">Send plan to teammates</button><button class="btn" id="print">Print plan</button><button class="btn" id="savePreset">☆ Save as a preset</button></div>
     <button class="btn full" id="openLab" style="margin-top:10px;font-weight:800"><span data-ic="lab"></span> Strategy Lab: compare strategies over many simulated races ›</button>
   </div>
 </section>
@@ -1494,6 +1498,10 @@ function go(tab){ show(tab); if(tab==='records') renderRecords(); if(tab==='lab'
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); go(b.dataset.tab); });
 document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>go(b.dataset.back));
 $('openLog').onclick=()=>go('log'); $('openLab').onclick=()=>go('lab');
+$('savePreset').onclick=()=>{ if(!DB||SIM.on) return; if(teamOnline()&&!canPlan()){ toast2('Only the owner or pit wall can save presets.'); return; } const r=activeRace(); if(!r) return;
+  const nm=(prompt('Name this preset (e.g. “Calabogie 8 h”)', r.rules.name||'')||'').trim(); if(!nm) return; dbSave();
+  const x={id:uid(),name:nm.slice(0,40),series:r.series,hours:Math.round(raceLen()/30)/2,track:r.rules.track||'none',carId:r.carId,drivers:r.drivers.map(d=>d.mid),rules:clone(r.rules)};
+  DB.team.presets=(DB.team.presets||[]).filter(q=>q.name.toLowerCase()!==x.name.toLowerCase()).concat(x); dbSave(); pushSoon(); toast2('Preset saved: '+x.name+'. It’s in Race now.'); };
 
 /* ================= loop ================= */
 function update(){ document.body.classList.toggle('nodb',!DB&&!SIM.on);
@@ -1722,6 +1730,8 @@ function normalizeDB(db){
   if(T.sid!==undefined&&!(typeof T.sid==='string'&&/^[0-9a-f-]{36}$/i.test(T.sid))){ delete T.sid; } if(!['owner','pitwall','crew','viewer'].includes(T.role)) delete T.role; if(T.joinCode!==undefined) T.joinCode=String(T.joinCode).replace(/[^A-Z0-9]/g,'').slice(0,8);
   T.members=T.members.filter(m=>m&&typeof m==='object'); T.members.forEach((m,i)=>{ m.id=safeId(m.id); m.name=str(m.name,40)||'Driver'; m.color=safeColor(m.color,i); if(!own(ROLES,m.role)) m.role='driver'; m.maxStint=nonneg(m.maxStint,120);
     ['pace','cons','ff','fade'].forEach(k=>{ if(m[k]===undefined) return; const x=+m[k]; if(m[k]===null||!isFinite(x)) delete m[k]; else m[k]=x; }); });
+  T.presets=(Array.isArray(T.presets)?T.presets:[]).filter(x=>x&&typeof x==='object').slice(0,24).map(x=>({id:safeId(x.id),name:str(x.name,40)||'Preset',series:safeSeries(x.series),hours:Math.min(48,Math.max(0.5,+x.hours||4)),
+    track:own(TRACKS,x.track)?x.track:'none',carId:typeof x.carId==='string'?x.carId:null,drivers:(Array.isArray(x.drivers)?x.drivers:[]).filter(d=>typeof d==='string').slice(0,12),rules:x.rules&&typeof x.rules==='object'?cleanRules(x.rules):null}));
   T.cars=T.cars.filter(c=>c&&typeof c==='object'); if(!T.cars.length) return null;
   T.cars.forEach(c=>{ const meas={}; Object.entries(c.measured&&typeof c.measured==='object'?c.measured:{}).forEach(([k,v])=>{ if(own(TRACKS,k)&&isFinite(+v)&&+v>0) meas[k]=+v; });
     Object.assign(c,cleanCar(c),{id:safeId(c.id),name:str(c.name,40)||'Car',measured:meas}); });
@@ -1865,6 +1875,10 @@ function renderTeamTab(){
   $('memberList').querySelectorAll('[data-mid]').forEach(e=>e.onclick=()=>memberSheet(e.dataset.mid));
   $('carList').querySelectorAll('[data-cid]').forEach(e=>e.onclick=()=>carSheet(e.dataset.cid));
   $('raceList').querySelectorAll('[data-rid]').forEach(e=>e.onclick=()=>raceSheet(e.dataset.rid));
+  const ps=T.presets||[];
+  $('presetList').innerHTML=ps.length?ps.map(x=>`<div class="lrow" style="cursor:default"><div class="lmain"><b>${esc(x.name)}</b><small>${esc((SERIES[x.series]||{}).label||'')} · ${x.hours} h${TRACKS[x.track]&&x.track!=='none'?' · '+esc(TRACKS[x.track][0]):''} · ${x.drivers.map(id=>esc((member(id)||{}).name||'')).filter(Boolean).join(' → ')||'drivers picked on the day'}${x.rules?' · custom rules':''}</small></div>${canPlan()?`<button class="mini" data-delpr="${esc(x.id)}" aria-label="Delete ${esc(x.name)}">✕</button>`:''}</div>`).join('')
+    :'<div class="sub" style="margin:0">Save a setup you race often (series, hours, track, car, drivers, rules) and start it with one tap in Race now. Save one from the Race now sheet or Plan → Save as a preset.</div>';
+  $('presetList').querySelectorAll('[data-delpr]').forEach(b=>b.onclick=()=>{ const x=ps.find(q=>q.id===b.dataset.delpr); if(!x||!confirm(`Delete the preset “${x.name}”?`)) return; T.presets=ps.filter(q=>q!==x); dbSave(); pushSoon(); renderTeamTab(); });
 }
 function memberSheet(id){
   dbSave();
@@ -1925,7 +1939,7 @@ function raceNow(){
   if(SIM.on) return; if(DB&&raceIsLive()){ show('race'); return; } if(!planGate()) return;
   if(DB) dbSave();
   const T=DB&&DB.team, cur0=DB&&activeRace(), untouched=!!(cur0&&!cur0.sim&&cur0.status!=='done'&&!cur0.events.length), last=untouched?cur0:DB?[...DB.races].filter(r=>!r.sim&&(r.status==='done'||r.events.length)).sort((a,b)=>(b.date||b.created||0)-(a.date||a.created||0))[0]:null;
-  const st={series:last?last.series:(T?T.series:'luckydog'), carId:T?((last&&carById(last.carId))||T.cars[0]).id:null, names:[], sel:[], hours:null};
+  const st={series:last?last.series:(T?T.series:'luckydog'), carId:T?((last&&carById(last.carId))||T.cars[0]).id:null, names:[], sel:[], hours:null, preset:null};
   const people=()=>T?T.members.filter(m=>isDriverRole(m.role)):[];
   st.sel=(last?last.drivers.map(d=>d.mid).filter(id=>member(id)):[]); if(!st.sel.length) st.sel=people().map(m=>m.id);
   st.hours=last?Math.round(lenOfRace(last)/30)/2:Math.round(lenOfRace({series:st.series,rules:Object.assign(clone(DEFAULT.race),SERIES[st.series].race||{})})/30)/2;
@@ -1936,11 +1950,13 @@ function raceNow(){
   SHEET_LOCK=!DB;
   openSheet('Race now',
     (DB?'':fld('Team name',`<input id="nTeam" type="text" placeholder="My team">`))+
+    (T?`<div id="nPresetBox"></div>`:'')+
     `<div class="sub" style="margin:0 0 8px">Who’s driving? Tap in order.</div><div class="pick" id="nPick"></div>
      <div class="row" style="gap:8px;margin-top:8px"><input id="nName" type="text" placeholder="Add a driver" ${inp('flex:1')}><button class="btn" id="nAdd" style="flex:0 0 auto">Add</button></div>
      <div class="sub" style="margin:16px 0 8px">How long?</div><div class="chips" id="nHours" style="margin-bottom:0"></div>
      <div class="row" style="gap:8px;margin-top:8px;align-items:center"><input id="nHrs" type="number" inputmode="decimal" step="0.5" min="0.5" ${inp('width:90px;flex:0 0 auto')}><span class="sub" style="margin:0">hours</span></div>
      <div class="sub" style="margin:16px 0 8px">Car</div><div id="nCar"></div>
+     ${T?`<button class="mini" id="nSave" style="margin-top:14px">☆ Save as a preset</button>`:''}
      <details class="nmore" style="margin-top:14px"><summary class="sub" style="cursor:pointer">Series: <b id="nSerLbl">${esc(SERIES[st.series].label)}</b></summary>${fld('Series',`<select id="nSeries">${seriesOpts(st.series)}</select>`)}</details>`,
     [...(DB?[{label:'Cancel',fn:closeSheet}]:[{label:'← Back',fn:()=>{ SHEET_LOCK=false; startOnboarding(); }}]),{label:'RACE NOW',cls:'pri',id:'nGo',fn:go}]);
   function drawPick(){
@@ -1957,7 +1973,18 @@ function raceNow(){
   $('nAdd').onclick=addName; $('nName').onkeydown=e=>{ if(e.key==='Enter') addName(); };
   $('nHrs').oninput=()=>{ const v=parseFloat($('nHrs').value); if(v>0){ st.hours=v; $('nHours').querySelectorAll('button').forEach(b=>b.classList.toggle('sel',+b.dataset.h===v)); } };
   $('nSeries').onchange=()=>{ st.series=val('nSeries'); $('nSerLbl').textContent=SERIES[st.series].label; };
-  drawPick(); drawHours(); drawCar();
+  function drawPresets(){ const b=$('nPresetBox'); if(!b) return; const ps=T.presets||[];
+    b.innerHTML=ps.length?`<div class="sub" style="margin:0 0 8px">Presets</div><div class="chips" id="nPresets">${ps.map(x=>`<button class="chipbtn ${st.preset&&st.preset.id===x.id?'sel':''}" style="flex:0 0 auto" data-pr="${esc(x.id)}">${esc(x.name)}<small>${esc((SERIES[x.series]||{}).label||'')} · ${x.hours} h${TRACKS[x.track]&&x.track!=='none'?' · '+esc(TRACKS[x.track][0]):''}</small></button>`).join('')}</div>`:'';
+    b.querySelectorAll('[data-pr]').forEach(el=>el.onclick=()=>{ const x=ps.find(q=>q.id===el.dataset.pr); if(!x) return;
+      if(st.preset&&st.preset.id===x.id){ st.preset=null; drawPresets(); return; }
+      st.preset=x; st.series=x.series; st.hours=x.hours; if(x.carId&&carById(x.carId)) st.carId=x.carId;
+      const ds=x.drivers.filter(id=>member(id)); if(ds.length) st.sel=ds;
+      $('nSeries').value=st.series; $('nSerLbl').textContent=SERIES[st.series].label; drawPresets(); drawPick(); drawHours(); drawCar(); }); }
+  const sv=$('nSave'); if(sv) sv.onclick=()=>{ const nm=(prompt('Name this preset (e.g. “Calabogie 8 h”)', (st.preset&&st.preset.name)||'')||'').trim(); if(!nm) return;
+    const x={id:uid(),name:nm.slice(0,40),series:st.series,hours:st.hours,track:(st.preset&&st.preset.track)||(last&&last.series===st.series?last.rules.track:'none'),carId:st.carId,drivers:st.sel.filter(id=>member(id)),
+      rules:untouched&&cur0.series===st.series?clone(cur0.rules):(st.preset&&st.preset.rules?clone(st.preset.rules):null)};
+    T.presets=(T.presets||[]).filter(q=>q.name.toLowerCase()!==x.name.toLowerCase()).concat(x); st.preset=x; dbSave(); pushSoon(); drawPresets(); toast2('Preset saved: '+x.name); };
+  drawPresets(); drawPick(); drawHours(); drawCar();
   function go(){
     if(val('nName').trim()) addName();
     if(!st.sel.length){ alert('Pick at least one driver.'); return; }
@@ -1975,8 +2002,9 @@ function raceNow(){
     // the race on screen hasn't started and is for today: Race now / Change edits it in place (keeps its custom rules,
     // name and shared id); otherwise a new race is made
     const cur=activeRace(), edit=!!(cur&&!cur.sim&&cur.status!=='done'&&!cur.events.length&&(!cur.rules.date||cur.rules.date<=todayISO()));
-    const keep=edit&&cur.series===st.series;
-    const rules=keep?clone(cur.rules):Object.assign(clone(DEFAULT.race),ser.race||{},{name:t.toLocaleDateString([], {weekday:'long'})+' race',track:last&&last.series===st.series?last.rules.track:'none'});
+    const keep=edit&&cur.series===st.series, pr=st.preset&&st.preset.series===st.series?st.preset:null;
+    const rules=pr&&pr.rules?clone(pr.rules):keep?clone(cur.rules):Object.assign(clone(DEFAULT.race),ser.race||{},{name:t.toLocaleDateString([], {weekday:'long'})+' race',track:last&&last.series===st.series?last.rules.track:'none'});
+    if(pr){ rules.track=pr.track; rules.name=pr.name; const tk=TRACKS[pr.track]; if(tk&&tk[1]!=null){ rules.lat=tk[1]; rules.lon=tk[2]; } }
     if(!keep&&last&&last.rules.track===rules.track){ rules.lat=last.rules.lat; rules.lon=last.rules.lon; }
     Object.assign(rules,{date:todayISO(),start,end:pad(e.getHours())+':'+pad(e.getMinutes()),len:mins});
     const drivers=ids.map(id=>{ const prev=edit&&cur.drivers.find(d=>d.mid===id); return {mid:id,max:prev?prev.max:Math.min(member(id).maxStint||120,rules.maxStint||999)}; });
@@ -2479,6 +2507,7 @@ const HELP={
   rec_pits:{t:'Pit stops',read:'Fuel stops from every log: best and average time in the pits, and time spent beyond the minimum hold.',means:'Time over the minimum is time given away on track.',can:'',cant:''},
   rec_fuel:{t:'Measured fuel burn',read:'What each car really burned per lap at each track, measured between full tanks.',means:'The next plan at that track starts from this number.',can:'',cant:''},
   rec_races:{t:'Races',read:'Every finished race, newest first.',means:'',can:'Open a race’s debrief.',cant:''},
+  presets:{t:'Race presets',read:'Setups you race often: series, hours, track, car, driver order and the race rules.',means:'Shared with the whole team when it’s online.',can:'Start one with one tap in Race now; delete one here (owner and pit wall).',cant:'A preset doesn’t change a race already set up.'},
   trackmap:{t:'Track map',read:'The circuit outline; the dashed line is the pit lane.',means:'Drawn from OpenStreetMap (© OpenStreetMap contributors) and stored in the app, so it shows without signal.',can:'Pick the track in Plan → Race.',cant:'It doesn’t show where the car is: PitDog has no live position yet.'},
   pill:{t:'Status',read:'PRE-RACE, ON TRACK, IN PITS or FINISHED.',means:'Comes from the race log.',can:'',cant:''},
   tabs:{t:'Tabs',read:'Home (next race, last race, records), Race (pit wall; the race log opens from here), Plan (stints, rules, Strategy Lab), Team (people, cars, races, sync, look, data).',means:'',can:'',cant:''},
@@ -2598,7 +2627,7 @@ const toRow=(e,r)=>({id:e.id,race_id:r.sid,team_id:DB.team.sid,t:Math.round(e.t)
 const fromRow=row=>cleanEvents([Object.assign({},row.payload||{},{id:row.id,t:+row.t,type:row.type})])[0];
 const raceSettings=r=>{ const o={}; ['id','series','rules','carId','drivers','status','summary','date','notes','prep','planAtGreen','created','copy','abandoned','anchor'].forEach(k=>{ if(r[k]!==undefined) o[k]=r[k]; }); return o; };
 const settingsKey=r=>{ const o=raceSettings(r); delete o.status; delete o.planAtGreen; return o; };   // derived/local fields aren't plan edits
-const teamDoc=()=>({name:DB.team.name,series:DB.team.series,members:DB.team.members,cars:DB.team.cars,exampleProfiles:!!DB.team.exampleProfiles});
+const teamDoc=()=>({name:DB.team.name,series:DB.team.series,members:DB.team.members,cars:DB.team.cars,presets:DB.team.presets||[],exampleProfiles:!!DB.team.exampleProfiles});
 // key-order-independent: Postgres jsonb hands objects back with its own key order
 const stable=o=>Array.isArray(o)?'['+o.map(stable).join(',')+']':o&&typeof o==='object'?'{'+Object.keys(o).filter(k=>o[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+stable(o[k])).join(',')+'}':JSON.stringify(o===undefined?null:o);
 const hashOf=o=>{ const s=stable(o); let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return h; };
@@ -2711,7 +2740,7 @@ async function pull(full){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline(
     DB.team.role=me[0].role; DB.team.name=t.name;
     if(['owner','pitwall'].includes(DB.team.role)){ const {data:c}=await sb.from('team_codes').select('join_code').eq('team_id',tid); DB.team.joinCode=c&&c[0]?c[0].join_code:DB.team.joinCode; } else delete DB.team.joinCode;
     const d=t.doc||{}, docDirty=hashOf(teamDoc())!==DB.team.docHash;
-    if(d.members&&(full||!docDirty||!canPlan())){ Object.assign(DB.team,{series:d.series||DB.team.series,members:d.members||[],cars:(d.cars&&d.cars.length?d.cars:DB.team.cars),exampleProfiles:!!d.exampleProfiles}); DB.team.docHash=hashOf(teamDoc()); }
+    if(d.members&&(full||!docDirty||!canPlan())){ Object.assign(DB.team,{series:d.series||DB.team.series,members:d.members||[],cars:(d.cars&&d.cars.length?d.cars:DB.team.cars),presets:Array.isArray(d.presets)?d.presets:(DB.team.presets||[]),exampleProfiles:!!d.exampleProfiles}); DB.team.docHash=hashOf(teamDoc()); }
     races.forEach(row=>{ let r=DB.races.find(x=>x.sid===row.id); const st=row.settings||{};
       if(!r){ r=Object.assign(newRaceObj({}),st,{id:st.id||uid(),sid:row.id,events:[],outbox:[],voids:[]}); DB.races.push(r); r.settingsHash=hashOf(settingsKey(r)); r.isNew=false; return; }
       const dirty=hashOf(settingsKey(r))!==r.settingsHash;
@@ -2733,7 +2762,7 @@ function applyRemoteRace(row){ if(!teamOnline()||SIM.on||!row) return; let r=DB.
     const keep={id:r.id,planAtGreen:r.planAtGreen}; Object.assign(r,row.settings||{},{id:keep.id}); if(!r.planAtGreen&&keep.planAtGreen) r.planAtGreen=keep.planAtGreen; }
   r.settingsHash=hashOf(settingsKey(r)); const n=normalizeDB(DB); if(n) DB=n; if(r.id===DB.activeRaceId){ hydrate(); bind(); } store.set('pitdog_db',JSON.stringify(DB)); update(); }
 function applyRemoteTeam(row){ if(!teamOnline()||SIM.on||!row) return; if(canPlan()&&hashOf(teamDoc())!==DB.team.docHash) return; const d=row.doc||{};
-  DB.team.name=row.name; if(d.members){ Object.assign(DB.team,{series:d.series||DB.team.series,members:d.members,cars:d.cars&&d.cars.length?d.cars:DB.team.cars}); }
+  DB.team.name=row.name; if(d.members){ Object.assign(DB.team,{series:d.series||DB.team.series,members:d.members,cars:d.cars&&d.cars.length?d.cars:DB.team.cars,presets:Array.isArray(d.presets)?d.presets:(DB.team.presets||[])}); }
   DB.team.docHash=hashOf(teamDoc()); const n=normalizeDB(DB); if(n) DB=n; hydrate(); bind(); store.set('pitdog_db',JSON.stringify(DB)); update(); }
 function startSync(){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline()) return; stopSync(); setSync('syncing'); watchAuth();
   measureSkew().then(()=>pull(false)).then(pushAll);
