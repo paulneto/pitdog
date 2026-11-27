@@ -184,6 +184,7 @@
   .cc-ns .ns-who{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:800}
   .cc-ns.next{border-color:var(--cc-acc)}
   .cc-flag{flex:1;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;letter-spacing:4px;font-size:14px;transition:background .3s}
+  .cc-flag.g::after,.cc-flag.y::after,.cc-flag.r::after{content:' · crew-set';font-size:10px;letter-spacing:1px;opacity:.7;font-weight:700;margin-left:6px}
   .cc-flag.g{background:color-mix(in srgb,var(--green) 14%,transparent);color:var(--green);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--green) 40%,transparent)}
   .cc-flag.y{background:var(--yellow);color:var(--on-yellow)}
   .cc-flag.r{background:var(--red);color:var(--on-fill);animation:ccpulse .8s infinite}
@@ -1123,6 +1124,8 @@ const alertIc=a=>ic(a[2]||ALERT_IC[a[0]]||'clock');
 const byRank=A=>A.map((a,i)=>[a,i]).sort((x,y)=>(ALERT_RANK[x[0][0]]??9)-(ALERT_RANK[y[0][0]]??9)||x[1]-y[1]).map(x=>x[0]);
 function computeAlerts(lv,P){
   const R=S.race, A=[];
+  const ab=appBanner(); if(ab) A.push([ab.level==='bad'?'box':ab.level==='warn'?'warn':'info',esc(ab.text.slice(0,200)),'user']);
+  const so=(SERIES[S.series]||{}).overridden; if(so&&so.length&&!lv.started) A.push(['info',`${esc(SERIES[S.series].label)} rules updated by your admin: ${so.map(esc).join(', ')}. New races use them; check this race in Plan.`]);
   if(SAVE_FAIL) A.push(['box','NOT SAVING · device storage is full or blocked (private tab?). Export from the Log tab now.','stop']);
   if(OTHER_TAB) A.push(['warn','PitDog is open in another tab or window · close one, or their logs will overwrite each other']);
   if(lv.red) A.push(['redf','RED FLAG · stop work, cap fuel, step back']);
@@ -2038,6 +2041,28 @@ $('helpBtn').onclick=()=>setHelp(!HELP_ON); $('ccHelp').onclick=()=>setHelp(!HEL
 // never left on by accident: help switches itself off after 3 minutes without use
 setInterval(()=>{ if(HELP_ON&&Date.now()-HELP_AT_T>180000) setHelp(false); },5000);
 
+/* ================= APP SETTINGS (set by an admin in admin.html) ================= */
+// Read with the publishable key (designed to be public; row-level security makes app_settings read-only to clients).
+// Cached on the device so a banner or a rule override still applies with no signal.
+const SB_URL='https://xbyxqcudlugyqwgdnktj.supabase.co', SB_KEY='sb_publishable_G6_rkktXYoQIRFm1qFmvpw__xM8BcUf';
+const SERIES_BASE=clone(Object.fromEntries(Object.entries(SERIES).map(([k,v])=>[k,v.race])));
+let APPSET={};
+function applyAppSettings(o){
+  APPSET=o&&typeof o==='object'?o:{};
+  // per-series rule overrides: only known rule keys, only numbers; applied on top of the built-in presets
+  const ov=APPSET.series_overrides&&typeof APPSET.series_overrides==='object'?APPSET.series_overrides:{};
+  Object.keys(SERIES).forEach(k=>{ const base=clone(SERIES_BASE[k]); const o2=ov[k]&&typeof ov[k]==='object'?ov[k]:{};
+    const applied=[]; Object.keys(o2).forEach(r=>{ if(own(RULEKEYS,r)&&typeof RULEKEYS[r]==='number'&&o2[r]!==null&&o2[r]!==''&&isFinite(+o2[r])&&+o2[r]>=0){ base[r]=+o2[r]; applied.push(r); } });
+    SERIES[k].race=base; SERIES[k].overridden=applied; });
+}
+async function fetchAppSettings(){
+  if(location.protocol==='file:') return;                       // tests and local files: no network
+  try{ const r=await fetch(SB_URL+'/rest/v1/app_settings?select=key,value',{headers:{apikey:SB_KEY}}); if(!r.ok) return;
+    const o={}; (await r.json()).forEach(x=>{ o[x.key]=x.value; }); store.set('pitdog_settings',JSON.stringify(o)); applyAppSettings(o); update(); }catch(e){}
+}
+try{ applyAppSettings(JSON.parse(store.get('pitdog_settings')||'{}')); }catch(e){}
+const appBanner=()=>{ const b=APPSET.banner; return b&&typeof b==='object'&&typeof b.text==='string'&&b.text.trim()?b:null; };
+
 /* ================= SKINS ================= */
 const SKINS=[{k:'night',t:'Night race',d:'Floodlit pit lane. The default.'},{k:'sunlight',t:'Sunlight',d:'Maximum contrast for the midday pit wall.'},
   {k:'ferrari',t:'Rosso',d:'Ferrari: racing red, giallo, black.'},{k:'mclaren',t:'Papaya',d:'McLaren: papaya, anthracite, blue.'},
@@ -2055,6 +2080,7 @@ $('ccSkin').onclick=skinSheet;
 setSkin(document.documentElement.dataset.skin||'night');
 
 try{ loadDB(); }catch(e){ DB=null; }
+fetchAppSettings(); setInterval(fetchAppSettings,15*60000);
 if(DB) hydrate(); else S=clone(DEFAULT);
 bind(); update(); keepAwake(); renderBackup();
 // ask the browser not to evict our data (iOS clears storage for sites it thinks are unused)
