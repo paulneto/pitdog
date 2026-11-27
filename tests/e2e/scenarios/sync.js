@@ -2,24 +2,28 @@
 // @budget 15000
 // Team sync against an in-memory fake Supabase server shared by two "devices" (A = owner iPad, B = crew phone),
 // which take turns in this page by swapping their local state. RLS itself is tested for real in supabase/tests.
-const SRV = { teams: [], memberships: [], races: [], events: [], down: false, user: null, subs: [] };
+const SRV = { teams: [], team_codes: [], memberships: [], history: [], races: [], events: [], down: false, user: null, subs: [], delay: 0, dead: false };
+// like Postgres jsonb: objects come back with their keys in a different order than they were written
+const jsonb = v => Array.isArray(v) ? v.map(jsonb) : v && typeof v === 'object' ? Object.keys(v).sort().reverse().reduce((o, k) => (o[k] = jsonb(v[k]), o), {}) : v;
+const out = r => { const o = JSON.parse(JSON.stringify(r)); ['settings', 'doc', 'payload'].forEach(k => { if (o[k]) o[k] = jsonb(o[k]); }); return o; };
 const U = { A: { id: '11111111-1111-4111-8111-111111111111', email: 'paul@neto.me' }, B: { id: '22222222-2222-4222-8222-222222222222', email: 'luc@example.com' } };
 const roleOf = (tid) => (SRV.memberships.find(m => m.team_id === tid && m.user_id === SRV.user.id) || {}).role;
-function broadcast(table, row) { SRV.subs.forEach(s => s.table === table && s.cb({ new: JSON.parse(JSON.stringify(row)) })); }
+function broadcast(table, row) { SRV.subs.forEach(s => s.table === table && s.cb({ new: out(row) })); }
 function Q(table) {
   const st = { table, filters: [], op: 'select', single: false };
   const q = {
     select() { return q; }, eq(c, v) { st.filters.push([c, v]); return q; }, single() { st.single = true; return q; },
     insert(rows) { st.op = 'insert'; st.rows = [].concat(rows); return q; }, upsert(rows, o) { st.op = 'upsert'; st.rows = [].concat(rows); return q; },
     update(obj) { st.op = 'update'; st.obj = obj; return q; }, delete() { st.op = 'delete'; return q; },
-    then(res, rej) { return Promise.resolve().then(() => run(st)).then(res, rej); },
+    then(res, rej) { return new Promise(r => setTimeout(r, SRV.delay)).then(() => run(st)).then(res, rej); },
   };
   return q;
 }
 function run(st) {
   if (SRV.down) return { data: null, error: { message: 'TypeError: Failed to fetch' } };
   const T = SRV[st.table], match = r => st.filters.every(([c, v]) => r[c] === v);
-  if (st.op === 'select') { const d = JSON.parse(JSON.stringify(T.filter(match))); return { data: st.single ? d[0] : d, error: null }; }
+  const visible = r => !SRV.dead && (st.table === 'teams' ? roleOf(r.id) : st.table === 'team_codes' ? ['owner', 'pitwall'].includes(roleOf(r.team_id)) : st.table === 'memberships' ? roleOf(r.team_id) : roleOf(r.team_id));
+  if (st.op === 'select') { const d = T.filter(match).filter(visible).map(out); if (st.single && !d.length) return { data: null, error: { code: 'PGRST116', message: 'Cannot coerce the result to a single JSON object' } }; return { data: st.single ? d[0] : d, error: null }; }
   if (st.op === 'insert' || st.op === 'upsert') {
     for (const r of st.rows) {
       if (st.table === 'events' && !['owner', 'pitwall', 'crew'].includes(roleOf(r.team_id))) return { data: null, error: { message: 'new row violates row-level security policy for table "events"' } };
@@ -33,14 +37,21 @@ function run(st) {
     T.filter(match).forEach(r => { const tid = st.table === 'teams' ? r.id : r.team_id; if (!['owner', 'pitwall'].includes(roleOf(tid))) return; Object.assign(r, st.obj); broadcast(st.table, r); });
     return { data: null, error: null };
   }
-  if (st.op === 'delete') { SRV[st.table] = T.filter(r => !match(r)); return { data: null, error: null }; }
+  if (st.op === 'delete') {
+    const del = T.filter(match).filter(r => st.table !== 'memberships' || r.role !== 'owner' || SRV.memberships.filter(m => m.team_id === r.team_id && m.role === 'owner').length > 1);
+    del.forEach(r => SRV.history.push({ team_id: r.team_id, user_id: r.user_id, last_role: r.role, removed: r.user_id !== SRV.user.id }));
+    SRV[st.table] = T.filter(r => !del.includes(r)); return { data: del.map(out), error: null }; }
 }
 window.PITDOG_SB = {
-  auth: { getSession: async () => ({ data: { session: SRV.user ? { user: SRV.user } : null } }), signOut: async () => {}, signInWithIdToken: async () => ({ data: { user: SRV.user }, error: null }) },
+  auth: { getSession: async () => ({ data: { session: SRV.user && !SRV.dead ? { user: SRV.user } : null } }), getUser: async () => SRV.dead ? { data: { user: null }, error: { message: 'invalid JWT' } } : { data: { user: SRV.user }, error: null }, signOut: async () => {}, signInWithIdToken: async () => ({ data: { user: SRV.user }, error: null }) },
   rpc: async (fn, a) => {
     if (SRV.down) return { data: null, error: { message: 'Failed to fetch' } };
-    if (fn === 'create_team') { const t = { id: uuid(), name: a.p_name, join_code: 'K7QM3XPA', doc: {}, doc_updated_at: null }; SRV.teams.push(t); SRV.memberships.push({ team_id: t.id, user_id: SRV.user.id, role: 'owner' }); return { data: t, error: null }; }
-    if (fn === 'join_team') { const t = SRV.teams.find(x => x.join_code === a.p_code); if (!t) return { data: null, error: { message: 'no team with that code' } }; if (!SRV.memberships.some(m => m.team_id === t.id && m.user_id === SRV.user.id)) SRV.memberships.push({ team_id: t.id, user_id: SRV.user.id, role: 'crew' }); return { data: t.id, error: null }; }
+    if (fn === 'create_team') { const code = SRV.teams.length ? 'Z9XW8VUT' : 'K7QM3XPA'; const t = { id: uuid(), name: a.p_name, doc: {}, doc_updated_at: null }; SRV.teams.push(t); SRV.team_codes.push({ team_id: t.id, join_code: code }); SRV.memberships.push({ team_id: t.id, user_id: SRV.user.id, role: 'owner' }); return { data: { id: t.id, name: t.name, join_code: code }, error: null }; }
+    if (fn === 'join_team') { const c = SRV.team_codes.find(x => x.join_code === a.p_code); if (!c) return { data: null, error: { message: 'no team with that code' } };
+      if (!SRV.memberships.some(m => m.team_id === c.team_id && m.user_id === SRV.user.id)) { const h = SRV.history.filter(x => x.team_id === c.team_id && x.user_id === SRV.user.id).pop();
+        if (h && h.removed) return { data: null, error: { message: 'removed from this team: ask the owner to add you back' } };
+        SRV.memberships.push({ team_id: c.team_id, user_id: SRV.user.id, role: h ? (h.last_role === 'owner' ? 'pitwall' : h.last_role) : 'crew' }); }
+      return { data: c.team_id, error: null }; }
   },
   from: t => Q(t),
   channel: () => { const ch = { on(ev, f, cb) { SRV.subs.push({ table: f.table, cb }); return ch; }, subscribe() { return ch; } }; return ch; },
@@ -112,13 +123,72 @@ setTimeout(async () => {
     become('A'); await pushAll(); park('A'); become('B'); await pushAll(); await pull(false);
     expect(S.events.some(e => e.type === 'yellow' && e.on) && S.events.some(e => e.type === 'red' && e.on), 'simultaneous offline taps on two devices: both survive');
 
-    // --- plan changes by the owner reach the crew; viewers can't log
+    // --- plan changes by the owner reach the crew in ONE pull, even after the crew logged GREEN (jsonb key order)
     park('B'); become('A'); S.race.maxStint = 110; update(); await pushAll(); park('A');
     become('B'); await pull(false);
-    expect(S.race.maxStint === 110, 'the owner’s plan change reaches the crew');
-    SRV.memberships.find(m => m.user_id === U.B.id).role = 'viewer'; await pull(false);
+    expect(S.race.maxStint === 110, 'the owner’s plan change reaches the crew on the first pull');
+    park('B'); become('A'); const before0 = SRV.races[0].updated_at; await pull(false); await pushAll();
+    expect(SRV.races[0].updated_at === before0, 'an owner’s pull + push of unchanged settings writes nothing (no echo rewrite)');
+    // offline plan edit on the owner's device survives the startup pull and goes up
+    SRV.down = true; S.race.rest = 55; update(); await wait(10); SRV.down = false;
+    await pull(false); await pushAll();
+    expect(SRV.races.some(r => r.settings.rules && r.settings.rules.rest === 55), 'an owner’s offline plan edit is pushed after the next pull (not marked clean)');
+    park('A');
+
+    // --- a tap made while a send is in flight is not lost (finding #1)
+    become('B'); SRV.delay = 60;
+    adv(1); click('yBtn'); const p1 = pushAll(); await wait(5); adv(0.1); click('yBtn'); const mid = S.events[S.events.length - 1]; clearTimeout(PUSH_T); await p1; await wait(80);
+    expect(pendingCount() === 1, 'the tap made during the send is still waiting in the outbox');
+    await pushAll(); SRV.delay = 0;
+    expect(pendingCount() === 0 && SRV.events.some(e => e.id === mid.id), '…and reaches the server on the next send');
+    // UNDO of an entry that is already on its way sends a void (finding #1b)
+    SRV.delay = 60; click('rBtn'); const lastR = S.events[S.events.length - 1]; const p2 = pushAll(); await wait(5); click('undoBtn'); await p2; await wait(80); await pushAll(); SRV.delay = 0;
+    expect(SRV.events.some(e => e.id === lastR.id) && SRV.events.some(e => e.type === 'void' && e.payload.target === lastR.id), 'UNDO during the send: the entry went up, so a void follows it');
+    await pull(false);
+    expect(!S.events.some(e => e.id === lastR.id), '…and it stays undone after a pull');
+    park('B');
+
+    // --- both devices tap PIT IN for the same stop (finding #3)
+    become('A'); if (live().inPit) { adv(5.3); click('bigBtn'); } adv(2); click('bigBtn'); await pushAll(); park('A');   // A: PIT IN
+    become('B'); await pull(false); const inPitB = live().inPit, stops = live().stops.length;
+    logEvent({ type: 'in' }); save(); update(); await pushAll(); await pull(false);                        // B taps PIT IN for the same stop
+    expect(inPitB && live().stops.length === stops && live().inPit, 'a second PIT IN from another device doesn’t open a second stop');
+    adv(5.3); click('bigBtn'); await pushAll();
+    expect(!live().inPit && live().stops[live().stops.length - 1].out != null, '…and one PIT OUT closes it');
+    park('B');
+
+    // --- Fix sheet survives a pull that rebuilds the log (finding #4)
+    become('A'); await pull(false);
+    tap('#banners [data-act="fix"]') ;
+    if (txt('sheetT') !== 'Fix last stop') fixStopSheet();
+    await pull(false);
+    tap('#sheetB [data-k="driver"]'); click('fixSave'); await wait(10);
+    expect(S.events.filter(e => e.type === 'out').pop().kind === 'driver', 'Fix saved after a pull still applies (looked up by id)');
+    park('A');
+
+    // --- roles and membership rules
+    become('B'); SRV.memberships.find(m => m.user_id === U.B.id).role = 'viewer'; await pull(false);
     const k = n(); click('yBtn');
     expect(n() === k && /View only/.test(txt('banners')), 'a viewer can’t log, and is told why');
+    expect(!DB.team.joinCode, 'a viewer doesn’t see the join code');
+    await leaveTeam(); park('B');
+    become('B'); SYNC.user = U.B; await joinTeam('K7QM3XPA');
+    expect(DB.team.role === 'viewer', 'a viewer who leaves and re-joins comes back as a viewer, not crew');
+    park('B');
+    become('A'); const ownerRows = SRV.memberships.filter(m => m.user_id === U.A.id).length; await leaveTeam();
+    expect(teamOnline() && SRV.memberships.filter(m => m.user_id === U.A.id).length === ownerRows, 'the only owner can’t leave (the team keeps its owner)');
+
+    // --- session died elsewhere: keep everything, say signed out (finding #2)
+    SRV.dead = true; click('yBtn'); await pull(false);
+    expect(teamOnline() && DB.team.sid && pendingCount() >= 1 && !SYNC.user && /SIGNED OUT/.test(txt('syncPill')), 'a dead session keeps the team and its unsent entries, and says SIGNED OUT');
+    SRV.dead = false; SYNC.user = U.A; await pushAll();
+    expect(pendingCount() === 0, '…and they go up once signed in again');
+    park('A');
+
+    // --- a detached device can put a team online again (fresh ids, no clash) (finding #7)
+    become('A'); const evN = SRV.events.length; delete DB.team.sid; delete DB.team.role; dbSave(); hydrate();
+    await putTeamOnline(); await wait(20);
+    expect(SRV.teams.length === 2 && SYNC.status === 'live' && pendingCount() === 0 && SRV.events.length > evN, 'putting a team online again gives fresh ids: no clash, everything uploads');
   } catch (e) { R.fails.push('EXCEPTION ' + e.message + ' @ ' + (e.stack || '').split('\n')[1]); }
   const p = document.createElement('pre'); p.id = 'RESULT'; p.textContent = JSON.stringify(R); document.body.appendChild(p);
 }, 400);

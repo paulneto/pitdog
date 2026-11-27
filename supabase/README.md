@@ -21,6 +21,11 @@ team with its 8-character join code. Allowed redirect URLs: `https://paulneto.gi
 | `events` | the race log, **append-only** (device-generated ids; UNDO = a `void` event) | owner / pit wall / crew, as themselves only |
 
 Row-level security is on for every table; realtime is enabled on `events`, `races` and `teams`.
+
+**Membership rules** (hardened after an independent review): join codes live in `team_codes`, readable only by owners
+and pit wall. Leaving and re-joining gives back your previous role; someone removed by an owner can't re-join until
+the owner calls `allow_rejoin(team, user)`; the last owner can't leave or be demoted. `server_now()` lets devices
+correct their clock.
 `rotate_join_code(team)` lets the owner replace a leaked code.
 
 ## Admin access
@@ -42,7 +47,7 @@ delete), **App settings** (`app_settings`: banner, maintenance, series_overrides
 **Admins** (add/remove; the last admin can't be removed) and **Audit log**. Destructive actions need the name typed.
 
 ## Checks
-`python3 supabase/tests/rls_check.py` runs 49 permission checks (team roles, platform admins, admin console RPCs) **inside the real database** (simulated users,
+`python3 supabase/tests/rls_check.py` runs 64 permission checks (team roles, join codes, membership history, last owner, platform admins, admin console RPCs) **inside the real database** (simulated users,
 everything it creates is deleted in the same request). Run it after any migration.
 
 ## Applying a migration

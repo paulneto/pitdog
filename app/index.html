@@ -901,7 +901,8 @@ const $=id=>document.getElementById(id);
 const buzz=(p=30)=>{try{navigator.vibrate&&navigator.vibrate(p);}catch(e){}};
 const sched=()=>!!(SERIES[S.series]||{}).sched;
 const SIM={on:false,v:0,speed:30,auto:true,done:false,timer:null,last:0,t:null,flags:[]};
-const nowMs=()=>SIM.on?SIM.v:Date.now();
+let CLOCK_SKEW=0;   // ms; set by team sync when this device's clock is off from the server's
+const nowMs=()=>SIM.on?SIM.v:Date.now()+CLOCK_SKEW;
 
 /* ================= helpers ================= */
 /* one consistent icon set (inline SVG, stroke = currentColor) instead of emoji, which render differently per device */
@@ -933,7 +934,7 @@ function live(now=nowMs()){
   let cur=null;
   for(const e of S.events){
     const m=(e.t-t0)/60000;
-    if(e.type==='in'){ cur={in:m,kind:'fuel'}; st.stops.push(cur); }
+    if(e.type==='in'&&!cur){ cur={in:m,kind:'fuel'}; st.stops.push(cur); }   // a second PIT IN (two devices) is ignored
     if(e.type==='out'&&cur){ cur.out=m; cur.next=e.driver; cur.kind=e.kind||'fuel'; cur.fuel=e.fuel||0; cur.full=!!e.full; st.added+=cur.fuel; cur=null; }
     if(e.type==='yellow'){ if(e.on&&!st.yellow) st.flags.push({type:'yellow',from:m,to:null}); if(!e.on&&st.yellow){ const f=st.flags.filter(x=>x.type==='yellow').pop(); if(f) f.to=m; } st.yellow=e.on; }
     if(e.type==='red'){ if(e.on&&!st.red) st.flags.push({type:'red',from:m,to:null}); if(!e.on&&st.red){ const f=st.flags.filter(x=>x.type==='red').pop(); if(f) f.to=m; } st.red=e.on; }
@@ -1405,7 +1406,7 @@ function fixStopSheet(){
     <div class="chips"><button class="chipbtn fulltgl ${st.full?'sel':''}" data-full="1">${ic(st.full?'check':'drop')} ${st.full?'Filled to full':'Not full'}</button></div>`:''}
     <h2 class="fixh">Went out</h2><div class="chips">${S.drivers.map((d,i)=>`<button class="chipbtn ${i===st.driver?'sel':''}" style="--c:${dcol(i)}" data-d="${i}">${esc(d.name)}</button>`).join('')}</div>`;
     $('sheetB').querySelectorAll('button').forEach(b=>b.onclick=()=>{ if(b.dataset.k) st.kind=b.dataset.k; if(b.dataset.step) st.jugs=Math.max(0,Math.min(mx,st.jugs+(+b.dataset.step))); if(b.dataset.full) st.full=!st.full; if(b.dataset.d!=null) st.driver=+b.dataset.d; buzz(10); draw(); }); };
-  openSheet('Fix last stop','',[{label:'Cancel',fn:closeSheet},{label:'Save',cls:'pri',id:'fixSave',fn:()=>{ const fuelStop=st.kind==='fuel'; replaceEvent(e,Object.assign({},e,{kind:st.kind,fuel:fuelStop?st.jugs*C.jug:0,full:fuelStop&&st.full,driver:st.driver})); closeSheet(); save(); update(); pushSoon(); }}]);
+  openSheet('Fix last stop','',[{label:'Cancel',fn:closeSheet},{label:'Save',cls:'pri',id:'fixSave',fn:()=>{ const fuelStop=st.kind==='fuel'; const done=replaceEvent(e,Object.assign({},e,{kind:st.kind,fuel:fuelStop?st.jugs*C.jug:0,full:fuelStop&&st.full,driver:st.driver})); closeSheet(); if(!done){ toast2('That stop changed on another device. Open Fix again.'); return; } save(); update(); pushSoon(); }}]);
   draw();
 }
 const lv0=()=>live();
@@ -2311,7 +2312,7 @@ const appBanner=()=>{ const b=APPSET.banner; return b&&typeof b==='object'&&type
 const GOOGLE_CLIENT_ID='846016887540-4l73s7sub7hram5djch1ofa27s7gd56n.apps.googleusercontent.com';
 const uuid=()=>(window.crypto&&crypto.randomUUID)?crypto.randomUUID():'10000000-1000-4000-8000-100000000000'.replace(/[018]/g,c=>(c^Math.random()*16>>c/4).toString(16));
 const UUIDRX=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const SYNC={sb:null,user:null,role:null,status:'off',ch:null,busy:false,err:'',pulledAt:0};
+const SYNC={sb:null,user:null,role:null,status:'off',ch:null,busy:false,err:'',pulledAt:0,inflight:new Set(),skew:0};
 const DEVICE=(()=>{ let d=store.get('pitdog_device'); if(!d){ d=(/iPad|Macintosh/.test(navigator.userAgent)&&'ontouchend' in document?'iPad':/iPhone/.test(navigator.userAgent)?'iPhone':/Android/.test(navigator.userAgent)?'Android':'Browser')+' '+uuid().slice(0,4); store.set('pitdog_device',d); } return d; })();
 function sbClient(){ if(SYNC.sb) return SYNC.sb; if(window.PITDOG_SB) return SYNC.sb=window.PITDOG_SB;
   if(!window.supabase||location.protocol==='file:') return null;
@@ -2323,20 +2324,26 @@ const raceSynced=r=>teamOnline()&&r&&!r.sim&&r.sid;
 // ---- local log edits that understand sync
 function logEvent(e){ const r=activeRace(); const ev=Object.assign({id:uuid(),t:nowMs()},e); S.events.push(ev);
   if(raceSynced(r)&&!SIM.on){ r.outbox=r.outbox||[]; r.outbox.push({op:'ins',id:ev.id}); } return ev; }
-function voidEvent(ev){ const r=activeRace(); const i=S.events.indexOf(ev); if(i<0) return; S.events.splice(i,1);
-  if(!raceSynced(r)||SIM.on||!ev.id) return;
+// the live event object for a reference that may be stale (pulls rebuild event objects): match by id
+function findEvent(ref){ return ref&&ref.id?S.events.find(x=>x.id===ref.id)||null:(S.events.includes(ref)?ref:null); }
+function voidEvent(ref){ const ev=findEvent(ref); if(!ev) return false; const r=activeRace(); S.events.splice(S.events.indexOf(ev),1);
+  if(!raceSynced(r)||SIM.on||!ev.id) return true;
   const q=(r.outbox||[]).findIndex(o=>o.op==='ins'&&o.id===ev.id);
-  if(q>=0){ r.outbox.splice(q,1); return; }                   // never left this device: nothing to cancel upstream
-  r.voids=r.voids||[]; r.voids.push(ev.id); r.outbox=r.outbox||[]; r.outbox.push({op:'void',id:uuid(),target:ev.id,t:nowMs()}); }
-function replaceEvent(old,nw){ const i=S.events.indexOf(old); if(i<0) return; voidEvent(old); const ev=Object.assign({},nw,{id:uuid(),t:old.t}); S.events.splice(i,0,ev);
+  if(q>=0&&!SYNC.inflight.has(ev.id)){ r.outbox.splice(q,1); return true; }   // provably never left this device: nothing to cancel upstream
+  r.voids=r.voids||[]; r.voids.push(ev.id); r.outbox=r.outbox||[]; r.outbox.push({op:'void',id:uuid(),target:ev.id,t:nowMs()}); return true; }
+function replaceEvent(ref,nw){ const cur=findEvent(ref); if(!cur) return null; const i=S.events.indexOf(cur); voidEvent(cur);
+  const ev=Object.assign({},nw,{id:uuid(),t:cur.t}); S.events.splice(i,0,ev);
   const r=activeRace(); if(raceSynced(r)&&!SIM.on){ r.outbox=r.outbox||[]; r.outbox.push({op:'ins',id:ev.id}); } return ev; }
 // ---- mapping
 const evPayload=e=>{ const p={}; ['on','driver','kind','fuel','full','stopLen'].forEach(k=>{ if(e[k]!==undefined) p[k]=e[k]; }); return p; };
 const toRow=(e,r)=>({id:e.id,race_id:r.sid,team_id:DB.team.sid,t:Math.round(e.t),type:e.type,payload:evPayload(e),device:DEVICE});
 const fromRow=row=>cleanEvents([Object.assign({},row.payload||{},{id:row.id,t:+row.t,type:row.type})])[0];
 const raceSettings=r=>{ const o={}; ['id','series','rules','carId','drivers','status','summary','date','notes','prep','planAtGreen','created','copy'].forEach(k=>{ if(r[k]!==undefined) o[k]=r[k]; }); return o; };
+const settingsKey=r=>{ const o=raceSettings(r); delete o.status; delete o.planAtGreen; return o; };   // derived/local fields aren't plan edits
 const teamDoc=()=>({name:DB.team.name,series:DB.team.series,members:DB.team.members,cars:DB.team.cars,exampleProfiles:!!DB.team.exampleProfiles});
-const hashOf=o=>{ const s=JSON.stringify(o); let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return h; };
+// key-order-independent: Postgres jsonb hands objects back with its own key order
+const stable=o=>Array.isArray(o)?'['+o.map(stable).join(',')+']':o&&typeof o==='object'?'{'+Object.keys(o).filter(k=>o[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+stable(o[k])).join(',')+'}':JSON.stringify(o===undefined?null:o);
+const hashOf=o=>{ const s=stable(o); let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return h; };
 function mergeEvents(r,rows){   // rows from the server for race r: add what's new, apply voids, keep sorted
   const have=new Set((r.events||[]).map(e=>e.id)); r.voids=r.voids||[]; let changed=false;
   rows.forEach(row=>{ if(row.type==='void'){ const tg=row.payload&&row.payload.target; if(tg&&!r.voids.includes(tg)){ r.voids.push(tg); changed=true; } } });
@@ -2348,7 +2355,7 @@ function setSync(st,err){ SYNC.status=st; if(err!==undefined) SYNC.err=err; rend
 function pendingCount(){ return teamOnline()?DB.races.reduce((a,r)=>a+((r.outbox||[]).length),0):0; }
 function renderSyncPill(){ const p=$('syncPill'); if(!p) return; if(!teamOnline()){ p.style.display='none'; return; } p.style.display='';
   const n=pendingCount(), st=SYNC.status;
-  const [cls,txt]=!SYNC.user?['warn','SIGNED OUT']:st==='live'?(n?['warn','SYNC · '+n]:['ok','SYNC ✓']):st==='offline'?['warn','OFFLINE'+(n?' · '+n:'')]:st==='error'?['bad','SYNC ERROR']:st==='paused'?['warn','SYNC PAUSED']:['warn','SYNCING'];
+  const [cls,txt]=!SYNC.user?['warn','SIGNED OUT'+(n?' · '+n:'')]:st==='live'?(n?['warn','SYNC · '+n]:['ok','SYNC ✓']):st==='offline'?['warn','OFFLINE'+(n?' · '+n:'')]:st==='error'?['bad','SYNC ERROR'+(n?' · '+n:'')]:st==='paused'?['warn','SYNC PAUSED']:['warn','SYNCING'];
   p.className='syncpill '+cls; p.textContent=txt; p.title=SYNC.err||''; }
 // ---- Google sign-in (in-page)
 function loadGIS(){ return new Promise((res,rej)=>{ if(window.google&&google.accounts&&google.accounts.id) return res(); const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.async=true; s.onload=()=>res(); s.onerror=()=>rej(new Error('Can’t reach Google: sign-in needs signal')); document.head.appendChild(s); }); }
@@ -2361,60 +2368,93 @@ async function renderGoogleButton(el){ const sb=sbClient(); if(!sb){ el.innerHTM
     if(error){ setSync('error',error.message); toast2('Sign-in failed: '+error.message); return; }
     SYNC.user=data.user; await afterSignIn(); }});
   google.accounts.id.renderButton(el,{theme:document.documentElement.dataset.skin==='sunlight'?'outline':'filled_black',size:'large',shape:'pill',text:'signin_with',width:280}); }
-async function restoreSession(){ const sb=sbClient(); if(!sb) return; try{ const {data}=await sb.auth.getSession(); SYNC.user=data&&data.session?data.session.user:null; }catch(e){ SYNC.user=null; }
-  if(SYNC.user&&teamOnline()) startSync(); else renderSyncPill(); }
+// sessions: follow supabase-js's own auth events, and keep retrying a session that couldn't refresh (offline start)
+function watchAuth(){ const sb=sbClient(); if(!sb||SYNC.authSub||typeof sb.auth.onAuthStateChange!=='function') return;
+  try{ SYNC.authSub=sb.auth.onAuthStateChange((ev,session)=>{ const u=session?session.user:null, had=!!SYNC.user; SYNC.user=u;
+    if(u&&!had&&teamOnline()&&!SYNC.timer) startSync(); if(!u&&ev==='SIGNED_OUT') stopSync(); renderSyncPill(); }); }catch(e){} }
+async function restoreSession(){ const sb=sbClient(); if(!sb) return; watchAuth();
+  try{ const {data}=await sb.auth.getSession(); SYNC.user=data&&data.session?data.session.user:null; }catch(e){ SYNC.user=null; }
+  if(SYNC.user&&teamOnline()){ if(!SYNC.timer) startSync(); } else renderSyncPill(); }
+setInterval(()=>{ if(teamOnline()&&!SYNC.user&&navigator.onLine!==false) restoreSession(); },30000);
 async function afterSignIn(){ renderSyncCard(); const code=SYNC.joinCode||new URLSearchParams(location.search).get('join'); if(code&&!teamOnline()){ await joinTeam(code); return; } if(teamOnline()) startSync(); }
-async function signOut(){ const sb=sbClient(); stopSync(); try{ if(sb) await sb.auth.signOut(); }catch(e){} SYNC.user=null; setSync('off'); }
+// sign out of THIS device only (a global sign-out would kill the session on the iPad when you sign out on your phone)
+async function signOut(){ const sb=sbClient(); stopSync(); try{ if(sb) await sb.auth.signOut({scope:'local'}); }catch(e){} SYNC.user=null; setSync('off'); }
+// ---- clock: device clocks differ; measure against the server and correct nowMs() when it's off by more than 1.5 s
+async function measureSkew(){ const sb=sbClient(); if(!sb) return; try{ const t0=Date.now(); const {data,error}=await sb.rpc('server_now'); const t1=Date.now();
+  if(error||!isFinite(+data)) return; const off=+data-(t0+t1)/2; SYNC.skew=off; CLOCK_SKEW=Math.abs(off)>1500&&Math.abs(off)<15*60000?off:0; }catch(e){} }
 // ---- create / join / leave
 async function putTeamOnline(){ const sb=sbClient(); if(!sb||!SYNC.user||!DB) return;
   if(!confirm('Put “'+DB.team.name+'” online? Your crew can then join with a code, and race logs sync between devices.')) return;
   setSync('syncing'); dbSave();
   const {data:t,error}=await sb.rpc('create_team',{p_name:DB.team.name.slice(0,60),p_device:DEVICE}); if(error){ setSync('error',error.message); toast2(error.message); return; }
   DB.team.sid=t.id; DB.team.joinCode=t.join_code; DB.team.role='owner'; DB.team.docHash=null;
-  DB.races.filter(r=>!r.sim).forEach(r=>{ r.sid=r.sid||uuid(); r.settingsHash=null; r.isNew=true; r.voids=r.voids||[];
-    r.events.forEach(e=>{ if(!e.id||!UUIDRX.test(e.id)) e.id=uuid(); }); r.outbox=r.events.map(e=>({op:'ins',id:e.id})); });
-  dbSave(); await pushAll(); startSync(); toast2('Team is online. Share the join code with your crew.'); }
+  // a new team: every race and entry gets a fresh id (ids left over from an earlier team would collide on the server)
+  DB.races.filter(r=>!r.sim).forEach(r=>{ r.sid=uuid(); r.settingsHash=null; r.isNew=true; r.voids=[];
+    r.events.forEach(e=>{ e.id=uuid(); }); r.outbox=r.events.map(e=>({op:'ins',id:e.id})); });
+  if(S) hydrate(); dbSave(); await pushAll(); startSync(); toast2('Team is online. Share the join code with your crew.'); }
 async function joinTeam(code){ const sb=sbClient(); if(!sb||!SYNC.user) return; code=String(code||'').trim().toUpperCase(); if(!/^[A-Z0-9]{8}$/.test(code)){ toast2('A join code is 8 letters and numbers.'); return; }
-  if(DB&&DB.races.some(r=>r.events.length&&!r.sim)&&!confirm('Joining replaces the team on this device with the shared team. A backup of this device is kept (Log → Restore). Continue?')) return;
-  setSync('syncing'); const {data:tid,error}=await sb.rpc('join_team',{p_code:code,p_device:DEVICE}); if(error){ setSync('error',error.message); toast2(error.message==='no team with that code'?'No team has that code. Check it with your team owner.':error.message); return; }
+  setSync('syncing'); const {data:tid,error}=await sb.rpc('join_team',{p_code:code,p_device:DEVICE});
+  if(error){ setSync('error',error.message); toast2(error.message==='no team with that code'?'No team has that code. Check it with your team owner.':error.message); return; }
+  SYNC.joinCode=null; try{ history.replaceState(null,'',location.pathname); }catch(e){}
+  if(DB&&DB.team.sid===tid){ await pull(false); startSync(); toast2('Back in '+DB.team.name+'.'); return; }   // same team: keep everything on this device
+  if(DB&&DB.races.some(r=>r.events.length&&!r.sim)&&!confirm('Joining replaces the team on this device with the shared team. A backup of this device is kept (Log → Restore). Continue?')){ setSync('off'); return; }
   if(DB){ dbSave(); backupDB('before joining a team'); }
   DB={v:2,team:{id:uid(),sid:tid,name:'Team',series:'luckydog',members:[],cars:[clone(Object.assign({id:uid(),name:'Car 1',measured:{}},DEFAULT.car))]},races:[],activeRaceId:null};
-  SYNC.joinCode=null; try{ history.replaceState(null,'',location.pathname); }catch(e){}
   await pull(true); startSync(); toast2('Joined '+DB.team.name+'.'); }
-async function leaveTeam(){ if(!teamOnline()) return; if(!confirm('Stop syncing on this device? The team stays online for everyone else; this device keeps its copy.')) return;
-  const sb=sbClient(); stopSync(); try{ await sb.from('memberships').delete().eq('team_id',DB.team.sid).eq('user_id',SYNC.user.id); }catch(e){}
-  delete DB.team.sid; delete DB.team.role; delete DB.team.joinCode; DB.races.forEach(r=>{ delete r.sid; delete r.outbox; }); dbSave(); setSync('off'); update(); }
+async function leaveTeam(){ if(!teamOnline()) return; const n=pendingCount();
+  if(!confirm('Stop syncing on this device? The team stays online for everyone else; this device keeps its copy.'+(n?`\n\n${n} entr${n===1?'y hasn’t':'ies haven’t'} reached the team yet and will stay only on this device.`:''))) return;
+  const sb=sbClient();
+  try{ const {data,error}=await sb.from('memberships').delete().eq('team_id',DB.team.sid).eq('user_id',SYNC.user.id).select();
+    if(!error&&Array.isArray(data)&&!data.length&&DB.team.role==='owner'){ toast2('You’re the team’s only owner: make someone else owner first (admin console), then leave.'); return; } }catch(e){}
+  stopSync(); delete DB.team.sid; delete DB.team.role; delete DB.team.joinCode; DB.races.forEach(r=>{ delete r.sid; delete r.outbox; delete r.voids; }); dbSave(); setSync('off'); update(); }
 // ---- push / pull
 async function pushAll(){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline()||SIM.on) return; if(APPSET.maintenance===true){ setSync('paused'); return; }
   if(SYNC.busy) return; SYNC.busy=true;
   try{ dbSave();
     if(canPlan()){ const doc=teamDoc(), h=hashOf(doc); if(h!==DB.team.docHash){ const {error}=await sb.from('teams').update({doc,doc_updated_at:new Date().toISOString()}).eq('id',DB.team.sid); if(error) throw error; DB.team.docHash=h; } }
     for(const r of DB.races.filter(r=>r.sid&&!r.sim)){
-      if(canPlan()){ const st=raceSettings(r), h=hashOf(st); if(h!==r.settingsHash){
+      if(canPlan()){ const h=hashOf(settingsKey(r)); if(h!==r.settingsHash||r.isNew){ const st=raceSettings(r);
         const q=r.isNew?sb.from('races').insert({id:r.sid,team_id:DB.team.sid,settings:st}):sb.from('races').update({settings:st,updated_at:new Date().toISOString()}).eq('id',r.sid);
-        const {error}=await q; if(error&&!/duplicate key/i.test(error.message)) throw error; r.settingsHash=h; r.isNew=false; } }
-      if((r.outbox||[]).length&&canLog()){ const rows=r.outbox.map(o=>o.op==='void'?{id:o.id,race_id:r.sid,team_id:DB.team.sid,t:Math.round(o.t),type:'void',payload:{target:o.target},device:DEVICE}:(()=>{ const e=r.events.find(x=>x.id===o.id); return e?toRow(e,r):null; })()).filter(Boolean);
-        if(rows.length){ const {error}=await sb.from('events').upsert(rows,{onConflict:'id',ignoreDuplicates:true}); if(error) throw error; }
-        r.outbox=[]; } }
+        const {error}=await q;
+        if(error){ if(!(r.isNew&&/duplicate key/i.test(error.message))) throw error;
+          const {data:mine}=await sb.from('races').select('id').eq('id',r.sid).eq('team_id',DB.team.sid);   // a retry after a lost response is fine; a clash isn't
+          if(!mine||!mine.length) throw new Error('race id clash'); }
+        r.settingsHash=h; r.isNew=false; } }
+      if((r.outbox||[]).length&&canLog()){
+        const sending=r.outbox.slice(); sending.forEach(o=>{ if(o.op==='ins') SYNC.inflight.add(o.id); });   // taps and UNDO during the send are kept
+        try{ const rows=sending.map(o=>o.op==='void'?{id:o.id,race_id:r.sid,team_id:DB.team.sid,t:Math.round(o.t),type:'void',payload:{target:o.target},device:DEVICE}:(()=>{ const e=r.events.find(x=>x.id===o.id); return e?toRow(e,r):null; })()).filter(Boolean);
+          if(rows.length){ const {error}=await sb.from('events').upsert(rows,{onConflict:'id',ignoreDuplicates:true}); if(error) throw error; }
+          syncSToDB(); const sent=new Set(sending.map(o=>o.id)); r.outbox=(r.outbox||[]).filter(o=>!sent.has(o.id)); }
+        finally{ sending.forEach(o=>SYNC.inflight.delete(o.id)); } } }
     store.set('pitdog_db',JSON.stringify(DB)); setSync('live','');
   }catch(e){ setSync(navigator.onLine===false||/fetch|network/i.test(e.message||'')?'offline':'error',e.message||String(e)); }
-  finally{ SYNC.busy=false; } }
+  finally{ SYNC.busy=false; renderSyncPill(); } }
 async function pull(full){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline()) return;
   try{ const tid=DB.team.sid;
     const [{data:t,error:e1},{data:me,error:e2},{data:races,error:e3},{data:evs,error:e4}]=await Promise.all([
-      sb.from('teams').select('id,name,join_code,doc,doc_updated_at').eq('id',tid).single(),
+      sb.from('teams').select('id,name,doc,doc_updated_at').eq('id',tid).single(),
       sb.from('memberships').select('role').eq('team_id',tid).eq('user_id',SYNC.user.id),
       sb.from('races').select('id,settings,updated_at').eq('team_id',tid),
       sb.from('events').select('id,race_id,t,type,payload').eq('team_id',tid)]);
-    const gone=e1&&/PGRST116|0 rows|coerce/i.test((e1.code||'')+' '+(e1.message||''));   // team not visible = not a member any more
+    const gone=e1&&/PGRST116|0 rows|coerce/i.test((e1.code||'')+' '+(e1.message||''));
     const err=(gone?null:e1)||e2||e3||e4; if(err) throw err;
-    if(gone||!me||!me.length){ toast2('You’re no longer in this team.'); delete DB.team.sid; delete DB.team.role; setSync('off'); dbSave(); update(); return; }
-    DB.team.role=me[0].role; DB.team.joinCode=t.join_code; DB.team.name=t.name;
-    const d=t.doc||{}; if(d.members&&(full||hashOf(teamDoc())===DB.team.docHash)){ Object.assign(DB.team,{series:d.series||DB.team.series,members:d.members||[],cars:(d.cars&&d.cars.length?d.cars:DB.team.cars),exampleProfiles:!!d.exampleProfiles}); DB.team.docHash=hashOf(teamDoc()); }
+    if(gone||!me||!me.length){
+      // not visible any more: either our session died (e.g. signed out elsewhere) or we were removed. Never drop data either way.
+      let valid=false; try{ const {data:u,error:ue}=await sb.auth.getUser(); valid=!ue&&u&&u.user&&u.user.id===SYNC.user.id; }catch(e){}
+      stopSync();
+      if(!valid){ SYNC.user=null; setSync('error','Signed out. Sign in again to keep syncing; nothing on this device is lost.'); return; }
+      setSync('error','You’re no longer a member of this team. Everything stays on this device; ask the owner to add you back, or Stop syncing here.'); return; }
+    syncSToDB();                                         // capture taps made while we were waiting
+    DB.team.role=me[0].role; DB.team.name=t.name;
+    if(['owner','pitwall'].includes(DB.team.role)){ const {data:c}=await sb.from('team_codes').select('join_code').eq('team_id',tid); DB.team.joinCode=c&&c[0]?c[0].join_code:DB.team.joinCode; } else delete DB.team.joinCode;
+    const d=t.doc||{}, docDirty=hashOf(teamDoc())!==DB.team.docHash;
+    if(d.members&&(full||!docDirty||!canPlan())){ Object.assign(DB.team,{series:d.series||DB.team.series,members:d.members||[],cars:(d.cars&&d.cars.length?d.cars:DB.team.cars),exampleProfiles:!!d.exampleProfiles}); DB.team.docHash=hashOf(teamDoc()); }
     races.forEach(row=>{ let r=DB.races.find(x=>x.sid===row.id); const st=row.settings||{};
-      if(!r){ r=Object.assign(newRaceObj({}),st,{id:st.id||uid(),sid:row.id,events:[],outbox:[],voids:[]}); DB.races.push(r); }
-      else if(full||hashOf(raceSettings(r))===r.settingsHash){ Object.assign(r,st,{id:r.id}); }   // local unsent plan edits win until pushed
-      r.settingsHash=hashOf(raceSettings(r)); r.isNew=false; });
+      if(!r){ r=Object.assign(newRaceObj({}),st,{id:st.id||uid(),sid:row.id,events:[],outbox:[],voids:[]}); DB.races.push(r); r.settingsHash=hashOf(settingsKey(r)); r.isNew=false; return; }
+      const dirty=hashOf(settingsKey(r))!==r.settingsHash;
+      if(full||!dirty||!canPlan()){ const keep={id:r.id,planAtGreen:r.planAtGreen}; Object.assign(r,st,{id:keep.id}); if(!r.planAtGreen&&keep.planAtGreen) r.planAtGreen=keep.planAtGreen; r.settingsHash=hashOf(settingsKey(r)); }
+      // else: our unsent plan edits stay dirty and go up on the next push
+      r.isNew=false; });
     DB.races.filter(r=>r.sid).forEach(r=>mergeEvents(r,evs.filter(x=>x.race_id===r.sid)));
     const n=normalizeDB(DB); if(n) DB=n;
     if(!activeRace()) DB.activeRaceId=(DB.races.find(r=>r.status!=='done')||DB.races[DB.races.length-1]||{}).id;
@@ -2426,14 +2466,14 @@ function applyRemoteEvent(row){ if(!teamOnline()||SIM.on) return; const r=DB.rac
   syncSToDB(); if(mergeEvents(r,[row])){ if(r.id===DB.activeRaceId) S.events=r.events; store.set('pitdog_db',JSON.stringify(DB)); update(); } }
 function applyRemoteRace(row){ if(!teamOnline()||SIM.on||!row) return; let r=DB.races.find(x=>x.sid===row.id); syncSToDB();
   if(!r){ r=Object.assign(newRaceObj({}),row.settings||{},{sid:row.id,events:[],outbox:[],voids:[]}); DB.races.push(r); }
-  else if(hashOf(raceSettings(r))!==r.settingsHash) return;          // we have unsent edits; ours go up next
-  else Object.assign(r,row.settings||{},{id:r.id});
-  r.settingsHash=hashOf(raceSettings(r)); const n=normalizeDB(DB); if(n) DB=n; if(r.id===DB.activeRaceId){ hydrate(); bind(); } store.set('pitdog_db',JSON.stringify(DB)); update(); }
-function applyRemoteTeam(row){ if(!teamOnline()||SIM.on||!row) return; if(hashOf(teamDoc())!==DB.team.docHash) return; const d=row.doc||{};
-  DB.team.name=row.name; DB.team.joinCode=row.join_code; if(d.members){ Object.assign(DB.team,{series:d.series||DB.team.series,members:d.members,cars:d.cars&&d.cars.length?d.cars:DB.team.cars}); }
+  else{ if(canPlan()&&hashOf(settingsKey(r))!==r.settingsHash) return;    // we have unsent edits; ours go up next
+    const keep={id:r.id,planAtGreen:r.planAtGreen}; Object.assign(r,row.settings||{},{id:keep.id}); if(!r.planAtGreen&&keep.planAtGreen) r.planAtGreen=keep.planAtGreen; }
+  r.settingsHash=hashOf(settingsKey(r)); const n=normalizeDB(DB); if(n) DB=n; if(r.id===DB.activeRaceId){ hydrate(); bind(); } store.set('pitdog_db',JSON.stringify(DB)); update(); }
+function applyRemoteTeam(row){ if(!teamOnline()||SIM.on||!row) return; if(canPlan()&&hashOf(teamDoc())!==DB.team.docHash) return; const d=row.doc||{};
+  DB.team.name=row.name; if(d.members){ Object.assign(DB.team,{series:d.series||DB.team.series,members:d.members,cars:d.cars&&d.cars.length?d.cars:DB.team.cars}); }
   DB.team.docHash=hashOf(teamDoc()); const n=normalizeDB(DB); if(n) DB=n; hydrate(); bind(); store.set('pitdog_db',JSON.stringify(DB)); update(); }
-function startSync(){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline()) return; stopSync(); setSync('syncing');
-  pull(false).then(pushAll);
+function startSync(){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline()) return; stopSync(); setSync('syncing'); watchAuth();
+  measureSkew().then(()=>pull(false)).then(pushAll);
   try{ SYNC.ch=sb.channel('team-'+DB.team.sid)
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'events',filter:'team_id=eq.'+DB.team.sid},p=>applyRemoteEvent(p.new))
     .on('postgres_changes',{event:'*',schema:'public',table:'races',filter:'team_id=eq.'+DB.team.sid},p=>applyRemoteRace(p.new))
@@ -2441,7 +2481,7 @@ function startSync(){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline()) re
     .subscribe(); }catch(e){}
   SYNC.timer=setInterval(()=>{ if(pendingCount()||Date.now()-SYNC.pulledAt>120000) pushAll().then(()=>{ if(Date.now()-SYNC.pulledAt>120000) pull(false); }); },15000); }
 function stopSync(){ clearInterval(SYNC.timer); SYNC.timer=null; try{ if(SYNC.ch&&SYNC.sb) SYNC.sb.removeChannel(SYNC.ch); }catch(e){} SYNC.ch=null; }
-window.addEventListener('online',()=>{ if(SYNC.user&&teamOnline()) pushAll().then(()=>pull(false)); });
+window.addEventListener('online',()=>{ if(!teamOnline()) return; if(SYNC.user) pushAll().then(()=>pull(false)); else restoreSession(); });
 window.addEventListener('offline',()=>{ if(teamOnline()) setSync('offline'); });
 function toast2(m){ let t=$('toast2'); if(!t){ t=document.createElement('div'); t.id='toast2'; t.className='toast2'; document.body.appendChild(t); } t.textContent=m; t.classList.add('on'); clearTimeout(toast2.h); toast2.h=setTimeout(()=>t.classList.remove('on'),3500); }
 // ---- the Team sync card
@@ -2462,7 +2502,7 @@ function renderSyncCard(){ const box=$('syncBody'); if(!box) return;
   box.innerHTML=`<div class="lrow" style="cursor:default"><div class="lmain"><b>${esc(DB.team.name)}</b><small>${who} · ${esc({owner:'Owner',pitwall:'Pit wall',crew:'Crew (can log)',viewer:'Viewer (read-only)'}[role]||role)} · ${esc(DEVICE)}</small></div><span class="syncpill ${SYNC.status==='live'&&!n?'ok':SYNC.status==='error'?'bad':'warn'}">${SYNC.status==='live'?(n?n+' waiting':'live'):esc(SYNC.status)}</span></div>
     ${['owner','pitwall'].includes(role)&&DB.team.joinCode?`<div class="sub" style="margin:10px 0 4px">Invite your crew: join code</div><div class="code" style="font-size:28px;letter-spacing:6px;font-weight:900">${esc(DB.team.joinCode)}</div>
       <button class="btn full" id="syncInvite">Send the invite link</button>`:''}
-    ${SYNC.err&&SYNC.status!=='live'?`<div class="w w-warn">${esc(SYNC.err)}</div>`:''}
+    ${SYNC.err&&SYNC.status!=='live'?`<div class="w w-warn">${esc(SYNC.err)}</div>`:''}${Math.abs(SYNC.skew||0)>2000?`<div class="w w-warn">This device’s clock is ${Math.round(Math.abs(SYNC.skew)/1000)} s ${SYNC.skew>0?'behind':'ahead of'} the server; PitDog corrects for it, but check the phone’s date &amp; time settings.</div>`:''}
     <div class="row" style="margin-top:10px;gap:8px"><button class="btn" id="syncNow">Sync now</button><button class="btn" id="syncLeave">Stop syncing here</button><button class="btn" id="syncOut2">Sign out</button></div>
     <div class="hint">Roles: owner and pit wall can change the plan; crew can log pit stops and flags; viewers watch. Owners change roles in the admin console.</div>`;
   const inv=$('syncInvite'); if(inv) inv.onclick=()=>{ const txt='Join our PitDog team: '+link; try{ if(navigator.share){ navigator.share({title:'PitDog team',text:txt,url:link}).catch(()=>{}); return; } navigator.clipboard.writeText(link).then(()=>toast2('Invite link copied'),()=>prompt('Invite link:',link)); }catch(e){ prompt('Invite link:',link); } };

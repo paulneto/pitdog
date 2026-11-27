@@ -39,8 +39,14 @@ CHECKS = [
   ("nobody can grant themselves membership", 'B', f"insert into memberships(team_id,user_id,role) values ({TEAM},auth.uid(),'owner') returning user_id", 'denied'),
   ("signed-out callers see nothing", None, "select * from teams", 'rows:0'),
   ("signed-out callers can't create teams", None, "select public.create_team('anon team')", 'denied'),
+  ("a stranger can't read any join code", 'B', "select * from team_codes", 'rows:0'),
   ('teammate joins with the code (any case) as crew', 'B', "select public.join_team(lower((select code from pg_temp.ids where k='team')),'crew phone')", 'ok'),
   ('crew can now read the race log', 'B', "select * from events", 'rows:1'),
+  ("crew can't read the join code", 'B', "select * from team_codes", 'rows:0'),
+  ('owner can read the join code', 'A', f"select * from team_codes where team_id={TEAM}", 'rows:1'),
+  ("the last owner can't leave", 'A', f"delete from memberships where team_id={TEAM} and user_id=auth.uid() returning user_id", 'rows:0'),
+  ("the last owner can't demote themselves", 'A', f"update memberships set role='crew' where team_id={TEAM} and user_id=auth.uid() returning user_id", 'denied'),
+  ('server clock is readable', 'B', "select 1 where public.server_now() > 1700000000000", 'rows:1'),
   ('crew can log PIT IN', 'B', f"insert into events(id,race_id,team_id,t,type) values (gen_random_uuid(),{RACE},{TEAM},3,'in') returning id", 'rows:1'),
   ("crew can't forge an event as someone else", 'B', f"insert into events(id,race_id,team_id,t,type,created_by) values (gen_random_uuid(),{RACE},{TEAM},4,'out',{ID('userA')}) returning id", 'denied'),
   ("crew can't change the race plan", 'B', "update races set settings='{\"name\":\"hacked\"}' returning id", 'rows:0'),
@@ -48,8 +54,17 @@ CHECKS = [
   ("events are append-only: the owner can't delete one", 'A', "delete from events returning id", 'rows:0'),
   ("events are append-only: no edits (UNDO is a void event)", 'A', "update events set type='out' returning id", 'rows:0'),
   ('UNDO is logged as a void event', 'A', "insert into events(id,race_id,team_id,t,type,payload) select gen_random_uuid(),race_id,team_id,5,'void',jsonb_build_object('target',id) from events where type='in' limit 1 returning id", 'rows:1'),
+  ('owner demotes the teammate to viewer', 'A', f"update memberships set role='viewer' where user_id={ID('userB')} and team_id={TEAM} returning user_id", 'rows:1'),
+  ('a viewer can leave', 'B', f"delete from memberships where team_id={TEAM} and user_id=auth.uid() returning user_id", 'rows:1'),
+  ('the viewer re-joins with the code', 'B', "select public.join_team((select code from pg_temp.ids where k='team'))", 'ok'),
+  ('…and gets the old role back (viewer, not crew)', 'B', "select 1 from memberships where user_id=auth.uid() and team_id=(select id from pg_temp.ids where k='team') and role='viewer'", 'rows:1'),
   ('owner promotes the teammate to pit wall', 'A', f"update memberships set role='pitwall' where user_id={ID('userB')} returning user_id", 'rows:1'),
   ('pit wall can change the plan', 'B', "update races set settings='{\"name\":\"Sat v2\"}' returning id", 'rows:1'),
+  ('setup: E joins team 2 as crew', 'E', "select public.join_team((select code from pg_temp.ids where k='team2'))", 'ok'),
+  ('owner removes a member', 'A', f"delete from memberships where team_id={TEAM2} and user_id={ID('userE')} returning user_id", 'rows:1'),
+  ("a removed member can't re-join with the code", 'E', "select public.join_team((select code from pg_temp.ids where k='team2'))", 'denied'),
+  ('owner can let them back in', 'A', f"select public.allow_rejoin({TEAM2},{ID('userE')})", 'ok'),
+  ('…and then they can re-join', 'E', "select public.join_team((select code from pg_temp.ids where k='team2'))", 'ok'),
   ("an event can't point at another team's race", 'A', f"insert into events(id,race_id,team_id,t,type) values (gen_random_uuid(),{RACE},{TEAM2},6,'in') returning id", 'denied'),
   ("only the owner can rotate the join code", 'B', f"select public.rotate_join_code({TEAM})", 'denied'),
   ('owner rotates the join code', 'A', f"select public.rotate_join_code({TEAM})", 'ok'),
@@ -82,11 +97,11 @@ CHECKS = [
 ]
 # after these checks, remember ids the later checks refer to
 AFTER = {
-  0: "insert into pg_temp.ids select 'team', id, join_code from teams where name='RLS check team';",
+  0: "insert into pg_temp.ids select 'team', t.id, c.join_code from teams t join team_codes c on c.team_id=t.id where t.name='RLS check team';",
   1: """insert into pg_temp.ids select 'race', id, null from races where team_id=(select id from pg_temp.ids where k='team');
   perform set_config('request.jwt.claims', (select json_build_object('sub',id::text,'role','authenticated')::text from pg_temp.ids where k='userA'), true);
   execute 'set local role authenticated'; perform public.create_team('RLS check team 2'); execute 'reset role';
-  insert into pg_temp.ids select 'team2', id, join_code from teams where name='RLS check team 2';""",
+  insert into pg_temp.ids select 'team2', t.id, c.join_code from teams t join team_codes c on c.team_id=t.id where t.name='RLS check team 2';""",
 }
 
 def block(i, desc, who, sql, exp):
@@ -112,7 +127,7 @@ script = """
 create temp table results(i int, descr text, ok boolean, detail text);
 create temp table ids(k text, id uuid, code text);
 grant all on results, ids to authenticated, anon;
-insert into ids values ('userA', gen_random_uuid(), null), ('userB', gen_random_uuid(), null), ('userC', gen_random_uuid(), null), ('userD', gen_random_uuid(), null);
+insert into ids values ('userA', gen_random_uuid(), null), ('userB', gen_random_uuid(), null), ('userC', gen_random_uuid(), null), ('userD', gen_random_uuid(), null), ('userE', gen_random_uuid(), null);
 insert into public.platform_admins(email, note) values ('rls-admin@pitdog.test', 'rls_check'), ('rls-unverified@pitdog.test', 'rls_check');
 insert into auth.users(id, aud, role, instance_id, email, email_confirmed_at)
   select id, 'authenticated', 'authenticated', '00000000-0000-0000-0000-000000000000',
@@ -124,6 +139,7 @@ end $t$;
 delete from public.teams where name in ('RLS check team','RLS check team 2','anon team');
 delete from auth.users where id in (select id from pg_temp.ids where k like 'user%');
 delete from public.platform_admins where note = 'rls_check';
+delete from public.membership_history where user_id in (select id from pg_temp.ids where k like 'user%');
 delete from public.admin_audit where admin_email = 'rls-admin@pitdog.test';
 delete from public.app_settings where key = 'rls_check';
 select i, descr, ok, detail from pg_temp.results order by i;
