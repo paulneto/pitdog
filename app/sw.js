@@ -1,6 +1,6 @@
 // PitDog service worker: keeps the app usable with no signal in the paddock.
 // Bump VERSION on every deploy so phones pick up the new version.
-const VERSION = 'pitdog-20261127113151';
+const VERSION = 'pitdog-v1';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
