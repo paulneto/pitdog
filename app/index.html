@@ -218,6 +218,7 @@
   .cc-c2{grid-column:2;grid-row:1/3}
 
   /* ---------- team / sheets / sim ---------- */
+  .li{width:72px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:7px;padding:6px;font:inherit;font-size:14px;text-align:right}
   .mini{background:#20252f;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font:inherit;font-size:12px;font-weight:700;letter-spacing:0;text-transform:none;cursor:pointer}
   .lrow{display:flex;align-items:center;gap:12px;padding:12px 2px;border-bottom:1px solid var(--line);cursor:pointer}
   .lrow:last-child{border-bottom:0}
@@ -478,6 +479,7 @@
     <label class="f pcaonly">No stops before (min) <input id="earliest" type="number" inputmode="numeric" min="0"></label>
     <label class="f pcaonly">Stops start before last (min) <input id="latest" type="number" inputmode="numeric" min="0"></label>
     <label class="f">Pits open under yellow <select id="pitsUnderYellow"><option value="1">Yes</option><option value="0">No</option></select></label>
+    <label class="f">Stint lengths <select id="weighting"><option value="even">Even</option><option value="pace">Favour faster drivers</option></select></label>
     <label class="f">Yellow pit window (min early) <input id="yellowWindow" type="number" inputmode="numeric" min="0"></label>
     <label class="f">"On deck" warning (min before) <input id="onDeck" type="number" inputmode="numeric" min="0"></label>
   </div>
@@ -506,6 +508,39 @@
     <h2 id="rulesTitle">Rules</h2>
     <div id="rulesGlance"></div>
     <ul class="rules" id="rulesList"></ul>
+  </div>
+</section>
+
+<!-- ================= LAB ================= -->
+<section class="tab" id="tab-lab">
+  <div class="card">
+    <h2>Strategy Lab</h2>
+    <div class="sub" style="margin:0">Compare strategies over many simulated races of <b id="labRace"></b>, using your drivers, car and series rules. Every strategy faces the same yellows and reds, so the comparison is fair.</div>
+  </div>
+  <div class="card">
+    <h2><span>Driver profiles</span><button class="mini" id="labExample">Example values</button></h2>
+    <div class="hint" id="labExHint" style="display:none;margin:0 0 8px;color:var(--amber)">These are <b>made-up example values</b>. Edit them to match your drivers.</div>
+    <div id="labDrivers" style="overflow-x:auto"></div>
+    <div class="hint">Lap = typical race lap · Consistency = lap-to-lap spread · Fuel = burn vs the car's average (100 = average) · Fade = how much slower per hour in the seat.</div>
+  </div>
+  <div class="card">
+    <h2>Conditions</h2>
+    <div class="chips" id="labCond" style="overflow-x:auto;flex-wrap:wrap"></div>
+    <button class="btn full" id="labPlay">🎮 Practise: play a race yourself in these conditions</button>
+  </div>
+  <div class="card">
+    <h2>Strategies to compare</h2>
+    <div id="labStrats"></div>
+  </div>
+  <div class="card">
+    <div class="row" style="align-items:center"><label class="f" style="border:0;padding:0">Races per strategy <select id="labN"><option value="20">20 (quick)</option><option value="50">50</option><option value="100">100</option><option value="200">200 (slow)</option></select></label></div>
+    <button class="btn full" id="labRun" style="background:var(--red);border-color:var(--red);font-weight:800;margin-top:10px">▶ Run comparison</button>
+    <div class="bar" style="margin-top:10px"><i id="labBar" style="width:0;background:var(--blue)"></i></div>
+    <div class="sub" id="labStatus" style="margin:0"></div>
+  </div>
+  <div class="card">
+    <h2>Results</h2>
+    <div id="labResults"></div>
   </div>
 </section>
 
@@ -547,6 +582,7 @@
   <button class="on" data-tab="race"><span class="ic">⏱</span>Race</button>
   <button data-tab="team"><span class="ic">👥</span>Team</button>
   <button data-tab="plan"><span class="ic">📋</span>Plan</button>
+  <button data-tab="lab"><span class="ic">🧪</span>Lab</button>
   <button data-tab="log"><span class="ic">🧾</span>Log</button>
 </nav>
 
@@ -592,7 +628,7 @@ const SERIES={
   custom:{label:'Custom',sched:false,race:Object.assign({},RULEKEYS),glance:null,rules:['Set your own rules in the Race settings above.'],pit:'',src:''}
 };
 const DEFAULT={series:'luckydog',
-  race:Object.assign({track:'none',lat:0,lon:0,name:'Saturday',start:'10:00',end:'17:00',len:120,startG:'13:00'},SERIES.luckydog.race),
+  race:Object.assign({weighting:'even',track:'none',lat:0,lon:0,name:'Saturday',start:'10:00',end:'17:00',len:120,startG:'13:00'},SERIES.luckydog.race),
   car:{unit:'gal',cap:16.4,burn:0.38,reserve:1,lap:'2:20',pitLoss:45,fillRate:4,changeSec:60,jug:5,useMeasured:1},
   drivers:[{name:'Driver A',max:120},{name:'Driver B',max:120},{name:'Driver C',max:120},{name:'Driver D',max:120}],
   events:[],archive:[]};
@@ -656,8 +692,9 @@ function plan(lv){
   const meas=measuredBurn(lv,lap); const burn=(C.useMeasured&&meas)?meas:C.burn;
   const refuel = R.refuelOver ? L>R.refuelOver : true;
   const fuelRangeMin=(C.cap - C.reserve*burn)/burn*lap;
+  const lapOf=i=>lap*(1+prof(i).pace), burnOf=i=>burn*prof(i).ff, rangeOf=i=>(C.cap-C.reserve*burnOf(i))/burnOf(i)*lapOf(i);
   const driverCap=Math.min(...S.drivers.map(d=>d.max||Infinity));
-  const caps=[[refuel?fuelRangeMin:Infinity,'fuel range'],[driverCap,'driver max stint'],[R.maxStint||Infinity,'series max stint'],[R.mandEvery?R.mandEvery-1:Infinity,'5-min stop every '+R.mandEvery+' min']];
+  const caps=[[refuel?Math.min(fuelRangeMin,...S.drivers.map((_,i)=>rangeOf(i))):Infinity,'fuel range'],[driverCap,'driver max stint'],[R.maxStint||Infinity,'series max stint'],[R.mandEvery?R.mandEvery-1:Infinity,'5-min stop every '+R.mandEvery+' min']];
   const [cap,capWhy]=caps.reduce((a,b)=>b[0]<a[0]?b:a);
   const stopDur=Math.max(R.minStop, C.changeSec/60 + (refuel?C.cap/C.fillRate:0));
   const stopCost=stopDur + C.pitLoss/60;
@@ -674,14 +711,14 @@ function plan(lv){
     let green=(Rm-(n-1)*stopCost)/n;
     if(green<=0) return {err:'Too many stops for the race length. Check the stop time and pit-lane loss.'};
     // the next stint can't outrun the fuel actually in the tank, or the next mandatory 5-min stop
-    let fuelT=C.cap; stints.forEach(s=>{ fuelT-=(s.end-s.start)/lap*burn; const a=s.actual;
+    let fuelT=C.cap; stints.forEach(s=>{ fuelT-=(s.end-s.start)/lapOf(s.driver)*burnOf(s.driver); const a=s.actual;
       if(a.kind==='fuel'&&refuel) fuelT = a.out!=null ? Math.min(C.cap,fuelT+(a.fuel||0)) : C.cap; });
     let lastMand=0; lv.stops.forEach(a=>{ if(a.out!=null&&a.out-a.in>=R.minStop-1e-6) lastMand=a.out; else if(a.out==null&&a.kind==='fuel') lastMand=t; });
-    const firstCap=Math.min(cap, refuel?(fuelT-C.reserve*burn)/burn*lap:Infinity, R.mandEvery?lastMand+R.mandEvery-1-t:Infinity);
+    const d0=di%nd; const firstCap=Math.min(cap, refuel?(fuelT-C.reserve*burnOf(d0))/burnOf(d0)*lapOf(d0):Infinity, R.mandEvery?lastMand+R.mandEvery-1-t:Infinity);
     let first=green;
     if(firstCap<green-1e-9){
       first=Math.max(1,firstCap); const R2=Rm-first-stopCost;
-      if(R2<=0){ const toEmpty=refuel?fuelT/burn*lap:Infinity; if(toEmpty>=Rm||Rm-stopCost-1<1){ n=1; first=Rm; } else { n=2; first=Rm-stopCost-1; green=1; } }   // finish on reserve if it truly lasts, else a short stop
+      if(R2<=0){ const toEmpty=refuel?fuelT/burnOf(d0)*lapOf(d0):Infinity; if(toEmpty>=Rm||Rm-stopCost-1<1){ n=1; first=Rm; } else { n=2; first=Rm-stopCost-1; green=1; } }   // finish on reserve if it truly lasts, else a short stop
       else { let m=Math.max(1,remMand); while(m<80&&(R2-(m-1)*stopCost)/m>cap+1e-9) m++; n=m+1; green=(R2-(m-1)*stopCost)/m; }
     }
     // driver rotation that respects rest
@@ -694,13 +731,28 @@ function plan(lv){
       stints.push({start:t,end:t+len,driver:pick,locked:false});
       lastEnd[pick]=t+len; t+=len+(k<n-1?stopCost:0); di=(pick+1)%nd;
     }
+    // "Favour faster drivers": resize the not-yet-started stints by pace, within each driver's caps
+    if(R.weighting==='pace'){
+      // includes the stint being driven, so the weighting survives re-planning every tick
+      const adj=stints.map((x,i)=>i).filter(i=>!stints[i].locked);
+      if(adj.length>1){
+        const capFor=i=>{ const d=stints[i].driver; const c=Math.min(refuel?rangeOf(d):Infinity,(S.drivers[d]||{}).max||Infinity,R.maxStint||Infinity,R.mandEvery?R.mandEvery-1:Infinity); return i===adj[0]?Math.min(c,firstCap):c; };
+        const tot=adj.reduce((a,i)=>a+stints[i].end-stints[i].start,0), mean=tot/adj.length, lo=0.6*mean;
+        const w=adj.map(i=>Math.pow(1/(1+prof(stints[i].driver).pace),5)), ws=w.reduce((a,b)=>a+b,0);
+        let len=w.map(x=>tot*x/ws);
+        for(let it=0;it<8;it++){ let rem=0; const free=[]; len=len.map((x,k)=>{ const h=capFor(adj[k]); if(x>h){ rem+=x-h; return h; } if(x<lo){ rem-=lo-x; return lo; } free.push(k); return x; });
+          if(Math.abs(rem)<1e-6||!free.length) break; const fs=free.reduce((a,k)=>a+len[k],0); free.forEach(k=>{ len[k]+=rem*len[k]/fs; }); }
+        let tt=stints[adj[0]].start; adj.forEach((i,k)=>{ stints[i].start=tt; stints[i].end=tt+len[k]; tt+=len[k]+stopCost; });
+        stints[adj[adj.length-1]].end=L;
+      }
+    }
   }
   let fuel=C.cap, laps=0;
   stints.forEach((s,i)=>{
-    s.dur=s.end-s.start; s.laps=s.dur/lap; laps+=s.laps;
-    s.fuelStart=fuel; fuel-=s.laps*burn; s.fuelEnd=fuel;
+    s.dur=s.end-s.start; s.laps=s.dur/lapOf(s.driver); laps+=s.laps;
+    s.fuelStart=fuel; fuel-=s.laps*burnOf(s.driver); s.fuelEnd=fuel;
     if(i<stints.length-1){
-      const nx=stints[i+1]; const need=((nx.end-nx.start)/lap + C.reserve)*burn;
+      const nx=stints[i+1]; const need=((nx.end-nx.start)/lapOf(nx.driver) + C.reserve)*burnOf(nx.driver);
       const kind=s.actual?s.actual.kind:'fuel';
       let add = (refuel&&kind==='fuel') ? Math.max(0, Math.min(C.cap,need)-fuel) : 0;
       if(s.actual&&s.actual.out!=null&&s.actual.fuel!=null&&kind==='fuel') add=s.actual.fuel||add;
@@ -729,7 +781,7 @@ function plan(lv){
   if(R.mandPer) W.push(['ok',`${mandCount(R,L)} mandatory stops for a ${fmt(L)} race (race minutes ÷ ${R.mandPer} − 1).`]);
   if(meas) W.push(['ok',`Measured burn ${r1(meas*100)/100} ${C.unit}/lap (planned ${C.burn}).${C.useMeasured?' The plan is using the measured figure.':''}`]);
   if(!W.some(w=>w[0]==='bad')) W.unshift(['ok',`Plan is legal: ${stints.length-1} stops. Stints are limited by ${capWhy}.`]);
-  return {stints,W,L,lap,laps,stopCost,stopDur,refuel,fuelRangeMin,lastStart,burn,meas};
+  return {lapOf,burnOf,stints,W,L,lap,laps,stopCost,stopDur,refuel,fuelRangeMin,lastStart,burn,meas};
 }
 
 /* ================= live helpers ================= */
@@ -746,9 +798,9 @@ function driverStatus(lv,P){
 }
 
 /* ================= render: plan tab ================= */
-const raceFields=['mandPer','minApplies','track','lat','lon','name','start','end','len','startG','maxStint','rest','minStop','mandEvery','mandatory','earliest','latest','pitsUnderYellow','yellowWindow','onDeck'];
+const raceFields=['weighting','mandPer','minApplies','track','lat','lon','name','start','end','len','startG','maxStint','rest','minStop','mandEvery','mandatory','earliest','latest','pitsUnderYellow','yellowWindow','onDeck'];
 const carFields=['unit','cap','burn','reserve','lap','pitLoss','fillRate','changeSec','jug'];
-const TXT=['minApplies','track','name','start','end','startG','unit','lap'];
+const TXT=['weighting','minApplies','track','name','start','end','startG','unit','lap'];
 const num=(f,v)=>TXT.includes(f)?v:parseFloat(v)||0;
 function bind(){
   if(!$('track').options.length) $('track').innerHTML=Object.entries(TRACKS).map(([k,[n]])=>`<option value="${k}">${n}</option>`).join('');
@@ -841,6 +893,8 @@ function computeAlerts(lv,P){
 // half-jug logging: the last jug is usually only partly poured
 const jugSteps=C=>{ const out=[]; const mx=Math.min(6,Math.ceil(C.cap/C.jug)); for(let j=0;j<=mx+1e-9;j+=0.5) out.push(j); return out; };
 const jugLbl=j=>j===0?'0':(Math.floor(j)||'')+(j%1?'½':'');
+const PROF0={pace:0,cons:0.015,ff:1,fade:0.005};
+function prof(i){ const d=S&&S.drivers&&S.drivers[i]; return d?{pace:d.pace??0,cons:d.cons??0.015,ff:d.ff??1,fade:d.fade??0.005}:PROF0; }
 function minFor(kind){ const R=S.race, m=R.minStop||0, ap=R.minApplies||'fuel'; if(kind==='black'||!m) return 0;
   if(ap==='all') return m; if(kind==='fuel'&&ap!=='mand') return m;
   if(ap==='mand'||ap==='mandfuel'){ const lv=live(); return countedStops(lv)<mandCount(R,lv.L)?m:0; } return 0; }
@@ -917,8 +971,8 @@ function renderTrack(s,lv,ds){
   $('stintBar').style.background=inSeat>lim?'var(--red)':inSeat>s.dur-3?'var(--amber)':'var(--green)';
   if(last){ $('nextStop').textContent=lv.started?hms(lv.L-lv.now):'–'; $('nextStopL').textContent='To checkered'; }
   else { const tt=s.end-lv.now; $('nextStop').textContent=lv.started?fmt(tt):clockAt(s.end); $('nextStopL').textContent=lv.started?(tt<0?'Box overdue':'Next stop in'):'First stop'; }
-  $('fuelLeft').textContent=r1(s.fuelStart-inSeat/P.lap*P.burn)+' '+C.unit;
-  $('lapsDone').textContent=Math.floor(inSeat/P.lap);
+  $('fuelLeft').textContent=r1(s.fuelStart-inSeat/P.lapOf(s.driver)*P.burnOf(s.driver))+' '+C.unit;
+  $('lapsDone').textContent=Math.floor(inSeat/P.lapOf(s.driver));
 }
 
 /* ================= render: team & log ================= */
@@ -979,7 +1033,7 @@ $('share').onclick=()=>{ const s=clone(S); delete s.events; delete s.archive; co
   const done=()=>{ $('share').textContent='Link copied ✓'; setTimeout(()=>$('share').textContent='Send plan to teammates',1500); };
   try{ if(navigator.share){ navigator.share({title:'PitDog plan',text:'Our stint plan',url}).catch(()=>{}); return; } navigator.clipboard.writeText(url).then(done,()=>prompt('Copy this link:',url)); }catch(e){ prompt('Copy this link:',url); } };
 function show(tab){ document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+tab)); document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab)); $('actionBar').style.display=tab==='race'?'block':'none'; window.scrollTo(0,0); }
-document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); show(b.dataset.tab); });
+document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); show(b.dataset.tab); if(b.dataset.tab==='lab') renderLab(); });
 
 /* ================= loop ================= */
 function update(){
@@ -1092,7 +1146,7 @@ function renderCC(){
   const tot=ds.reduce((a,o)=>a+o.seat,0); $('ccCrewSum').textContent=lv.started?fmt(tot)+' driven':'';
   // fuel
   const s=cur||st[st.length-1]; let fuelNow;
-  if(lv.inPit){ const ps=st[ci-1]; fuelNow=ps?ps.fuelEnd:C.cap; } else { const inSeat=lv.started?Math.max(0,lv.now-s.start):0; fuelNow=s.fuelStart-inSeat/P.lap*P.burn; }
+  if(lv.inPit){ const ps=st[ci-1]; fuelNow=ps?ps.fuelEnd:C.cap; } else { const inSeat=lv.started?Math.max(0,lv.now-s.start):0; fuelNow=s.fuelStart-inSeat/P.lapOf(s.driver)*P.burnOf(s.driver); }
   fuelNow=Math.max(0,fuelNow); const resv=C.reserve*P.burn; const rangeMin=Math.max(0,(fuelNow-resv)/P.burn*P.lap);
   const fpct=Math.min(100,fuelNow/C.cap*100); $('ccTankFill').style.height=fpct+'%'; $('ccTankFill').style.background=fpct<15?'linear-gradient(#ff3b30,#8a1a14)':fpct<30?'linear-gradient(#ffb340,#8a5a10)':'linear-gradient(#2de0c0,#0d5c50)';
   $('ccTankRes').style.bottom=(resv/C.cap*100)+'%';
@@ -1147,7 +1201,7 @@ function hydrate(){
   const r=activeRace(); if(!r) return;
   const car=carById(r.carId)||DB.team.cars[0]; r.carId=car.id;
   r.rules=Object.assign(clone(DEFAULT.race),clone((SERIES[r.series]||SERIES.luckydog).race),r.rules); CAR_FIELDS.forEach(f=>{ if(car[f]===undefined) car[f]=DEFAULT.car[f]; });
-  S={series:r.series||'luckydog',race:r.rules,car,drivers:r.drivers.filter(d=>member(d.mid)).map(d=>{ const m=member(d.mid); return {mid:d.mid,name:m.name,color:m.color,max:d.max}; }),events:r.events||[]};
+  S={series:r.series||'luckydog',race:r.rules,car,drivers:r.drivers.filter(d=>member(d.mid)).map(d=>{ const m=member(d.mid); return {mid:d.mid,name:m.name,color:m.color,max:d.max,pace:m.pace,cons:m.cons,ff:m.ff,fade:m.fade}; }),events:r.events||[]};
 }
 function syncSToDB(){
   const r=activeRace(); if(!r||!S) return;
@@ -1314,12 +1368,14 @@ $('teamEdit').onclick=()=>DB&&teamSheet(); $('addMember').onclick=()=>DB&&member
 // an optional auto-crew runs the stops. Nothing is saved: the real team data reloads on End.
 function mulberry(a){ return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 function startSim(opt){
-  opt=opt||{}; if(SIM.on) endSim(true);
-  if(DB) dbSave();
+  opt=opt||{}; const HL=!!opt.headless; if(SIM.on&&!HL) endSim(true);
+  if(DB&&!HL) dbSave();
   if(!DB||opt.demo){ const demo=clone(DEFAULT); demo.drivers=[{name:'Paul',max:120},{name:'Luc',max:120},{name:'Marco',max:120},{name:'Sam',max:120}]; demo.race.track='glen'; DB=dbFromS(demo,'Demo team'); DB.team.cars[0].name='E30 (demo)'; }
   else DB=clone(DB);                                    // work on a throwaway copy
   const base=activeRace();
-  const r=newRaceObj({sim:true,series:base.series,rules:Object.assign(clone(base.rules),{name:'Simulation'}),carId:base.carId,drivers:clone(base.drivers)});
+  const cond=CONDS[opt.cond||'normal']||CONDS.normal; SIM.cond=cond;
+  const r=newRaceObj({sim:true,series:base.series,rules:Object.assign(clone(base.rules),(opt.strat||{}).rules||{},{name:'Simulation'+(opt.strat?' · '+opt.strat.name:'')+(cond!==CONDS.normal?' · '+cond.label:'')}),carId:base.carId,drivers:clone(base.drivers)});
+  if(cond.drop&&r.drivers.length>1) r.drivers.pop();
   DB.races.push(r); DB.activeRaceId=r.id;
   SIM.on=true; SIM.rng=mulberry(opt.seed||((Date.now()%1e9)|0)); SIM.speed=opt.speed!=null?opt.speed:30; SIM.auto=opt.auto!==false; SIM.done=false; SIM.stopTarget=null; SIM.late=null; SIM.after=0;
   hydrate();
@@ -1327,40 +1383,43 @@ function startSim(opt){
   SIM.v=sch?schedStartMs(Date.now())-2*60000:Date.now();
   SIM.greenAt=sch?schedStartMs(Date.now())+30000:SIM.v+60000;
   const g=SIM.rng;
-  SIM.t={fuel:S.car.cap,laps:0,oof:false,burn:S.car.burn*(1+(g()*0.18-0.03)),lap:lapMin(S.car.lap),pace:S.drivers.map(()=>g()*0.065-0.025),added:0};
-  SIM.flags=[]; let t=15+g()*40; while(t<L-10){ const d=3+g()*5; SIM.flags.push({type:'yellow',at:t,dur:d}); t+=d+30-Math.log(1-g())*55; }
-  if(g()<0.3){ SIM.flags.push({type:'red',at:40+g()*(L-80),dur:8+g()*8}); }
+  SIM.gauss=()=>Math.sqrt(-2*Math.log(g()+1e-12))*Math.cos(2*Math.PI*g());
+  SIM.t={fuel:S.car.cap,laps:0,oof:false,burn:S.car.burn*(1+(g()*0.18-0.03))*cond.burnMul,lap:lapMin(S.car.lap)*cond.lapMul,added:0};
+  SIM.flags=[]; let t=15+g()*40/cond.yMul; while(t<L-10){ const d=3+g()*5; SIM.flags.push({type:'yellow',at:t,dur:d}); t+=d+(30-Math.log(1-g())*55)/cond.yMul; }
+  if(g()<cond.redP){ SIM.flags.push({type:'red',at:40+g()*(L-80),dur:8+g()*8}); }
   SIM.flags.forEach(f=>{ f.on=false; f.off=false; });
-  document.body.classList.add('sim-on'); closeSheet(); pend={driver:null,kind:null,jugs:null};
+  pend={driver:null,kind:null,jugs:null}; if(HL) return;
+  document.body.classList.add('sim-on'); closeSheet();
   bind(); update(); if(typeof applyView==='function') applyView(); show('race'); simHud();
   clearInterval(SIM.timer); SIM.last=Date.now(); SIM.timer=setInterval(simTick,250);
 }
 function simTick(){ const n=Date.now(); const dt=(n-SIM.last)/60000*SIM.speed; SIM.last=n; if(SIM.on&&dt>0&&!SIM.done) simStep(dt); }
 function simEmit(e){ S.events.push(Object.assign({t:SIM.v},e)); }
-function simStep(dtMin){
+function simStep(dtMin,headless){
   if(!SIM.on) return;
   let left=dtMin;
   while(left>1e-9){
-    const sub=Math.min(0.25,left); left-=sub; SIM.v+=sub*60000;
+    const sub=Math.min(headless?0.5:0.25,left); left-=sub; SIM.v+=sub*60000;
     const T=SIM.t; const R=S.race;
     if(!greenEv()&&SIM.v>=SIM.greenAt) simEmit({type:'green'});
     let lv=live(); if(!lv.started) continue;
     // race control
     SIM.flags.forEach(f=>{ if(!f.on&&lv.now>=f.at&&lv.now<lv.L){ f.on=true; simEmit({type:f.type,on:true}); } if(f.on&&!f.off&&lv.now>=f.at+f.dur){ f.off=true; simEmit({type:f.type,on:false}); } });
-    lv=live(); if(lv.finished){ if(!SIM.done){ SIM.done=true; update(); simHud(); simSummary(); } return; }
+    lv=live(); if(lv.finished){ if(!SIM.done){ SIM.done=true; if(!headless){ update(); simHud(); simSummary(); } } return; }
     // the real car
     if(!lv.inPit&&!lv.red&&!T.oof){
       if(SIM.after>0){ SIM.after-=sub; }                         // still driving out of pit lane
       else { const cur=P&&!P.err?P.stints[curIdx(P)]:null; const di=cur?cur.driver:0;
-        const lapT=T.lap*(1+(T.pace[di]||0))*(lv.yellow?1.55:1)*(1+(SIM.rng()-0.5)*0.02);
-        const laps=sub/lapT; T.laps+=laps; T.fuel-=laps*T.burn*(lv.yellow?0.55:1);
+        const pr=prof(di), hrs=cur?Math.max(0,lv.now-cur.start)/60:0;
+        const lapT=T.lap*(1+pr.pace)*(1+pr.fade*hrs)*(1+SIM.gauss()*pr.cons*0.5)*(lv.yellow?1.55:1);
+        const laps=sub/lapT; T.laps+=laps; T.fuel-=laps*T.burn*pr.ff*(lv.yellow?0.55:1);
         if(T.fuel<=0){ T.fuel=0; T.oof=true; } }
     }
     // the crew
     if(SIM.auto) simCrew(lv);
     P=plan(live());
   }
-  update(); simHud();
+  if(!headless){ update(); simHud(); }
 }
 function simCrew(lv){
   const R=S.race, T=SIM.t; const P2=plan(lv); if(P2.err) return; const st=P2.stints, ci=curIdx(P2);
@@ -1388,7 +1447,7 @@ function simHud(){
   document.querySelectorAll('#simHud [data-s]').forEach(b=>b.classList.toggle('on',+b.dataset.s===SIM.speed));
   $('simAutoBtn').classList.toggle('on',SIM.auto); $('simAutoBtn').textContent=SIM.auto?'auto-crew ✓':'auto-crew ✗';
   const lv=live(); let est='';
-  if(P&&!P.err&&lv.started){ const ci=curIdx(P), s=P.stints[ci]||P.stints[P.stints.length-1]; const e=lv.inPit?(P.stints[ci-1]||{}).fuelEnd:s.fuelStart-Math.max(0,lv.now-s.start)/P.lap*P.burn; if(e!=null) est=` · app est ${r1(Math.max(0,e))}`; }
+  if(P&&!P.err&&lv.started){ const ci=curIdx(P), s=P.stints[ci]||P.stints[P.stints.length-1]; const e=lv.inPit?(P.stints[ci-1]||{}).fuelEnd:s.fuelStart-Math.max(0,lv.now-s.start)/P.lapOf(s.driver)*P.burnOf(s.driver); if(e!=null) est=` · app est ${r1(Math.max(0,e))}`; }
   $('simTruth').innerHTML=SIM.t.oof?'<span class="oof">OUT OF FUEL</span>':`truth ${r1(SIM.t.fuel)} ${S.car.unit}${est} · ${Math.floor(SIM.t.laps)} laps`;
 }
 function simReport(){
@@ -1420,6 +1479,94 @@ document.querySelectorAll('#simHud [data-s]').forEach(b=>b.onclick=()=>{ SIM.spe
 $('simAutoBtn').onclick=()=>{ SIM.auto=!SIM.auto; simHud(); };
 $('simEnd').onclick=()=>{ if(confirm('End the simulation? Nothing from it is saved.')) endSim(); };
 $('simOpen').onclick=()=>startSim({});
+
+/* ================= STRATEGY LAB ================= */
+const CONDS={normal:{label:'Normal',lapMul:1,burnMul:1,yMul:1,redP:0.3,desc:'Typical day'},
+  wet:{label:'🌧 Wet',lapMul:1.08,burnMul:0.92,yMul:1.8,redP:0.35,desc:'Laps 8% slower, less fuel, more yellows'},
+  chaos:{label:'💥 Chaos',lapMul:1,burnMul:1,yMul:2.5,redP:0.8,desc:'Lots of yellows, a red likely'},
+  leak:{label:'⛽ Fuel leak',lapMul:1,burnMul:1.15,yMul:1,redP:0.3,desc:'Burning 15% more than planned'},
+  driverout:{label:'🤒 Driver out',lapMul:1,burnMul:1,yMul:1,redP:0.3,drop:true,desc:'Last driver in the rotation can\'t race'}};
+const STRATS=[
+  {key:'plan',name:'Your current plan',desc:'Exactly as set in the Plan tab.',rules:{}},
+  {key:'even',name:'Even stints',desc:'Equal stint lengths.',rules:{weighting:'even'}},
+  {key:'pace',name:'Fast drivers longer',desc:'Quicker drivers get longer stints, within max stint and fuel range.',rules:{weighting:'pace'}},
+  {key:'yellow',name:'Pit on yellows',desc:'Take any yellow within 35 min of a planned stop.',rules:{yellowWindow:35}},
+  {key:'noyellow',name:'Ignore yellows',desc:'Never move a stop for a yellow.',rules:{yellowWindow:0}},
+  {key:'combo',name:'Fast longer + pit on yellows',desc:'Both together.',rules:{weighting:'pace',yellowWindow:35}}];
+const EXAMPLE_PROF=[{pace:-0.02,cons:0.010,ff:1.00,fade:0.004},{pace:0.006,cons:0.015,ff:1.04,fade:0.006},{pace:0.028,cons:0.022,ff:0.97,fade:0.010},
+  {pace:-0.008,cons:0.012,ff:1.02,fade:0.005},{pace:0.015,cons:0.018,ff:1.06,fade:0.008},{pace:0.035,cons:0.025,ff:0.99,fade:0.012}];
+const LAB={sel:['plan','even','pace','yellow'],cond:'normal',n:50,running:false,res:null};
+function lapStr(min){ const s=min*60; return Math.floor(s/60)+':'+(s%60).toFixed(1).padStart(4,'0'); }
+function ensureProfiles(){
+  if(!DB) return false; const ms=S.drivers.map(d=>member(d.mid)).filter(Boolean);
+  if(ms.length&&ms.every(m=>m.pace===undefined)){ ms.forEach((m,i)=>Object.assign(m,EXAMPLE_PROF[i%EXAMPLE_PROF.length])); DB.team.exampleProfiles=true; hydrate(); dbSave(); return true; }
+  return false;
+}
+function renderLab(){
+  if(!DB||!S){ $('labDrivers').innerHTML='<div class="sub">Create a team first.</div>'; return; }
+  ensureProfiles();
+  const base=lapMin(S.car.lap);
+  $('labRace').textContent=`${S.race.name||'this race'} (${(SERIES[S.series]||{}).label}, ${fmt(raceLen())})`;
+  $('labExHint').style.display=DB.team.exampleProfiles?'block':'none';
+  $('labDrivers').innerHTML=`<table><tr><th class="l">Driver</th><th>Lap</th><th>Consistency ±%</th><th>Fuel %</th><th>Fade %/h</th></tr>`+S.drivers.map((d,i)=>{ const p=prof(i);
+    return `<tr><td class="l"><span class="dot" style="background:${dcol(i)}"></span>${esc(d.name)}</td><td><input class="li" data-mid="${d.mid}" data-f="lap" value="${lapStr(base*(1+p.pace))}"></td><td><input class="li" data-mid="${d.mid}" data-f="cons" value="${r1(p.cons*100)}"></td><td><input class="li" data-mid="${d.mid}" data-f="ff" value="${Math.round(p.ff*100)}"></td><td><input class="li" data-mid="${d.mid}" data-f="fade" value="${r1(p.fade*100)}"></td></tr>`; }).join('')+`</table>`;
+  $('labDrivers').querySelectorAll('input').forEach(inp=>inp.onchange=()=>{ const m=member(inp.dataset.mid); if(!m) return; const v=inp.value.trim();
+    if(inp.dataset.f==='lap'){ const l=lapMin(v); if(l>0) m.pace=l/base-1; } else { const x=parseFloat(v); if(isFinite(x)) m[inp.dataset.f]=x/100; }
+    DB.team.exampleProfiles=false; hydrate(); dbSave(); update(); renderLab(); });
+  $('labCond').innerHTML=Object.entries(CONDS).map(([k,c])=>`<button class="chipbtn ${k===LAB.cond?'sel':''}" data-c="${k}" style="flex:0 0 auto">${c.label}<small>${c.desc}</small></button>`).join('');
+  $('labCond').querySelectorAll('button').forEach(b=>b.onclick=()=>{ LAB.cond=b.dataset.c; renderLab(); });
+  const noY=!S.race.pitsUnderYellow;
+  $('labStrats').innerHTML=STRATS.map(s=>{ const dis=noY&&s.rules.yellowWindow; return `<label class="lrow" style="cursor:pointer;${dis?'opacity:.4':''}"><input type="checkbox" data-k="${s.key}" ${LAB.sel.includes(s.key)&&!dis?'checked':''} ${dis?'disabled':''} style="width:22px;height:22px"><div class="lmain"><b style="font-size:15px">${s.name}</b><small>${s.desc}${dis?' (pits are closed under yellow in this series)':''}</small></div></label>`; }).join('');
+  $('labStrats').querySelectorAll('input').forEach(c=>c.onchange=()=>{ LAB.sel=[...$('labStrats').querySelectorAll('input:checked')].map(x=>x.dataset.k); });
+  $('labN').value=String(LAB.n);
+  renderLabResults();
+}
+function labRun(strat,seed,condKey){
+  const keep={S,DB,P,pend}, simKeep=Object.assign({},SIM);
+  try{ startSim({seed,speed:0,auto:true,headless:true,strat,cond:condKey}); simStep(raceLen()+25,true);
+    const lv=live(), P2=plan(lv), x=simReport(); x.seat=P2.err?[]:driverStatus(lv,P2).map(o=>({name:o.name,seat:o.seat})); return x; }
+  finally{ clearInterval(SIM.timer); Object.keys(SIM).forEach(k=>delete SIM[k]); Object.assign(SIM,simKeep); S=keep.S; DB=keep.DB; P=keep.P; pend=keep.pend; }
+}
+function labAggregate(key,runs){
+  const st=STRATS.find(s=>s.key===key); const laps=runs.map(x=>x.laps).sort((a,b)=>a-b); const q=p=>laps[Math.min(laps.length-1,Math.floor(p*(laps.length-1)))];
+  const seat={}; runs.forEach(x=>x.seat.forEach(o=>{ seat[o.name]=(seat[o.name]||0)+o.seat/runs.length; }));
+  const sv=Object.values(seat).filter(v=>v>0);
+  return {key,name:st.name,n:runs.length,avg:laps.reduce((a,b)=>a+b,0)/laps.length,p10:q(0.1),p90:q(0.9),min:laps[0],max:laps[laps.length-1],
+    dry:runs.filter(x=>x.oof).length/runs.length,viol:runs.filter(x=>x.bad.some(b=>!/under the .* minimum/.test(b))||x.overStints).length/runs.length,
+    stops:runs.reduce((a,x)=>a+x.stops,0)/runs.length,seat,spread:sv.length?Math.max(...sv)-Math.min(...sv):0};
+}
+function labCompareSync(keys,n,condKey){ return keys.map(k=>{ const st=STRATS.find(s=>s.key===k); const runs=[]; for(let i=0;i<n;i++) runs.push(labRun(st,1000+i,condKey)); return labAggregate(k,runs); }); }
+async function labCompare(){
+  if(LAB.running||SIM.on) return; const keys=LAB.sel.filter(k=>STRATS.some(s=>s.key===k)); if(!keys.length){ alert('Pick at least one strategy.'); return; }
+  dbSave(); LAB.running=true; LAB.n=parseInt($('labN').value)||50; $('labRun').disabled=true; const total=keys.length*LAB.n; let done=0; const out=[]; const t0=Date.now();
+  for(const k of keys){ const st=STRATS.find(s=>s.key===k); const runs=[];
+    for(let i=0;i<LAB.n;i++){ runs.push(labRun(st,1000+i,LAB.cond)); done++;
+      if(done%3===0){ $('labBar').style.width=(done/total*100)+'%'; $('labStatus').textContent=`Simulating ${st.name}: race ${i+1}/${LAB.n}…`; await new Promise(r=>setTimeout(r,0)); } }
+    out.push(labAggregate(k,runs)); }
+  LAB.res={rows:out,cond:LAB.cond,n:LAB.n,at:Date.now()}; LAB.running=false; $('labRun').disabled=false; $('labBar').style.width='100%';
+  $('labStatus').textContent=`${total} races simulated in ${Math.round((Date.now()-t0)/1000)} s · ${CONDS[LAB.cond].label} conditions · same yellows/reds for every strategy`;
+  update(); renderLabResults();
+}
+function renderLabResults(){
+  const R0=LAB.res; if(!R0){ $('labResults').innerHTML='<div class="sub">Pick strategies and run a comparison.</div>'; return; }
+  const rows=R0.rows, best=Math.max(...rows.map(r=>r.avg)), lo=Math.min(...rows.map(r=>r.min)), hi=Math.max(...rows.map(r=>r.max)), span=Math.max(1,hi-lo);
+  const pc=x=>((x-lo)/span*100).toFixed(1)+'%';
+  $('labResults').innerHTML=rows.map(r=>{ const isBest=r.avg===best; const d=r.avg-rows[0].avg;
+    return `<div class="lrow" style="cursor:default;display:block">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><b style="font-size:16px">${isBest?'🏆 ':''}${r.name}</b><span style="font-size:22px;font-weight:800;font-variant-numeric:tabular-nums">${r1(r.avg)} <small style="font-size:12px;color:var(--muted)">laps${rows.length>1&&r!==rows[0]?` (${d>=0?'+':''}${r1(d)})`:''}</small></span></div>
+      <div style="position:relative;height:14px;margin:8px 0;background:var(--panel2);border-radius:7px;border:1px solid var(--line)">
+        <div style="position:absolute;top:3px;bottom:3px;left:${pc(r.p10)};width:calc(${pc(r.p90)} - ${pc(r.p10)});background:${isBest?'var(--green)':'#3a7bd5'};border-radius:4px;opacity:.6"></div>
+        <div style="position:absolute;top:-2px;bottom:-2px;width:3px;left:${pc(r.avg)};background:#fff;border-radius:2px"></div></div>
+      <div class="sub" style="margin:0;font-size:12px">worst 10%: ${r.p10} · best 10%: ${r.p90} · stops ${r1(r.stops)} · ran dry ${Math.round(r.dry*100)}% · rule breaks ${Math.round(r.viol*100)}% · seat spread ${fmt(r.spread)}</div>
+      <div class="sub" style="margin:2px 0 0;font-size:12px">${Object.entries(r.seat).map(([n,v])=>`${esc(n)} ${fmt(v)}`).join(' · ')}</div>
+      <div class="row" style="margin-top:8px"><button class="mini" data-use="${r.key}" ${r.key==='plan'?'disabled':''}>Use this plan</button><button class="mini" data-watch="${r.key}">▶ Watch one</button></div></div>`; }).join('')+
+    `<div class="hint">Bars show the middle 80% of simulated races; the white line is the average. Driver profiles are ${DB&&DB.team.exampleProfiles?'<b>example values</b>':'your values'}, so results are only as good as those numbers.</div>`;
+  $('labResults').querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{ const st=STRATS.find(s=>s.key===b.dataset.use); Object.assign(S.race,st.rules); dbSave(); bind(); update(); show('plan'); });
+  $('labResults').querySelectorAll('[data-watch]').forEach(b=>b.onclick=()=>{ const st=STRATS.find(s=>s.key===b.dataset.watch); startSim({strat:st,cond:LAB.cond,speed:30,auto:true}); });
+}
+$('labRun').onclick=()=>labCompare();
+$('labExample').onclick=()=>{ if(!DB) return; S.drivers.forEach((d,i)=>{ const m=member(d.mid); if(m) Object.assign(m,EXAMPLE_PROF[i%EXAMPLE_PROF.length]); }); DB.team.exampleProfiles=true; hydrate(); dbSave(); update(); renderLab(); };
+$('labPlay').onclick=()=>startSim({cond:LAB.cond,speed:30,auto:false});
 
 try{ loadDB(); }catch(e){ DB=null; }
 if(DB) hydrate(); else S=clone(DEFAULT);

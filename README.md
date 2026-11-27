@@ -6,6 +6,7 @@
 
 ## What it does
 - **Team:** create a team once (people with roles and colours, cars), then for each race pick **who's driving** and in what order. Finished races go into team history with seat time per driver and the car's **measured fuel burn per track**. "Same team, new day" sets up Sunday from Saturday
+- **Strategy Lab:** driver profiles (typical lap, consistency, fuel use, fade per hour) feed the planner and the simulator. Compare strategies (your plan, even stints, fast drivers longer, pit on yellows, ignore yellows, combos) over 20–200 simulated races each, with the same random yellows and reds for every strategy. Results show average and worst-10% laps, stops, ran-dry and rule-break rates, and seat time per driver. Conditions: normal, wet, chaos, fuel leak, driver out. "Use this plan" applies a strategy; "Watch one" plays it on the command center; "Practise" lets the crew run a race manually. About 6 ms per simulated race in the browser
 - **Simulator:** run a whole race at up to 60× with your team, car and rules. Race control throws yellows and reds, a "truth" car burns real fuel, and an optional auto-crew runs the stops. The end-of-race report checks for running dry, short stops, stint limits and how close the measured burn was. Nothing is saved
 - **Plan:** stints, fuel and driver rotation within series rules (Lucky Dog: 2-h max stint, 60-min driver rest, 5-min fuel stops, mandatory 5-min stop every 2 h; PCA: stop window, pits closed under FCY)
 - **Race (phone):** one big button (GREEN → PIT IN → PIT OUT), stop-type and jug logging, next-driver picker with rest timers, BOX / on-deck / stint-limit / yellow-window alerts, YELLOW / RED / UNDO
@@ -20,7 +21,7 @@
 - **Weather** needs signal; without it the command center shows the last reading.
 
 ## Screenshots
-See `docs/screenshots/`: onboarding, Team tab, new race driver picker, simulator on the command center, simulation report, and the command center under yellow and during a pit stop.
+See `docs/screenshots/`: onboarding, Team tab, new race driver picker, simulator on the command center, simulation report, the command center under yellow and during a pit stop, and the Strategy Lab setup and results.
 
 ## Project layout
 ```
@@ -32,7 +33,7 @@ tests/e2e/           headless-Chrome scenarios with a fake race clock
   run.sh             run all scenarios (or: run.sh <name-filter>)
   harness.js         fake clock + helpers injected into the app
   scenarios/*.js     luckydog-full-day, pca-enduro, command-center, team-flow, migration,
-                     simulator, sim-sweep (25 races), series-sweep (5 races × every series)
+                     simulator, sim-sweep (25 races), series-sweep (5 races × every series), strategy-lab
 docs/
   roadmap-live-sync-sim.md   live timing research, team sync and simulator plan
   rules-comparison.md        all series side by side, with sources

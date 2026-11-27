@@ -54,6 +54,7 @@ Three layers:
 | Phase | What | Needs |
 |---|---|---|
 | A | ✅ **Done (27 Nov):** simulator (in-app SIM mode, auto-crew, race control, truth car) + automated sweeps; local team/races model | — |
+| A2 | ✅ **Done (27 Nov):** Strategy Lab: driver profiles, conditions, strategy comparison, practice mode | — |
 | B | Team sync (Supabase), with UNDO switched to void events | Supabase URL and anon key |
 | C | Car beacon (GPS laps, auto pit in/out) | a test drive or a recorded GPS track |
 | D | Race Monitor positions and gaps through a Vercel relay | API key and written OK from Race Monitor |
