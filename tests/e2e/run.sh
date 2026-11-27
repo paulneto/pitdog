@@ -17,12 +17,18 @@ import sys; app,h,sc,out=sys.argv[1:]
 s=open(app).read(); inj='<script>\n'+open(h).read()+'\n'+open(sc).read()+'\n</script>'
 i=s.rindex('</body>'); open(out,'w').write(s[:i]+inj+s[i:])
 PY
-  rm -rf "$OUT/profile-$name"
-  # shellcheck disable=SC2086  (CHROME_FLAGS is a list, e.g. --no-sandbox on CI)
   # a stalled network request freezes Chrome's virtual clock; cap each scenario so one hang can't hold the suite
   # no internet in tests: every scenario uses fakes, and an external request (weather, radar, Google) could stall the clock
-  $TO "$CHROME" --headless=new --disable-gpu --no-first-run --host-resolver-rules="MAP * ~NOTFOUND" ${CHROME_FLAGS:-} --user-data-dir="$OUT/profile-$name" --window-size="$win" \
-    --virtual-time-budget="$budget" --dump-dom "file://$OUT/$name.html" 2>/dev/null > "$OUT/$name.dom.html"
+  # headless Chrome occasionally returns an empty page: retry once (only when there's no result at all, never on a failure)
+  retried=""
+  for attempt in 1 2; do
+    rm -rf "$OUT/profile-$name"
+    # shellcheck disable=SC2086  (CHROME_FLAGS is a list, e.g. --no-sandbox on CI)
+    $TO "$CHROME" --headless=new --disable-gpu --no-first-run --host-resolver-rules="MAP * ~NOTFOUND" ${CHROME_FLAGS:-} --user-data-dir="$OUT/profile-$name" --window-size="$win" \
+      --virtual-time-budget="$budget" --dump-dom "file://$OUT/$name.html" 2>/dev/null > "$OUT/$name.dom.html"
+    grep -q '<pre id="RESULT">' "$OUT/$name.dom.html" && break
+    retried=" (retried once: empty page)"
+  done
   res="$(python3 -I -c "
 import re,html,json,sys
 s=open('$OUT/$name.dom.html').read(); m=re.search(r'<pre id=\"RESULT\">(.*?)</pre>',s,re.S)
@@ -31,6 +37,6 @@ r=json.loads(html.unescape(m.group(1)))
 print(('PASS' if not r['fails'] else 'FAIL')+'|'+str(r['checks'])+' checks'+''.join('\n    ✗ '+f for f in r['fails'])+''.join('\n    · '+l for l in r['log']))
 ")"
   n=$((n+1)); status="${res%%|*}"; [[ "$status" == PASS ]] || fail=$((fail+1))
-  printf '%-22s %s\n' "$name" "${res/|/  }"
+  printf '%-22s %s%s\n' "$name" "${res/|/  }" "$retried"
 done
 echo "—— $((n-fail))/$n scenarios passed"; [[ $fail -eq 0 ]]

@@ -2053,6 +2053,7 @@ function menuSheet(){
   if(DB&&!SIM.on&&!liveR&&canPlan()) items.push(['race','Race now','Set up and start a new race',()=>raceNow()]);
   if(DB) items.push(['home','Home','Next race, last race, your team'+(cc?' (leaves the command center; ⊞ COMMAND CENTER brings it back)':''),()=>leaveCC('home')]);
   if(cc) items.push(['user','Phone view','The race screen in the phone layout',()=>leaveCC('race')]);
+  items.push([SND.on?'bolt':'clock',SND.on?'Sound alerts: on':'Sound alerts: off',SND.on?'Tap to mute the gear-up, box and stop-served tones on this device':'Tap to hear gear-up, box and stop-served tones on this device',()=>setSound(!SND.on)]);
   items.push(['alert','Start over on this device','Delete the team and races here (a backup is kept)',()=>$('reset').click()]);
   SHEET_LOCK=false;
   openSheet('Menu',items.map((it,i)=>`<button class="mrow${['userx','alert'].includes(it[0])?' dng':''}" data-i="${i}">${ic(it[0])}<span><b>${it[1]}</b><small>${it[2]}</small></span></button>`).join(''),[{label:'Close',cls:'pri',fn:closeSheet}]);
@@ -2901,7 +2902,28 @@ try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(
 window.addEventListener('storage',e=>{ if(e.key==='pitdog_db'&&!SIM.on){ OTHER_TAB=true; update(); } });
 if(!DB) startOnboarding(); else if(PENDING_SHARE) shareSheet();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
-setInterval(()=>{ try{ const lv=live(); P=plan(lv); renderRace(); if($('tab-race').classList.contains('on')) renderTeam(lv); if($('tab-plan').classList.contains('on')) renderPlan(P,lv); }catch(e){} },500);
+/* ================= SOUND ALERTS ================= */
+// Short tones for the moments that matter, so the pit wall hears them over the noise: gear up, box in 3 min, box now,
+// minimum stop served, and the cheap stop under yellow. Each fires once; on (re)opening, alerts already passed stay quiet.
+const SND={on:store.get('pitdog_sound')!=='0',ctx:null,fired:new Set(),race:null,log:[]};
+function sndUnlock(){ try{ if(!SND.ctx){ const A=window.AudioContext||window.webkitAudioContext; if(A) SND.ctx=new A(); } if(SND.ctx&&SND.ctx.state==='suspended') SND.ctx.resume(); }catch(e){} }
+document.addEventListener('pointerdown',sndUnlock,true);
+const SOUNDS={gear:[[880,.14]],box3:[[880,.14],[880,.14]],box:[[988,.18],[988,.18],[1319,.4]],served:[[660,.12],[990,.3]],pitnow:[[740,.16],[740,.16],[740,.16],[988,.3]]};
+function tone(name){ SND.log.push(name); if(!SND.on) return; buzz(name==='box'||name==='pitnow'?[120,80,120,80,240]:80);
+  const c=SND.ctx; if(!c) return; try{ if(c.state==='suspended') c.resume(); let t=c.currentTime+0.02;
+    SOUNDS[name].forEach(([f,d])=>{ const o=c.createOscillator(), g=c.createGain(); o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.5,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+d+0.03); t+=d+0.07; }); }catch(e){} }
+function soundTick(lv,P){ const r=activeRace(); if(!r||SIM.on||!P||P.err||!lv.started||lv.finished) return;
+  const quiet=SND.race!==r.id; if(quiet){ SND.race=r.id; SND.fired.clear(); }          // first look at this race: mark, don't play
+  const fire=(k,n)=>{ if(SND.fired.has(k)) return; SND.fired.add(k); if(!quiet) tone(n); };
+  const R=S.race, st=P.stints, ci=curIdx(P), cur=st[ci];
+  if(lv.inPit){ const a=lv.stops[lv.stops.length-1], mn=minFor(pend.kind||'fuel'); if(mn&&lv.now-a.in>=mn+5/60) fire('served'+lv.stops.length,'served'); return; }
+  if(!cur||ci>=st.length-1) return; const tt=cur.end-lv.now;
+  if(R.onDeck&&tt<=R.onDeck) fire('gear'+ci,'gear');
+  if(tt<=3) fire('box3'+ci,'box3');
+  if(tt<=0) fire('box'+ci,'box');
+  if(pitNow(lv,tt)) fire('pitnow'+lv.flags.length,'pitnow'); }
+function setSound(on){ SND.on=on; store.set('pitdog_sound',on?'1':'0'); if(on){ sndUnlock(); tone('served'); } toast2(on?'Sound alerts on':'Sound alerts off'); }
+setInterval(()=>{ try{ const lv=live(); P=plan(lv); renderRace(); soundTick(lv,P); if($('tab-race').classList.contains('on')) renderTeam(lv); if($('tab-plan').classList.contains('on')) renderPlan(P,lv); }catch(e){} },500);
 show(SYNC.joinCode&&DB?'team':startTab()); if($('tab-home').classList.contains('on')) renderHome(); if($('tab-team').classList.contains('on')) renderTeamTab();
 restoreSession();
 applyView();
