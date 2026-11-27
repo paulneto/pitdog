@@ -1378,7 +1378,7 @@ $('finishRace').onclick=()=>{ if(SIM.on){ alert('Simulations aren\'t saved. Use 
 $('sameDay').onclick=()=>{ if(DB&&!SIM.on) newRaceSheet(activeRace()); };
 $('endRace').onclick=()=>{ if(confirm('Clear the race log and clock? Your plan stays. (A backup is kept: Log → Restore.)')){ backupDB('before clearing the race log'); [...S.events].forEach(voidEvent); save(); update(); renderBackup(); pushSoon(); } };
 $('reset').onclick=()=>{ if(SIM.on) return; if(confirm('Delete the team and ALL races on this device? (A backup is kept: Log → Restore.)')){ backupDB('before reset'); try{ localStorage.removeItem('pitdog_db'); localStorage.removeItem('pitdog'); }catch(e){} DB=null; S=clone(DEFAULT); bind(); update(); startOnboarding(); } };
-$('print').onclick=()=>window.print();
+$('print').onclick=()=>printSheet();
 $('exportDb').onclick=()=>{ if(!DB) return; dbSave(); const blob=new Blob([JSON.stringify({app:'pitdog',v:DB.v||2,exported:new Date().toISOString(),db:DB},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`pitdog-${(DB.team.name||'team').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); };
 $('importDb').onclick=()=>{ if(SIM.on) return; $('importFile').value=''; $('importFile').click(); };
@@ -2555,6 +2555,51 @@ setInterval(()=>{ try{ const lv=live(); P=plan(lv); renderRace(); if($('tab-race
 show(SYNC.joinCode&&DB?'team':startTab()); if($('tab-home').classList.contains('on')) renderHome(); if($('tab-team').classList.contains('on')) renderTeamTab();
 restoreSession();
 applyView();
+</script>
+<!-- ================= PRINTED RACE-DAY SHEET: the paper backup when phones die or there's no signal at all ================= -->
+<div id="printSheet" aria-hidden="true"></div>
+<style>
+  #printSheet{display:none}
+  @media print{
+    @page{size:letter portrait;margin:12mm}
+    body>*:not(#printSheet){display:none!important}
+    html,body{background:#fff!important;color:#000!important;padding:0!important;font:10.5pt/1.35 "Inter",Arial,sans-serif}
+    #printSheet{display:block!important;color:#000}
+    #printSheet h1{font-size:18pt;margin:0}#printSheet h1 b{color:#000}
+    #printSheet h2{font-size:10pt;text-transform:uppercase;letter-spacing:1px;margin:12px 0 4px;border-bottom:1.5px solid #000;padding-bottom:2px}
+    #printSheet .meta{margin:2px 0 8px;font-size:10pt}
+    #printSheet table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+    #printSheet th,#printSheet td{border:1px solid #444;padding:4px 6px;text-align:left;font-size:9.5pt;color:#000;background:#fff}
+    #printSheet th{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    #printSheet .grid td{height:22px}
+    #printSheet .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    #printSheet ul{margin:0;padding-left:16px}#printSheet li{margin:2px 0}
+    #printSheet .foot{margin-top:8px;font-size:8.5pt;color:#333}
+  }
+</style>
+<script>
+function printSheet(){
+  const box=document.getElementById('printSheet'); if(!S||!P||P.err){ alert(P&&P.err?P.err:'Nothing to print yet.'); return; }
+  const R=S.race, C=S.car, ser=SERIES[S.series]||{}, g=ser.glance||{}, r=typeof activeRace==='function'?activeRace():null, lv=live();
+  const nm=i=>esc((S.drivers[i]||{}).name||'?'), plain=h=>String(h||'').replace(/<[^>]+>/g,'');
+  const rows=P.stints.map((x,i)=>`<tr><td>${i+1}${x.locked?' ✓':''}</td><td>${nm(x.driver)}</td><td>${clockAt(x.start)}</td><td>${clockAt(x.end)}</td><td>${fmt(x.dur)}</td><td>${r1(x.laps)}</td><td>${x.stop?(x.stop.kind==='fuel'&&P.refuel?`${r1(x.stop.add)} ${esc(C.unit)} · ${x.stop.jugs} jug${x.stop.jugs===1?'':'s'}${x.stop.full?' (fill)':''}`:esc(KINDS[x.stop.kind].t)):'🏁 finish'}</td><td></td></tr>`).join('');
+  const add=P.stints.reduce((a,x)=>a+(x.stop?x.stop.add:0),0);
+  const blank=Array.from({length:Math.max(8,P.stints.length+3)},(_,i)=>`<tr><td>${i+1}</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`).join('');
+  box.innerHTML=`<h1>PIT<b>DOG</b> · ${esc(R.name||'Race')}</h1>
+  <div class="meta">${esc(dayLabel(R.date))}${R.date?' ('+esc(R.date)+')':''} · ${esc(ser.label||'')}${TRACKS[R.track]&&R.track!=='none'?' · '+esc(TRACKS[R.track][0]):''} · ${ser.sched?`${esc(R.start)}–${esc(R.end)}`:fmt(raceLen())+' from the green'} · car: ${esc(C.name||'')} · printed ${new Date().toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}${lv.started?' (race in progress: ✓ = done)':''}</div>
+  <h2>Stint plan</h2>
+  <table><tr><th>#</th><th>Driver</th><th>Out</th><th>In</th><th>Length</th><th>Laps</th><th>Stop after</th><th style="width:22%">Notes</th></tr>${rows}</table>
+  <div class="cols">
+    <div><h2>Rules at a glance</h2><ul><li>Max stint: ${esc(g.stint||(R.maxStint?fmt(R.maxStint):'none'))}</li><li>Driver rest: ${esc(g.rest||(R.rest?R.rest+' min':'none'))}</li><li>Minimum stop: ${esc(g.stop||(R.minStop?fmt(R.minStop):'none'))}</li><li>Mandatory stops: ${esc(g.mand||String(mandCount(R,raceLen())))}</li><li>Under full-course yellow: ${esc(g.fcy||(R.pitsUnderYellow?'pits open':'pits closed'))}</li></ul>
+      ${ser.pit?`<h2>At the wall</h2><div>${esc(plain(ser.pit))}</div>`:''}</div>
+    <div><h2>Fuel &amp; drivers</h2><ul><li>Plan burn ${Math.round(P.burn*1000)/1000} ${esc(C.unit)}/lap (${esc(plain(P.burnBasis))})</li><li>Tank ${esc(String(C.cap))} ${esc(C.unit)} · start full · ${P.fillFull?'every fuel stop fills to full':'pour only what the next stint needs'}</li><li>Fuel to add over the race: about ${Math.round(add)} ${esc(C.unit)} (${Math.ceil(add/C.jug)} jugs of ${esc(String(C.jug))})</li>
+      <li>Rotation: ${S.drivers.map((d,i)=>`${esc(d.name)} (max ${fmt(d.max||R.maxStint||120)})`).join(' → ')}</li></ul></div>
+  </div>
+  <h2>Pit log (backup)</h2>
+  <table class="grid"><tr><th style="width:5%">#</th><th>Pit in</th><th>Pit out</th><th>Length</th><th>Fuel (jugs) / full?</th><th>Driver out</th><th style="width:28%">Notes</th></tr>${blank}</table>
+  <div class="foot">If the app is down, log each stop here by hand. Check the event supplementals: they override the series rulebook.</div>`;
+  window.print();
+}
 </script>
 </body>
 </html>
