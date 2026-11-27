@@ -38,7 +38,7 @@ Supabase pieces:
 
 Vercel: host the app (it can move off GitHub Pages), plus **one serverless function as the Race Monitor relay** if we get a key. That keeps the token secret and avoids browser cross-site (CORS) restrictions. GitHub Pages is fine until then.
 
-**Status 27 Nov 2026:** Supabase project `pitdog` is live with the schema, row-level security (25 checks passing) and OAuth-only auth; see `supabase/README.md`. Still needed: a Google OAuth client, then the app-side sync.
+**Status 27 Nov 2026: built.** Supabase project `pitdog` (schema, row-level security with 49 checks, OAuth-only auth, platform admins, admin console) and the app side: in-page Google sign-in, create/join a team with a code or link, per-race outbox with void-based UNDO, live updates, roles enforced in the UI. See `supabase/README.md` and the README. Not yet: the GPS car beacon and Race Monitor positions (key and permission pending).
 
 ## 3. Simulator (end-to-end testing)
 

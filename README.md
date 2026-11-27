@@ -26,7 +26,7 @@
 - **Weather** needs signal; without it the command center shows the last reading.
 
 ## Screenshots
-See `docs/screenshots/`: onboarding, Team tab, new race driver picker, simulator on the command center, simulation report, the command center under yellow and during a pit stop, and the Strategy Lab setup and results.
+`docs/screenshots/` (Night skin): race screen with the next-stop hero, a pit stop (fuel stepper, filled-to-full), the iPad command center on track and in the pits, help mode, the skin list, the radar, Home, a debrief and team sync.
 
 ## Project layout
 ```
