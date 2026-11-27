@@ -17,9 +17,9 @@ A crew reading a screen at arm's length, under time pressure, in glare or at nig
 6. ✅ **Too many words at speed.** Alerts are sentences ("Gear up, wristband on, out in 10:49"). At a glance, people read a shape, a colour and a number: "LUC · 10:49 · gear up". Banners need an icon, a name and a number, and no prose. *(Recommended.)*
 7. ✅ **Equal-weight tiles.** Three identical stat boxes under the driver (next stop / fuel / laps) compete. One number matters per state: next stop on track, the timer in the pits, fuel when it's low. *(Recommended.)*
 8. ✅ **Fuel jug chips are small for gloves:** 9 half-jug buttons in a row. Use a stepper (− 2 jugs +) with big targets, defaulting to the plan. *(Recommended.)*
-9. **The command center alerts panel is often empty** ("All clear"). Fold alerts into the flag bar and give that space to a lap/pace trace once live timing exists. *(Later.)*
+9. ✅ **The command center alerts panel is often empty** ("All clear"). Fold alerts into the flag bar and give that space to a lap/pace trace once live timing exists. *(Later.)*
 10. ✅ **Emoji icons** (tab bar, conditions, log) render differently per device and look toy-like next to the data. Replace them with a small consistent icon set. *(Later.)*
-11. **The simulator bar** (purple stripes) is visually loud but carries little. Make it a slim pill with the speed control. *(Later.)*
+11. ✅ **The simulator bar** (purple stripes) is visually loud but carries little. Make it a slim pill with the speed control. *(Later.)*
 
 ## Done 27 Nov 2026 (second pass)
 - **Hero = next stop.** The phone race tab leads with the next-stop countdown (amber in the last 3 min, red with a real minus when overdue) and who goes out next. The race clock moved to the top bar; the series, wall time and progress are a slim card below.
@@ -29,6 +29,8 @@ A crew reading a screen at arm's length, under time pressure, in glare or at nig
 - **Primary buttons are neutral** (ink on paper in every skin); red is for PIT IN and danger only.
 - **Icons:** one inline-SVG set (stroke = currentColor) replaces every emoji: tab bar, stop types, log, alerts, conditions.
 - **Type:** Inter (OFL), bundled and precached; tabular digits on every number.
+- **Command center alerts live in the flag bar.** The most urgent non-flag alert sits beside the flag (action first, so a truncated line still says what to do), with "+N more". The freed panel is **Next stops**: stop number, time, countdown, fuel to add and who goes out, with any extra alerts above it. A lap/pace trace can take this space once live timing exists.
+- **Simulator HUD is a slim pill:** SIM · play/pause · one speed button (1×/10×/30×/60×) · auto-crew · truth readout · End. Its purple lives in `--sim*` tokens.
 
 ## Skins (Log → Look; SKIN button on the command center)
 | Skin | Source | Character |

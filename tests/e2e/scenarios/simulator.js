@@ -5,6 +5,11 @@ __run(() => {
   const before = localStorage.getItem('pitdog_db');
   startSim({ seed: 42, speed: 0, auto: true });
   expect(SIM.on && S.race.name === 'Simulation' && document.body.classList.contains('sim-on'), 'sim running with HUD');
+  expect(document.querySelector('#simHud .simpill') && $('simHud').getBoundingClientRect().height <= 40, 'simulator HUD is a slim pill');
+  SIM.speed = 30; click('simPlay'); expect(SIM.speed === 0 && $('simPlay').getAttribute('aria-label') === 'Play', 'pause');
+  click('simPlay'); expect(SIM.speed === 30, 'play resumes at the previous speed');
+  const sp = SIM.speed; click('simSpeed'); expect(SIM.speed !== sp && txt('simSpeed') === SIM.speed + '×', 'speed button cycles: ' + txt('simSpeed'));
+  SIM.speed = 0;
   simStep(5);
   expect(txt('ccFlag') !== 'PRE-RACE', 'race control threw the green');
   simStep(440);

@@ -163,6 +163,21 @@
   .cc-top{display:flex;align-items:center;gap:14px;height:44px;padding:0 6px}
   .cc-brand{font-weight:900;letter-spacing:3px;font-size:18px}.cc-brand b{color:var(--brand)}
   .cc-brand small{font-weight:600;letter-spacing:2px;font-size:10px;color:var(--cc-dim);margin-left:8px}
+  .cc-flagbar{flex:1;display:flex;gap:8px;min-width:0;height:30px}
+  .cc-flagbar.has .cc-flag{flex:0 0 auto;min-width:150px;padding:0 14px;letter-spacing:2px}
+  .cc-topalert{flex:1;min-width:0;display:none;align-items:center;gap:8px;padding:0 12px;border-radius:6px;font-size:14px;font-weight:800;white-space:nowrap}
+  .cc-topalert span{overflow:hidden;text-overflow:ellipsis}.cc-topalert .more{margin-left:auto;flex:none;font-size:11px;opacity:.85;letter-spacing:.5px}
+  .cc-flagbar.has .cc-topalert{display:flex}
+  .cc-topalert.box{background:var(--red);color:#fff;animation:ccpulse 1s infinite}
+  .cc-topalert.warn{background:color-mix(in srgb,var(--amber) 16%,var(--cc-bg));color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+  .cc-topalert.go{background:color-mix(in srgb,var(--green) 16%,var(--cc-bg));color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}
+  .cc-topalert.info{background:color-mix(in srgb,var(--blue) 16%,var(--cc-bg));color:var(--info);box-shadow:inset 0 0 0 1px var(--blue)}
+  .cc-stops{display:flex;flex-direction:column;gap:5px;overflow:auto;min-height:0}
+  .cc-ns{display:grid;grid-template-columns:26px auto 1fr auto;gap:8px;align-items:center;white-space:nowrap;padding:8px 10px;border-radius:8px;background:var(--cc-kv);border:1px solid var(--cc-line2);font-size:13px;color:var(--cc-text)}
+  .cc-ns>span{overflow:hidden;text-overflow:ellipsis}
+  .cc-ns .ns-k{color:var(--cc-dim);font-weight:800}.cc-ns .ns-t{font-weight:700;color:var(--cc-hi)}.cc-ns .ns-d{color:var(--cc-mid);font-size:12px}
+  .cc-ns .ns-who{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:800}
+  .cc-ns.next{border-color:var(--cc-acc)}
   .cc-flag{flex:1;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:900;letter-spacing:4px;font-size:14px;transition:background .3s}
   .cc-flag.g{background:rgba(48,209,88,.14);color:var(--green);box-shadow:inset 0 0 0 1px rgba(48,209,88,.4)}
   .cc-flag.y{background:var(--yellow);color:#000}
@@ -222,6 +237,7 @@
   .cc-tag.d{background:rgba(48,209,88,.15);color:var(--green)}.cc-tag.o{background:rgba(10,132,255,.18);color:var(--info)}
   .cc-tag.r{background:rgba(255,179,64,.14);color:var(--amber)}.cc-tag.k{background:rgba(255,255,255,.06);color:var(--cc-mid)}
   .cc-alerts{display:flex;flex-direction:column;gap:5px;overflow:auto;min-height:0}
+  .cc-alerts:not(:empty){margin-bottom:6px;flex:none;max-height:45%}
   #cc .stepper{margin:6px 0;gap:8px}#cc .stepper .stp{width:62px;min-height:50px;font-size:30px;background:var(--cc-deep);border-color:var(--cc-line2);color:var(--cc-text)}
   #cc .stepper .sv{background:var(--cc-kv);border-color:var(--cc-mid);color:var(--cc-hi)}#cc .stepper .sv b{font-size:20px}#cc .stepper .sv small{color:var(--cc-dim)}
   .cc-a{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700;padding:7px 10px;border-radius:7px;border-left:4px solid}
@@ -283,16 +299,19 @@
   .drv2{grid-template-columns:1fr 64px 36px 36px 36px!important;align-items:center}
   .drv2 .dn{padding:8px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .drv2 .dn b{color:var(--muted);margin-right:4px}
-  #simHud{position:fixed;top:0;left:0;right:0;z-index:70;height:calc(40px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 10px 0;display:none;align-items:center;gap:6px;background:repeating-linear-gradient(135deg,#2a1b4a 0 14px,#24173f 14px 28px);border-bottom:1px solid #6b4bd1;color:#e6dcff;font-size:12px;font-weight:700;overflow-x:auto;white-space:nowrap}
+  /* simulator: a slim pill, not a loud bar. Purple = "this is a simulation" (not a status colour). */
+  #simHud{position:fixed;top:0;left:0;right:0;z-index:70;height:calc(36px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 8px 0;display:none;align-items:center;justify-content:center;background:var(--bar)}
   body.sim-on #simHud{display:flex}
-  body.sim-on{padding-top:calc(40px + env(safe-area-inset-top))}
-  body.sim-on .appbar{top:calc(40px + env(safe-area-inset-top))}
-  body.sim-on #cc{top:calc(40px + env(safe-area-inset-top))}
-  #simHud b{background:#8b5cf6;color:#fff;padding:3px 8px;border-radius:6px;letter-spacing:1px}
-  #simHud button{background:#3b2a66;color:#e6dcff;border:1px solid #6b4bd1;border-radius:7px;padding:5px 9px;font:inherit;cursor:pointer}
-  #simHud button.on{background:#8b5cf6;color:#fff}
-  #simHud .tr{color:#c4b5fd;font-weight:600;margin-left:6px}
-  #simHud .oof{color:#fff;background:var(--red);padding:3px 8px;border-radius:6px}
+  body.sim-on{padding-top:calc(36px + env(safe-area-inset-top))}
+  body.sim-on .appbar{top:calc(36px + env(safe-area-inset-top))}
+  body.sim-on #cc{top:calc(36px + env(safe-area-inset-top))}
+  .simpill{display:flex;align-items:center;gap:4px;height:28px;padding:0 3px;max-width:100%;overflow-x:auto;white-space:nowrap;border-radius:999px;background:var(--sim-bg);border:1px solid var(--sim-line);color:var(--sim-ink);font-size:12px;font-weight:700;scrollbar-width:none}
+  .simpill b{background:var(--sim);color:#fff;padding:2px 9px;border-radius:999px;letter-spacing:1px}
+  .simpill button{flex:none;height:22px;min-width:30px;padding:0 9px;border-radius:999px;border:0;background:var(--sim-btn);color:var(--sim-ink);font:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+  .simpill button.on{background:var(--sim);color:#fff}
+  .simpill .tr{color:var(--sim-dim);font-weight:600;padding:0 4px;font-variant-numeric:tabular-nums}
+  .simpill .oof{color:#fff;background:var(--red);padding:2px 8px;border-radius:999px}
+  .btn.sim{background:var(--sim-bg);border-color:var(--sim-line);color:var(--sim-ink);font-weight:800}
 
   @media (min-width:700px){.clock{font-size:72px}}
   @media print{.tabbar,.action,.appbar{display:none}.tab{display:block!important}body{background:#fff;color:#000}}
@@ -305,6 +324,7 @@
     --cc-bg:#05070a;--cc-panel:rgba(10,16,18,.88);--cc-line:#16302d;--cc-line2:#1d2c2b;--cc-deep:#071010;--cc-kv:#081110;
     --cc-acc:#2de0c0;--cc-acc2:#4fb8a8;--cc-acc3:#1a8f7d;--cc-accl:#9fe9dc;--cc-text:#e6f1ef;--cc-hi:#ffffff;--cc-mid:#8aa8a4;--cc-dim:#5f7a78;
     --cc-grid:rgba(0,255,200,.025);--cc-glow:0 0 24px rgba(45,224,192,.25);--cc-fuel:#2de0c0;--cc-bar:linear-gradient(90deg,#1a8f7d,#2de0c0);--cc-barglow:0 0 10px #2de0c0;--cc-r:10px;--cc-num:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--cc-corner:1;--cc-scan:1;--livery:none;
+    --sim:#8b5cf6;--sim-bg:#2a1b4a;--sim-btn:#3b2a66;--sim-line:#6b4bd1;--sim-ink:#e6dcff;--sim-dim:#c4b5fd;
   }
   [data-skin="sunlight"]{
     --bg:#eef1f5;--panel:#ffffff;--panel2:#e6eaf0;--line:#c3ccd8;--text:#05080f;--muted:#465263;
@@ -421,19 +441,19 @@
 </style>
 </head>
 <body>
-<div id="simHud">
+<div id="simHud"><div class="simpill">
   <b>SIM</b>
-  <button data-s="0" aria-label="Pause"><span data-ic="pause"></span></button><button data-s="1">1×</button><button data-s="10">10×</button><button data-s="30">30×</button><button data-s="60">60×</button>
-  <button id="simAutoBtn">auto-crew</button>
+  <button id="simPlay" aria-label="Pause"></button><button id="simSpeed" aria-label="Speed">30×</button>
+  <button id="simAutoBtn">auto</button>
   <span class="tr" id="simTruth"></span>
-  <button id="simEnd" style="margin-left:auto">End sim</button>
-</div>
+  <button id="simEnd">End</button>
+</div></div>
 <div class="sheet-bg" id="sheetBg"><div class="sheet"><div class="sheet-h"><b id="sheetT"></b><button id="sheetX">✕</button></div><div id="sheetB"></div><div class="sheet-f" id="sheetF"></div></div></div>
 
 <div id="cc">
   <div class="cc-top">
     <div class="cc-brand">PIT<b>DOG</b><small>COMMAND CENTER</small></div>
-    <div class="cc-flag n" id="ccFlag">PRE-RACE</div>
+    <div class="cc-flagbar" id="ccFlagBar"><div class="cc-flag n" id="ccFlag">PRE-RACE</div><div class="cc-topalert" id="ccTopAlert"></div></div>
     <div class="cc-wall mono" id="ccWall">--:--:--</div>
     <button class="cc-tbtn" id="ccSkin">SKIN</button>
     <button class="cc-tbtn" id="ccSetup">SETUP</button>
@@ -505,8 +525,9 @@
     </div>
     <!-- col 3 row 2: alerts -->
     <div class="cc-p">
-      <div class="cc-h"><span><i></i>Alerts</span><span id="ccAlertN"></span></div>
+      <div class="cc-h"><span><i></i>Next stops</span><span id="ccAlertN"></span></div>
       <div class="cc-alerts" id="ccAlerts"></div>
+      <div class="cc-stops" id="ccStopsList"></div>
       <div class="cc-log mono" id="ccLog"></div>
     </div>
     <!-- bottom: timeline -->
@@ -601,7 +622,7 @@
   <div class="card">
     <h2>Simulator</h2>
     <div class="sub" style="margin:0 0 8px">Run a whole race at up to 60× speed with your team, car and rules. Race control throws yellows and reds, and an auto-crew can run the stops. Nothing is saved to your real races.</div>
-    <button class="btn full" id="simOpen" style="background:#3b2a66;border-color:#6b4bd1;color:#e6dcff;font-weight:800">▶ Start a simulated race</button>
+    <button class="btn full sim" id="simOpen"><span data-ic="play"></span> Start a simulated race</button>
   </div>
 </section>
 
@@ -1058,7 +1079,7 @@ function computeAlerts(lv,P){
     if(tt<=0) A.push(['box',`BOX BOX · stop ${st.indexOf(s)+1} due now`]);
     else if(tt<=3) A.push(['warn',`Box in ${fmt(tt)} · fuel + fire bottle ready`]);
     const nx=st[st.indexOf(s)+1]; if(nx&&tt<=(R.onDeck||0)&&tt>0) A.push(['info',`On deck: <b>${nm(nx.driver)}</b> · out in ${fmt(tt)} · gear up`,'user']);
-    if(lv.yellow&&R.pitsUnderYellow&&tt>0&&tt<=(R.yellowWindow||0)&&!lv.red) A.push(['go',`Yellow · stop due in ${fmt(tt)} · pit NOW`]);
+    if(lv.yellow&&R.pitsUnderYellow&&tt>0&&tt<=(R.yellowWindow||0)&&!lv.red) A.push(['go',`Pit NOW under yellow · stop due in ${fmt(tt)}`]);
   }
   if(R.maxStint){ if(inSeat>R.maxStint) A.push(['box',`${nm(s.driver)} OVER ${fmt(R.maxStint)} stint limit`]); else if(inSeat>R.maxStint-10) A.push(['warn',`${nm(s.driver)} · ${fmt(R.maxStint-inSeat)} left on max stint`]); }
   if(R.mandEvery){ const due=lastMandStop(lv)+R.mandEvery-lv.now; if(due<0) A.push(['box','Mandatory 5-min stop OVERDUE']); else if(due<10) A.push(['warn',`Mandatory 5-min stop due in ${fmt(due)}`]); }
@@ -1284,8 +1305,12 @@ function renderCC(){
   $('ccRaceBar').style.width=(lv.started?Math.min(100,Math.max(0,lv.now/L*100)):0)+'%';
   $('ccY').className=lv.yellow?'yon':''; $('ccR').className=lv.red?'ron':'';
   // alerts
-  const A=computeAlerts(lv,P); if(P&&!P.err&&!A.length) A.push(['ok', lv.started? 'All clear. Plan on track.':'Ready. Waiting for green.']);
-  $('ccAlerts').innerHTML=byRank(A).map(a=>`<div class="cc-a ${a[0]}">${alertIc(a)}<span>${a[1]}</span></div>`).join(''); $('ccAlertN').textContent=A.filter(a=>a[0]!=='ok').length?A.filter(a=>a[0]!=='ok').length+' active':'';
+  // the most urgent non-flag alert rides in the flag bar (the flag itself is already the bar); the rest list above the next stops
+  const A=byRank(computeAlerts(lv,P).filter(a=>a[0]!=='yellow'&&a[0]!=='redf')), top=A[0], more=A.slice(1);
+  $('ccFlagBar').classList.toggle('has',!!top);
+  $('ccTopAlert').className='cc-topalert'+(top?' '+top[0]:''); $('ccTopAlert').innerHTML=top?`${alertIc(top)}<span>${top[1]}</span>${more.length?`<span class="more">+${more.length} more</span>`:''}`:'';
+  $('ccAlerts').innerHTML=more.map(a=>`<div class="cc-a ${a[0]}">${alertIc(a)}<span>${a[1]}</span></div>`).join('');
+  $('ccAlertN').textContent=A.length?A.length+' alert'+(A.length===1?'':'s'):'';
   const t0=T0(); const ev=[...S.events].reverse().slice(0,4);
   $('ccLog').innerHTML=ev.map(e=>{ const m=t0?fmt((e.t-t0)/60000):''; let l={green:'GREEN',in:'PIT IN',out:'PIT OUT'}[e.type]||''; if(e.type==='yellow') l=e.on?'YELLOW':'YELLOW CLEAR'; if(e.type==='red') l=e.on?'RED':'RED CLEAR';
     if(e.type==='out') l+=` · ${KINDS[e.kind||'fuel'].t} ${fmt(e.stopLen||0)}${e.fuel?' · '+r1(e.fuel)+C.unit:''} · ${esc(S.drivers[e.driver]?.name||'')}`; return `<b>${m}</b> ${l}`; }).join('<br>');
@@ -1293,6 +1318,11 @@ function renderCC(){
   if(!P||P.err){ go.className='cc-go grey'; go.textContent='FIX PLAN'; return; }
   const st=P.stints, ci=curIdx(P), cur=st[ci]; const ds=driverStatus(lv,P);
   $('ccStops').textContent=`${lv.stops.length}/${st.length-1}`;
+  // next stops: when, how long until, fuel to add, who goes out
+  const up=st.map((x,i)=>[x,i]).filter(([x,i])=>x.stop&&!x.locked&&i>=Math.max(0,ci)).slice(0,4);
+  $('ccStopsList').innerHTML=lv.finished?'':up.length?up.map(([x,i],k)=>{ const nx=st[i+1], col=nx?dcol(nx.driver):'var(--cc-text)';
+    return `<div class="cc-ns ${k===0?'next':''}"><span class="ns-k mono">#${i+1}</span><span class="ns-t mono">${clockAt(x.stop.in)}</span><span class="ns-d mono">${fmt(Math.max(0,x.stop.in-(lv.started?lv.now:0)))}${P.refuel&&x.stop.kind==='fuel'?` · ${ic('fuel')} ${r1(x.stop.add)}`:''}</span><span class="ns-who" style="color:${col}">→ ${esc(nx?S.drivers[nx.driver]?.name||'?':'')}</span></div>`; }).join('')
+    :`<div class="cc-a ok">${ic('finish')}<span>No more stops: bring it home</span></div>`;
   // car panel
   const led=$('ccLed'), stt=$('ccState');
   $('ccTrackView').style.display=lv.inPit?'none':'block'; $('ccPitView').style.display=lv.inPit?'block':'none';
@@ -1706,8 +1736,9 @@ function simCrew(lv){
 }
 function simHud(){
   if(!SIM.on) return;
-  document.querySelectorAll('#simHud [data-s]').forEach(b=>b.classList.toggle('on',+b.dataset.s===SIM.speed));
-  $('simAutoBtn').classList.toggle('on',SIM.auto); $('simAutoBtn').textContent=SIM.auto?'auto-crew ✓':'auto-crew ✗';
+  const paused=SIM.speed===0; $('simPlay').innerHTML=ic(paused?'play':'pause'); $('simPlay').setAttribute('aria-label',paused?'Play':'Pause'); $('simPlay').classList.toggle('on',paused);
+  $('simSpeed').textContent=(paused?SIM.resume||30:SIM.speed)+'×';
+  $('simAutoBtn').classList.toggle('on',SIM.auto); $('simAutoBtn').textContent=SIM.auto?'auto-crew ✓':'auto-crew off';
   const lv=live(); let est='';
   if(P&&!P.err&&lv.started){ const ci=curIdx(P), s=P.stints[ci]||P.stints[P.stints.length-1]; const e=lv.inPit?(P.stints[ci-1]||{}).fuelEnd:s.fuelStart-Math.max(0,lv.now-s.start)/P.lapOf(s.driver)*P.burnOf(s.driver); if(e!=null) est=` · app est ${r1(Math.max(0,e))}`; }
   $('simTruth').innerHTML=SIM.t.oof?'<span class="oof">OUT OF FUEL</span>':`truth ${r1(SIM.t.fuel)} ${S.car.unit}${est} · ${Math.floor(SIM.t.laps)} laps`;
@@ -1737,7 +1768,9 @@ function endSim(quiet){
   pend={driver:null,kind:null,jugs:null};
   if(!quiet){ bind(); update(); if(typeof applyView==='function') applyView(); if(!DB) startOnboarding(); else show('team'); }
 }
-document.querySelectorAll('#simHud [data-s]').forEach(b=>b.onclick=()=>{ SIM.speed=+b.dataset.s; SIM.last=Date.now(); simHud(); });
+const SIM_SPEEDS=[1,10,30,60];
+$('simPlay').onclick=()=>{ if(SIM.speed===0) SIM.speed=SIM.resume||30; else { SIM.resume=SIM.speed; SIM.speed=0; } SIM.last=Date.now(); simHud(); };
+$('simSpeed').onclick=()=>{ const cur=SIM.speed||SIM.resume||30; const nx=SIM_SPEEDS[(SIM_SPEEDS.indexOf(cur)+1)%SIM_SPEEDS.length]; SIM.speed=nx; SIM.resume=nx; SIM.last=Date.now(); simHud(); };
 $('simAutoBtn').onclick=()=>{ SIM.auto=!SIM.auto; simHud(); };
 $('simEnd').onclick=()=>{ if(confirm('End the simulation? Nothing from it is saved.')) endSim(); };
 $('simOpen').onclick=()=>startSim({});
