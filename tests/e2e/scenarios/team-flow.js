@@ -33,7 +33,9 @@ __run(() => {
   const sat = DB.races.find(r => r.rules.name === 'Saturday');
   expect(sat.status === 'done' && sat.summary && sat.summary.stops === 1, 'Saturday saved as done with 1 stop');
   expect(Object.keys(sat.summary.seat).length === 2, 'seat time saved for 2 drivers');
-  // "Same team, new day" sheet opened by finishRace confirm → create it
+  // finishing opens the debrief; "Same team, new day" from there
+  expect($('tab-debrief').classList.contains('on') && /Debrief/i.test(txt('debriefBody')), 'finishing opens the debrief');
+  click('dbNext');
   expect(txt('sheetT') === 'Same team, new day', 'offers day 2: ' + txt('sheetT'));
   btn('Create day 2');
   expect(S.race.name === 'Sunday' && S.drivers.map(d => d.name).join() === 'Luc,Paul,Marco' && !S.events.length, 'Sunday copies drivers, empty log');
