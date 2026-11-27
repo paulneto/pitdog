@@ -40,6 +40,7 @@ docs/
   rules-comparison.md        all series side by side, with sources
   rules-*.md                 one page per series (lucky-dog, champcar, wrl, aer, lemons, pca)
 scripts/serve.sh     local dev server (http://localhost:8765)
+experiments/         parked prototypes (DriftScore), not deployed
 .github/workflows/pages.yml  auto-deploy app/ to GitHub Pages on push to main
 ```
 

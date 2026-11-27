@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d11">
+<title>DriftScore: score your drifts with just your phone</title>
+<style>
+  :root{--bg:#0b0d11;--panel:#151921;--line:#262c38;--text:#eef0f5;--muted:#8f98a8;--accent:#ff3b30;--a2:#ff9500;--ok:#34c759;--warn:#ffcc00}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  .wrap{max-width:760px;margin:0 auto;padding:18px}
+  h1{font-size:28px;margin:6px 0 2px;letter-spacing:.5px}
+  h1 b{color:var(--accent)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:0 0 10px}
+  p{color:var(--muted);margin:6px 0}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}
+  button{font:inherit;font-weight:600;border-radius:12px;padding:14px 16px;border:1px solid var(--line);background:#20252f;color:var(--text);cursor:pointer;width:100%;margin:6px 0}
+  button.go{background:var(--accent);border-color:var(--accent);font-size:18px}
+  button.small{width:auto;padding:8px 12px;font-size:13px;font-weight:500}
+  button:disabled{opacity:.4}
+  label.chk{display:flex;gap:10px;align-items:flex-start;color:var(--text);margin:10px 0}
+  label.chk input{width:22px;height:22px;flex:none;margin-top:2px}
+  ol{color:var(--muted);padding-left:20px;margin:6px 0} li{margin:4px 0}
+  .hidden{display:none!important}
+  .big{font-size:64px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .stat{background:#0f1218;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+  .stat .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:12px;color:var(--muted)}
+  .rec{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--accent)}
+  .rec i{width:14px;height:14px;border-radius:50%;background:var(--accent);animation:p 1s infinite}
+  @keyframes p{50%{opacity:.25}}
+  .msg{padding:12px;border-radius:10px;margin:10px 0;font-size:14px}
+  .msg.bad{background:rgba(255,59,48,.12);border:1px solid rgba(255,59,48,.4)}
+  .msg.info{background:rgba(255,204,0,.08);border:1px solid rgba(255,204,0,.3);color:#f3e3a0}
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:14px}
+  th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right}
+  th{color:var(--muted);font-weight:500;font-size:12px} th:first-child,td:first-child{text-align:left}
+  .score-hero{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+  .grade{font-size:22px;font-weight:700;color:var(--a2)}
+  svg{width:100%;height:auto;display:block}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px}
+  .legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;background:var(--c)}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .row button{flex:1;min-width:140px}
+  .count{font-size:120px;font-weight:800;text-align:center}
+  .foot{font-size:12px;color:var(--muted);text-align:center;margin:20px 0}
+  .stat{min-width:0}
+  @media(max-width:420px){.stat .v{font-size:20px}.big{font-size:52px}.wrap{padding:14px}th,td{padding:6px 4px;font-size:13px}}
+  select{font:inherit;background:#0f1218;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+
+  <!-- HOME -->
+  <section id="home">
+    <h1>DRIFT<b>SCORE</b></h1>
+    <p>Score your drifts with just your phone. No extra hardware needed.</p>
+
+    <div class="panel">
+      <h2>How it works</h2>
+      <ol>
+        <li><b>Mount your phone firmly</b> in the car (dash or windscreen mount, any orientation). Not in your hand, not loose in a cupholder.</li>
+        <li>Tap <b>Start session</b> and keep the car still for 3 seconds while it calibrates.</li>
+        <li>Drive your runs. Include a few seconds of normal, straight driving between drifts so the app can re-align itself.</li>
+        <li>Tap <b>Stop</b> to get your score: angle, speed, duration, smoothness and transitions.</li>
+      </ol>
+    </div>
+
+    <div class="panel">
+      <h2>Safety</h2>
+      <label class="chk"><input type="checkbox" id="agree"> <span>I'll only use this on a closed course or at an organised event, never on public roads. A passenger or a fixed mount handles the phone, not the driver while driving.</span></label>
+      <div class="row">
+        <label style="color:var(--muted);font-size:14px;display:flex;align-items:center;gap:8px">Units
+          <select id="units"><option value="kmh">km/h</option><option value="mph">mph</option></select></label>
+      </div>
+      <button class="go" id="startBtn" disabled>Start session</button>
+      <div id="homeMsg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>No car handy?</h2>
+      <button id="demoBtn">Try a demo run</button>
+      <button id="loadBtn">Open a saved run (.json)</button>
+      <button id="lastBtn" class="hidden">Show my last run</button>
+      <input type="file" id="fileIn" accept=".json,application/json" class="hidden">
+    </div>
+    <div class="foot">Phone sensors aren't lab equipment. Scores are for fun and practice, not official judging.</div>
+  </section>
+
+  <!-- CALIBRATE -->
+  <section id="calib" class="hidden">
+    <h1>Hold still…</h1>
+    <p>Calibrating the gyro and finding which way is down. Keep the car stopped and the phone in its mount.</p>
+    <div class="count" id="countdown">3</div>
+  </section>
+
+  <!-- RECORDING -->
+  <section id="recording" class="hidden">
+    <div class="rec"><i></i> RECORDING <span id="elapsed" style="margin-left:auto;color:var(--text)">0:00</span></div>
+    <div class="panel" style="text-align:center">
+      <div class="big" id="liveSpeed">0</div>
+      <div style="color:var(--muted)" id="liveSpeedUnit">km/h</div>
+    </div>
+    <div class="grid">
+      <div class="stat"><div class="v" id="liveYaw">0</div><div class="l">rotation °/s</div></div>
+      <div class="stat"><div class="v" id="liveGps">0</div><div class="l">GPS fixes</div></div>
+      <div class="stat"><div class="v" id="liveAcc">–</div><div class="l">GPS accuracy (m)</div></div>
+    </div>
+    <div id="recMsg"></div>
+    <button class="go" id="stopBtn" style="margin-top:16px">Stop &amp; score</button>
+    <p style="text-align:center;font-size:13px">Scores are calculated when you stop. Keep the screen on.</p>
+  </section>
+
+  <!-- RESULTS -->
+  <section id="results" class="hidden">
+    <h1>DRIFT<b>SCORE</b></h1>
+    <div class="panel">
+      <div class="score-hero">
+        <div><div class="big" id="runScore">0</div><div style="color:var(--muted)">run score</div></div>
+        <div class="grade" id="grade"></div>
+      </div>
+      <div class="grid" style="margin-top:14px">
+        <div class="stat"><div class="v" id="rDrifts">0</div><div class="l">drifts</div></div>
+        <div class="stat"><div class="v" id="rPeak">0°</div><div class="l">peak angle</div></div>
+        <div class="stat"><div class="v" id="rLong">0s</div><div class="l">longest drift</div></div>
+      </div>
+      <div id="resMsg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Drift angle over time</h2>
+      <div id="chart"></div>
+      <div class="legend"><span style="--c:rgba(255,59,48,.25)">scored drift</span><span style="--c:#ff9500">drift angle</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>Your line</h2>
+      <div id="map"></div>
+      <div class="legend"><span style="--c:#59606e">grip</span><span style="--c:#ffcc00">12–25°</span><span style="--c:#ff9500">25–40°</span><span style="--c:#ff3b30">40°+</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>Every drift</h2>
+      <div style="overflow-x:auto"><table id="driftTable"></table></div>
+      <p style="font-size:13px;margin-top:10px">Each drift is scored out of 100: <b>angle</b> 40 (full marks at 40°+ average), <b>speed</b> 25, <b>duration</b> 20 (full at 6 s+), <b>smoothness</b> 15, plus up to +10 for <b>transitions</b> (linking left↔right). The run score is the average of your best three.</p>
+    </div>
+
+    <div class="row">
+      <button id="shareBtn">Share score</button>
+      <button id="saveBtn">Save run (.json)</button>
+    </div>
+    <button class="go" id="againBtn">New session</button>
+    <button id="homeBtn">Home</button>
+  </section>
+</div>
+
+<script>
+/* ========= Pure analysis (no DOM) ========= */
+const D2R=Math.PI/180, R2D=180/Math.PI;
+const wrap=a=>((a+180)%360+360)%360-180;
+function bearing(a,b){const p1=a.lat*D2R,p2=b.lat*D2R,dl=(b.lon-a.lon)*D2R;const y=Math.sin(dl)*Math.cos(p2),x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dl);return (Math.atan2(y,x)*R2D+360)%360;}
+function dist(a,b){const R=6371000,p1=a.lat*D2R,p2=b.lat*D2R,dp=p2-p1,dl=(b.lon-a.lon)*D2R;const h=Math.sin(dp/2)**2+Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;return 2*R*Math.asin(Math.min(1,Math.sqrt(h)));}
+function idx(ts,t){let lo=0,hi=ts.length-1;if(t<=ts[0])return 0;if(t>=ts[hi])return hi-1;while(hi-lo>1){const m=(lo+hi)>>1;if(ts[m]<=t)lo=m;else hi=m;}return lo;}
+function lerp(ts,vs,t){if(ts.length===1)return vs[0];const i=idx(ts,t);const t0=ts[i],t1=ts[i+1];const f=t1>t0?Math.min(1,Math.max(0,(t-t0)/(t1-t0))):0;return vs[i]+(vs[i+1]-vs[i])*f;}
+function lerpAng(ts,vs,t){if(ts.length===1)return vs[0];const i=idx(ts,t);const t0=ts[i],t1=ts[i+1];const f=t1>t0?Math.min(1,Math.max(0,(t-t0)/(t1-t0))):0;return vs[i]+wrap(vs[i+1]-vs[i])*f;}
+function circMean(arr){let s=0,c=0;arr.forEach(a=>{s+=Math.sin(a*D2R);c+=Math.cos(a*D2R);});return Math.atan2(s,c)*R2D;}
+
+const CFG={angle:12,minDur:1.0,minSpeed:5,gapSame:0.5,gapFlip:1.0,refYaw:8};
+
+function analyze(run){
+  const S=(run.samples||[]).filter(s=>isFinite(s.yr)), F=(run.fixes||[]).filter(f=>isFinite(f.lat)&&isFinite(f.lon));
+  if(F.length<6||S.length<60) return {error:'Not enough data. Record at least 10–15 seconds of driving with GPS.'};
+  const bias=run.bias||0;
+  // 1. integrate rotation
+  const st=new Array(S.length), th=new Array(S.length); let acc=0;
+  for(let i=0;i<S.length;i++){ if(i>0){const dt=(S[i].t-S[i-1].t)/1000; if(dt>0&&dt<0.5) acc+=(S[i-1].yr-bias)*dt;} st[i]=S[i].t; th[i]=acc; }
+  const thAt=t=>lerp(st,th,t);
+  // 2. speed & course per fix (central difference for course)
+  const fx=F.map((f,i)=>{
+    let spd=(f.spd!=null&&isFinite(f.spd)&&f.spd>=0)?f.spd:null;
+    if(spd===null){const a=F[Math.max(0,i-1)],b=F[Math.min(F.length-1,i+1)];const dt=(b.t-a.t)/1000;spd=dt>0?dist(a,b)/dt:0;}
+    let c=null;
+    if(spd>2){ if(f.hdg!=null&&isFinite(f.hdg)&&f.hdg>=0) c=f.hdg; else {const a=F[Math.max(0,i-1)],b=F[Math.min(F.length-1,i+1)]; if(dist(a,b)>1) c=bearing(a,b);} }
+    return {t:f.t,lat:f.lat,lon:f.lon,spd,c};
+  });
+  // 3. scale+sign of gyro vs course (handles phone orientation & deg/rad differences)
+  let num=0,den=0,turn=0;
+  for(let i=0;i+1<fx.length;i++){const a=fx[i],b=fx[i+1]; if(a.c===null||b.c===null||b.t-a.t>3000) continue; const dC=wrap(b.c-a.c), dT=thAt(b.t)-thAt(a.t); num+=dC*dT; den+=dT*dT; turn+=Math.abs(dC);}
+  let scale=1, lowConf=false;
+  if(den>0&&turn>90){const s=num/den; scale=Math.sign(s)*(Math.abs(s)>20?R2D:1);} else lowConf=true;
+  const hd=t=>scale*thAt(t);
+  // 4. heading offset from "grip" moments (low rotation, moving)
+  const yrAbsMean=(t)=>{let lo=idx(st,t-1000),hi=idx(st,t+1000)+1,s=0,n=0;for(let k=lo;k<=hi&&k<S.length;k++){s+=Math.abs((S[k].yr-bias)*scale);n++;}return n?s/n:999;};
+  const offs=[]; fx.forEach(f=>{ if(f.c!==null&&f.spd>CFG.minSpeed){ f.off=wrap(f.c-hd(f.t)); f.ref=yrAbsMean(f.t)<CFG.refYaw; offs.push(f);} });
+  const refs=offs.filter(f=>f.ref);
+  const globalOff=circMean((refs.length?refs:offs).map(f=>f.off));
+  const rt=refs.map(f=>f.t), rv=refs.map(f=>f.off);
+  const offAt=t=>{ if(refs.length===0) return globalOff; if(refs.length===1) return rv[0]; return lerpAng(rt,rv,t); };
+  // 5. 10 Hz grid
+  const moving=fx.filter(f=>f.c!==null); if(moving.length<4) return {error:'GPS never showed the car moving. Check location permission and drive above ~20 km/h.'};
+  const ct=moving.map(f=>f.t), cv=moving.map(f=>f.c), pt=fx.map(f=>f.t), sv=fx.map(f=>f.spd), la=fx.map(f=>f.lat), lo=fx.map(f=>f.lon);
+  const g=[]; for(let t=fx[0].t;t<=fx[fx.length-1].t;t+=100){
+    const spd=lerp(pt,sv,t), c=lerpAng(ct,cv,t), beta=wrap(hd(t)+offAt(t)-c);
+    g.push({t,spd,beta,valid:spd>CFG.minSpeed,lat:lerp(pt,la,t),lon:lerp(pt,lo,t)});
+  }
+  // 6. detect drifts
+  const raw=[]; let cur=null;
+  g.forEach((p,i)=>{ const on=p.valid&&Math.abs(p.beta)>CFG.angle; if(on){ if(!cur) cur={s:i,e:i}; else cur.e=i; } else if(cur){ raw.push(cur); cur=null; } });
+  if(cur) raw.push(cur);
+  const merged=[];
+  raw.forEach(r=>{ const sign=Math.sign(g[r.s].beta); const prev=merged[merged.length-1];
+    if(prev){ const gap=(g[r.s].t-g[prev.e].t)/1000; const flip=sign!==prev.lastSign;
+      if((!flip&&gap<=CFG.gapSame)||(flip&&gap<=CFG.gapFlip)){ prev.e=r.e; if(flip) prev.trans++; prev.lastSign=sign; return; } }
+    merged.push({s:r.s,e:r.e,trans:0,lastSign:sign}); });
+  const drifts=merged.map(m=>{ const pts=g.slice(m.s,m.e+1); const dur=(pts[pts.length-1].t-pts[0].t)/1000+0.1;
+    const abs=pts.map(p=>Math.abs(p.beta)); const avg=abs.reduce((a,b)=>a+b,0)/abs.length; const peak=Math.max(...abs);
+    const spd=pts.reduce((a,p)=>a+p.spd,0)/pts.length;
+    const rates=[]; for(let k=1;k<pts.length;k++) rates.push((pts[k].beta-pts[k-1].beta)/0.1);
+    const mr=rates.reduce((a,b)=>a+b,0)/(rates.length||1); const sd=Math.sqrt(rates.reduce((a,b)=>a+(b-mr)**2,0)/(rates.length||1));
+    const sAng=40*Math.min(1,avg/40), sSpd=25*Math.min(1,(spd*3.6)/70), sDur=20*Math.min(1,dur/6), sSm=15*Math.max(0,1-sd/90), sTr=5*Math.min(2,m.trans);
+    return {start:(pts[0].t-g[0].t)/1000,dur,avg,peak,spd,trans:m.trans,smooth:sd,
+      parts:{angle:sAng,speed:sSpd,duration:sDur,smooth:sSm,trans:sTr}, score:Math.round(Math.min(100,sAng+sSpd+sDur+sSm+sTr)), s:m.s,e:m.e}; })
+    .filter(d=>d.dur>=CFG.minDur);
+  const top=[...drifts].sort((a,b)=>b.score-a.score).slice(0,3);
+  const runScore=top.length?Math.round(top.reduce((a,d)=>a+d.score,0)/top.length):0;
+  return {grid:g,drifts,runScore,scale,lowConf,refs:refs.length,duration:(g[g.length-1].t-g[0].t)/1000};
+}
+
+/* ========= Demo data generator ========= */
+function makeDemo(seed=7){
+  let x=seed; const rnd=()=>((x=(x*1664525+1013904223)%4294967296)/4294967296);
+  const gauss=()=>Math.sqrt(-2*Math.log(rnd()+1e-12))*Math.cos(2*Math.PI*rnd());
+  const lat0=38.7506, lon0=-9.3946; // closed-course demo location
+  const plan=[[6,0,0,11],[7,24,38,10.5],[1.0,0,null,10.5],[7,-24,-40,10.5],[6,0,0,12],[6,20,30,11],[1.2,0,null,11],[6,-22,-34,11],[5,0,0,12],[8,26,44,10],[5,0,0,11]];
+  const dt=1/60, bias=0.6, samples=[], fixes=[]; let t=0, c=20, beta=0, xm=0, ym=0, lastFix=-1, prevH=c, T0=Date.UTC(2026,10,26,10,0,0);
+  plan.forEach(([d,w,target,v])=>{ const n=Math.round(d/dt); for(let k=0;k<n;k++){
+      const tgt= target===null ? (k/n<0.5? beta: -Math.sign(beta)*5) : target;
+      beta+= (tgt-beta)*Math.min(1,dt/ (target===null?0.25:0.6));
+      c+= w*dt; const h=c+beta; const yr=(h-prevH)/dt; prevH=h;
+      xm+= v*Math.sin(c*D2R)*dt; ym+= v*Math.cos(c*D2R)*dt; t+=dt;
+      samples.push({t:Math.round(T0+t*1000), yr: yr+bias+gauss()*1.5});
+      if(Math.floor(t)>lastFix){ lastFix=Math.floor(t);
+        fixes.push({t:Math.round(T0+t*1000), lat:lat0+(ym+gauss())/111320, lon:lon0+(xm+gauss())/(111320*Math.cos(lat0*D2R)), spd:v+gauss()*0.2, hdg:((c+gauss()*2)%360+360)%360, acc:4}); }
+  }});
+  return {version:1,demo:true,created:new Date(T0).toISOString(),bias:bias+0.05,samples,fixes};
+}
+
+/* ========= UI ========= */
+if(typeof document!=='undefined' && document.getElementById('app')){
+const $=id=>document.getElementById(id);
+const show=id=>['home','calib','recording','results'].forEach(s=>$(s).classList.toggle('hidden',s!==id));
+const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}}};
+let units=store.get('ds_units')||'kmh'; $('units').value=units; $('units').onchange=()=>{units=$('units').value;store.set('ds_units',units);};
+const spdTxt=ms=>Math.round(units==='mph'?ms*2.23694:ms*3.6);
+const uLbl=()=>units==='mph'?'mph':'km/h';
+const msg=(el,cls,html)=>{$(el).innerHTML=html?`<div class="msg ${cls}">${html}</div>`:'';};
+$('agree').onchange=()=>{$('startBtn').disabled=!$('agree').checked;};
+if(store.get('ds_last')) $('lastBtn').classList.remove('hidden');
+let lastRun=null, lastRes=null;
+
+/* --- recording --- */
+let R=null, wake=null;
+function onMotion(e){
+  if(!R) return; const rr=e.rotationRate, gi=e.accelerationIncludingGravity; if(!rr) return;
+  const w=[rr.beta||0, rr.gamma||0, rr.alpha||0];
+  R.gotMotion=true;
+  if(R.phase==='calib'){ if(gi&&gi.x!=null) R.gs.push([gi.x,gi.y,gi.z]); R.ws.push(w); return; }
+  const yr=w[0]*R.gu[0]+w[1]*R.gu[1]+w[2]*R.gu[2];
+  R.samples.push({t:Date.now(),yr}); R.lastYr=yr;
+}
+function onFix(p){
+  if(!R||R.phase!=='rec') return; const c=p.coords;
+  R.fixes.push({t:p.timestamp||Date.now(),lat:c.latitude,lon:c.longitude,spd:(c.speed!=null&&c.speed>=0)?c.speed:null,hdg:(c.heading!=null&&!isNaN(c.heading))?c.heading:null,acc:c.accuracy});
+  $('liveSpeed').textContent=c.speed!=null&&c.speed>=0?spdTxt(c.speed):'–'; $('liveGps').textContent=R.fixes.length; $('liveAcc').textContent=Math.round(c.accuracy);
+}
+async function start(){
+  msg('homeMsg');
+  if(!window.isSecureContext){ msg('homeMsg','bad','This page needs to be opened over <b>https://</b> for the phone to share its sensors.'); return; }
+  if(!('geolocation' in navigator)){ msg('homeMsg','bad','This browser has no location access.'); return; }
+  try{ if(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function'){
+      const r=await DeviceMotionEvent.requestPermission(); if(r!=='granted'){ msg('homeMsg','bad','Motion access was denied. On iPhone, reload the page and tap <b>Allow</b> when asked.'); return; } } }catch(e){ msg('homeMsg','bad','Could not get motion access: '+e.message); return; }
+  R={phase:'calib',gs:[],ws:[],samples:[],fixes:[],gotMotion:false,t0:Date.now()};
+  window.addEventListener('devicemotion',onMotion);
+  R.watch=navigator.geolocation.watchPosition(onFix,err=>msg('recMsg','bad','Location error: '+err.message+'. Allow location access for this site.'),{enableHighAccuracy:true,maximumAge:0,timeout:15000});
+  try{ if('wakeLock' in navigator) wake=await navigator.wakeLock.request('screen'); }catch(e){}
+  show('calib'); let n=3; $('countdown').textContent=n;
+  const iv=setInterval(()=>{ n--; if(n>0){$('countdown').textContent=n;return;} clearInterval(iv);
+    if(!R.gotMotion||R.ws.length<20){ stopSensors(); show('home'); msg('homeMsg','bad','No motion data from this device. Open the page on a phone (not a laptop). On Android use Chrome; on iPhone use Safari.'); return; }
+    const gm=[0,1,2].map(k=>R.gs.reduce((a,v)=>a+v[k],0)/(R.gs.length||1)); const gn=Math.hypot(...gm)||1;
+    R.gu=R.gs.length?gm.map(v=>v/gn):[0,0,1];
+    R.bias=R.ws.reduce((a,w)=>a+w[0]*R.gu[0]+w[1]*R.gu[1]+w[2]*R.gu[2],0)/R.ws.length;
+    const shake=Math.max(...R.ws.map(w=>Math.hypot(...w)));
+    R.phase='rec'; R.t0=Date.now(); show('recording'); $('liveSpeedUnit').textContent=uLbl();
+    if(shake>15) msg('recMsg','info','The phone moved during calibration. If your scores look odd, start again with the car completely still.');
+    R.tick=setInterval(()=>{ const s=Math.floor((Date.now()-R.t0)/1000); $('elapsed').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); $('liveYaw').textContent=Math.round(Math.abs((R.lastYr||0)-R.bias));
+      if(s>8&&R.fixes.length===0) msg('recMsg','bad','No GPS yet. Make sure location is allowed and you have a clear view of the sky.'); },500);
+  },1000);
+}
+function stopSensors(){ window.removeEventListener('devicemotion',onMotion); if(R&&R.watch!=null) navigator.geolocation.clearWatch(R.watch); if(R&&R.tick) clearInterval(R.tick); try{wake&&wake.release();}catch(e){} wake=null; }
+function stop(){ stopSensors(); const run={version:1,created:new Date(R.t0).toISOString(),bias:R.bias,gu:R.gu,samples:R.samples,fixes:R.fixes,ua:navigator.userAgent}; R=null; openRun(run); }
+
+/* --- results --- */
+function openRun(run){
+  lastRun=run; const res=analyze(run); lastRes=res;
+  if(!run.demo){ const s=JSON.stringify(run); if(s.length<4e6){ store.set('ds_last',s); $('lastBtn').classList.remove('hidden'); } }
+  show('results'); window.scrollTo(0,0);
+  if(res.error){ $('runScore').textContent='–'; $('grade').textContent=''; ['rDrifts','rPeak','rLong'].forEach(i=>$(i).textContent='–'); msg('resMsg','bad',res.error); $('chart').innerHTML=''; $('map').innerHTML=''; $('driftTable').innerHTML=''; return; }
+  const d=res.drifts; $('runScore').textContent=res.runScore;
+  $('grade').textContent= res.runScore>=85?'🔥 Pro line':res.runScore>=70?'Committed':res.runScore>=50?'Getting sideways':d.length?'Keep practising':'No drifts detected';
+  $('rDrifts').textContent=d.length; $('rPeak').textContent=d.length?Math.round(Math.max(...d.map(x=>x.peak)))+'°':'–'; $('rLong').textContent=d.length?Math.max(...d.map(x=>x.dur)).toFixed(1)+'s':'–';
+  const notes=[]; if(run.demo) notes.push('This is a <b>demo run</b> made from simulated data.');
+  if(res.lowConf) notes.push('Not much turning in this run, so the app couldn\'t auto-check the phone\'s orientation. Angles may be off.');
+  if(res.refs<2&&!run.demo) notes.push('There was little straight driving to re-align on. Add a few seconds of normal driving between drifts for more accurate angles.');
+  msg('resMsg','info',notes.join('<br>'));
+  drawChart(res); drawMap(res); drawTable(res);
+}
+function drawChart(res){
+  const g=res.grid, W=640, H=200, pad=28, T=res.duration||1, maxA=60;
+  const X=t=>pad+(t/T)*(W-pad-6), Y=b=>H/2 - (Math.max(-maxA,Math.min(maxA,b))/maxA)*(H/2-12);
+  let s=`<svg viewBox="0 0 ${W} ${H}">`;
+  res.drifts.forEach(d=>{ s+=`<rect x="${X(d.start)}" y="4" width="${Math.max(2,X(d.start+d.dur)-X(d.start))}" height="${H-8}" fill="rgba(255,59,48,.22)" rx="3"/>`; });
+  [-45,-15,0,15,45].forEach(a=>{ s+=`<line x1="${pad}" x2="${W}" y1="${Y(a)}" y2="${Y(a)}" stroke="${a?'#262c38':'#3a4252'}" stroke-dasharray="${a?'3 4':''}"/><text x="2" y="${Y(a)+4}" fill="#8f98a8" font-size="10">${a}°</text>`; });
+  let path=''; let pen=false; g.forEach(p=>{ const t=(p.t-g[0].t)/1000; if(!p.valid){pen=false;return;} path+=(pen?'L':'M')+X(t).toFixed(1)+' '+Y(p.beta).toFixed(1)+' '; pen=true; });
+  s+=`<path d="${path}" fill="none" stroke="#ff9500" stroke-width="2"/>`;
+  for(let k=0;k<=T;k+=Math.max(5,Math.round(T/8/5)*5)) s+=`<text x="${X(k)}" y="${H-2}" fill="#8f98a8" font-size="10" text-anchor="middle">${k}s</text>`;
+  $('chart').innerHTML=s+'</svg>';
+}
+function drawMap(res){
+  const g=res.grid, lat0=g[0].lat, kx=Math.cos(lat0*D2R);
+  const xs=g.map(p=>p.lon*kx), ys=g.map(p=>p.lat); const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
+  const W=600,H=360,pad=16, sc=Math.min((W-2*pad)/((maxx-minx)||1e-9),(H-2*pad)/((maxy-miny)||1e-9));
+  const P=i=>[(pad+(xs[i]-minx)*sc).toFixed(1),(H-pad-(ys[i]-miny)*sc).toFixed(1)];
+  const col=p=>!p.valid?'#59606e':Math.abs(p.beta)>=40?'#ff3b30':Math.abs(p.beta)>=25?'#ff9500':Math.abs(p.beta)>=12?'#ffcc00':'#59606e';
+  let s=`<svg viewBox="0 0 ${W} ${H}">`;
+  for(let i=1;i<g.length;i++){ const a=P(i-1),b=P(i); s+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${col(g[i])}" stroke-width="4" stroke-linecap="round"/>`; }
+  const a=P(0); s+=`<circle cx="${a[0]}" cy="${a[1]}" r="6" fill="#34c759"/><text x="${+a[0]+9}" y="${+a[1]+4}" fill="#8f98a8" font-size="11">start</text>`;
+  res.drifts.forEach((d,i)=>{ const m=P(Math.round((d.s+d.e)/2)); s+=`<circle cx="${m[0]}" cy="${m[1]}" r="10" fill="#0b0d11" stroke="#ff3b30"/><text x="${m[0]}" y="${+m[1]+4}" fill="#fff" font-size="11" text-anchor="middle">${i+1}</text>`; });
+  $('map').innerHTML=s+'</svg>';
+}
+function drawTable(res){
+  if(!res.drifts.length){ $('driftTable').innerHTML='<tr><td>No drifts detected. Drifts need 12°+ of angle for at least 1 second above ~20 km/h.</td></tr>'; return; }
+  const best=Math.max(...res.drifts.map(d=>d.score));
+  let h=`<tr><th>#</th><th>Score</th><th>Avg angle</th><th>Peak</th><th>Speed</th><th>Time</th><th>Transitions</th></tr>`;
+  res.drifts.forEach((d,i)=>{ h+=`<tr><td>${i+1}${d.score===best?' 🏆':''}</td><td><b>${d.score}</b></td><td>${Math.round(d.avg)}°</td><td>${Math.round(d.peak)}°</td><td>${spdTxt(d.spd)} ${uLbl()}</td><td>${d.dur.toFixed(1)}s</td><td>${d.trans||'–'}</td></tr>`; });
+  $('driftTable').innerHTML=h;
+}
+function download(name,text){ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'application/json'})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+
+$('startBtn').onclick=start;
+$('stopBtn').onclick=stop;
+$('demoBtn').onclick=()=>openRun(makeDemo());
+$('loadBtn').onclick=()=>$('fileIn').click();
+$('fileIn').onchange=e=>{ const f=e.target.files[0]; if(!f) return; f.text().then(t=>{ try{ openRun(JSON.parse(t)); }catch(err){ msg('homeMsg','bad','That file isn\'t a DriftScore run.'); } }); e.target.value=''; };
+$('lastBtn').onclick=()=>{ try{ openRun(JSON.parse(store.get('ds_last'))); }catch(e){} };
+$('saveBtn').onclick=()=>{ if(lastRun) download('driftscore-'+(lastRun.created||'run').slice(0,16).replace(/[:T]/g,'-')+'.json',JSON.stringify(lastRun)); };
+$('shareBtn').onclick=async()=>{ if(!lastRes||lastRes.error) return; const d=lastRes.drifts; const txt=`DriftScore ${lastRes.runScore}/100: ${d.length} drifts, peak ${d.length?Math.round(Math.max(...d.map(x=>x.peak))):0}°, longest ${d.length?Math.max(...d.map(x=>x.dur)).toFixed(1):0}s 🏁`;
+  try{ if(navigator.share){ await navigator.share({text:txt,url:location.href.split('#')[0]}); return; } }catch(e){ return; }
+  try{ await navigator.clipboard.writeText(txt); $('shareBtn').textContent='Copied!'; setTimeout(()=>$('shareBtn').textContent='Share score',1500);}catch(e){ prompt('Copy:',txt); } };
+$('againBtn').onclick=()=>{ show('home'); window.scrollTo(0,0); };
+$('homeBtn').onclick=()=>{ show('home'); window.scrollTo(0,0); };
+window.addEventListener('error',e=>{ const el=document.querySelector('section:not(.hidden) [id$="Msg"]'); if(el) el.innerHTML=`<div class="msg bad">Something went wrong: ${e.message}</div>`; });
+}
+</script>
+</body>
+</html>
