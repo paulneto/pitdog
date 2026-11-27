@@ -101,6 +101,14 @@
   .toast2{position:fixed;left:50%;bottom:calc(var(--tab) + 150px);transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;z-index:95;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}.toast2.on{opacity:1}
   .btn.pri2{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:800}
   .code{font-family:var(--font-num);letter-spacing:3px}
+  .radarbox{position:relative;border-radius:var(--r-card);overflow:hidden;border:1px solid var(--line);background:var(--panel2)}
+  .radarbox canvas{display:block;width:100%;height:auto;aspect-ratio:1}
+  .rdtime{position:absolute;left:10px;top:10px;padding:5px 10px;border-radius:999px;background:color-mix(in srgb,var(--bg) 80%,transparent);color:var(--text);font-weight:800;font-size:14px;font-variant-numeric:tabular-nums}
+  .rdkey{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:8px}.rdkey i{flex:1;height:8px;border-radius:4px;background:linear-gradient(90deg,#88ddee,#0099cc,#0077aa,#ffee00,#ffaa00,#ff4400,#c10000,#ff77ff)}
+  .rdkey b{width:22px;height:8px;border-radius:4px;background:linear-gradient(90deg,#d8cfb4,#9b8a62);margin-left:10px}
+  .rdattr a,.helpcard a,.hint a{color:inherit;text-decoration:underline}
+  .rdbtn{background:var(--btn);color:var(--text);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  #cc .rdbtn{background:var(--cc-deep);color:var(--cc-text);border-color:var(--cc-line2)}
   .strip{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:800;padding:14px 16px;min-height:58px;letter-spacing:.2px}
   .strip .i{width:26px;height:26px}
   .strips2{display:flex;flex-wrap:wrap;gap:6px;margin:-4px 0 10px}
@@ -629,7 +637,7 @@
 
   <div class="card rstrip">
     <h2><span id="clockLabel">Race clock</span><span id="clockWall"></span></h2>
-    <div class="rs" id="serName"></div>
+    <div class="row" style="justify-content:space-between;align-items:center;gap:8px"><div class="rs" id="serName"></div><button class="rdbtn" id="raceRadar" data-radar="1" style="display:none"></button></div>
     <div class="sub" id="raceSub" style="margin-top:2px"></div>
     <div class="bar" style="margin-top:10px"><i id="raceBar" style="width:0;background:var(--blue)"></i></div>
   </div>
@@ -897,7 +905,7 @@ const nowMs=()=>SIM.on?SIM.v:Date.now();
 
 /* ================= helpers ================= */
 /* one consistent icon set (inline SVG, stroke = currentColor) instead of emoji, which render differently per device */
-const ICON={home:'<path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5M10 20v-5.5h4V20"/>',race:'<circle cx="12" cy="14" r="8"/><path d="M12 10v4l2.5 2M10 2h4M12 2v4"/>',team:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.5-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.5 3.5 5.2"/>',plan:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.8h6V4M8.5 10h7M8.5 14h7M8.5 18h4"/>',lab:'<path d="M9 3h6M10 3v6L4.6 18.2A2 2 0 0 0 6.3 21h11.4a2 2 0 0 0 1.7-2.8L14 9V3M7.5 14h9"/>',log:'<path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/>',fuel:'<path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16M3 21h13M4 10h11M15 8l3 3v6.5a1.5 1.5 0 0 0 3 0V9l-3-3"/>',swap:'<path d="M4 8h15l-3.5-3.5M20 16H5l3.5 3.5"/>',wrench:'<path d="M14.5 3.5a5 5 0 0 0-6 6.5L3 15.5V21h5.5l5.5-5.5a5 5 0 0 0 6.5-6l-3 3-3.5-1-1-3.5z"/>',flag:'<path d="M5 21V4M5 4h13l-3 4.5 3 4.5H5"/>',pitin:'<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',pitout:'<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>',alert:'<path d="M12 3 2 20h20zM12 10v4M12 17.5v.5"/>',stop:'<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z"/><path d="M12 7v6M12 16.5v.5"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.4-7 8-7s7 2.5 8 7"/>',bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',check:'<path d="M4 12.5 9.5 18 20 6"/>',trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8 21h8M9.5 17h5"/>',play:'<path d="M7 4v16l13-8z"/>',pause:'<path d="M8 5v14M16 5v14"/>',finish:'<path d="M5 21V3"/><rect x="5" y="3" width="14" height="10" rx="1"/><path class="f" d="M5 3h3.5v3.3H5zM12 3h3.5v3.3H12zM8.5 6.3H12v3.4H8.5zM15.5 6.3H19v3.4h-3.5zM5 9.7h3.5V13H5zM12 9.7h3.5V13H12z"/>',rain:'<path d="M7 15a4.5 4.5 0 1 1 1.3-8.8A5.5 5.5 0 0 1 19 8.5a3.5 3.5 0 0 1-1 6.5zM8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',userx:'<circle cx="10" cy="8" r="4"/><path d="M2 21c1-4.5 4.4-7 8-7 1.6 0 3.1.5 4.4 1.4M16 16l5 5M21 16l-5 5"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',car:'<path d="M3 16v-3l2.5-5h13L21 13v3zM3 16v2.5h3V16M18 16v2.5h3V16M6.5 12.5h.01M17.5 12.5h.01"/>'};
+const ICON={radar:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 12 18.5 5.5"/><circle cx="12" cy="12" r="1" class="f"/>',home:'<path d="M3 11.5 12 4l9 7.5M5.5 9.5V20h13V9.5M10 20v-5.5h4V20"/>',race:'<circle cx="12" cy="14" r="8"/><path d="M12 10v4l2.5 2M10 2h4M12 2v4"/>',team:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.5-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c1.8.7 3 2.5 3.5 5.2"/>',plan:'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.8h6V4M8.5 10h7M8.5 14h7M8.5 18h4"/>',lab:'<path d="M9 3h6M10 3v6L4.6 18.2A2 2 0 0 0 6.3 21h11.4a2 2 0 0 0 1.7-2.8L14 9V3M7.5 14h9"/>',log:'<path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/>',fuel:'<path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16M3 21h13M4 10h11M15 8l3 3v6.5a1.5 1.5 0 0 0 3 0V9l-3-3"/>',swap:'<path d="M4 8h15l-3.5-3.5M20 16H5l3.5 3.5"/>',wrench:'<path d="M14.5 3.5a5 5 0 0 0-6 6.5L3 15.5V21h5.5l5.5-5.5a5 5 0 0 0 6.5-6l-3 3-3.5-1-1-3.5z"/>',flag:'<path d="M5 21V4M5 4h13l-3 4.5 3 4.5H5"/>',pitin:'<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',pitout:'<path d="M12 21V9M7 14l5-5 5 5M5 3h14"/>',alert:'<path d="M12 3 2 20h20zM12 10v4M12 17.5v.5"/>',stop:'<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z"/><path d="M12 7v6M12 16.5v.5"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.4-7 8-7s7 2.5 8 7"/>',bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',check:'<path d="M4 12.5 9.5 18 20 6"/>',trophy:'<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4M12 13v4M8 21h8M9.5 17h5"/>',play:'<path d="M7 4v16l13-8z"/>',pause:'<path d="M8 5v14M16 5v14"/>',finish:'<path d="M5 21V3"/><rect x="5" y="3" width="14" height="10" rx="1"/><path class="f" d="M5 3h3.5v3.3H5zM12 3h3.5v3.3H12zM8.5 6.3H12v3.4H8.5zM15.5 6.3H19v3.4h-3.5zM5 9.7h3.5V13H5zM12 9.7h3.5V13H12z"/>',rain:'<path d="M7 15a4.5 4.5 0 1 1 1.3-8.8A5.5 5.5 0 0 1 19 8.5a3.5 3.5 0 0 1-1 6.5zM8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',userx:'<circle cx="10" cy="8" r="4"/><path d="M2 21c1-4.5 4.4-7 8-7 1.6 0 3.1.5 4.4 1.4M16 16l5 5M21 16l-5 5"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',car:'<path d="M3 16v-3l2.5-5h13L21 13v3zM3 16v2.5h3V16M18 16v2.5h3V16M6.5 12.5h.01M17.5 12.5h.01"/>'};
 const ic=(n,cls)=>`<svg class="i${cls?' '+cls:''}" viewBox="0 0 24 24" aria-hidden="true">${ICON[n]||''}</svg>`;
 document.querySelectorAll('[data-ic]').forEach(e=>{ e.innerHTML=ic(e.dataset.ic); });
 function lapMin(s){ const m=String(s).trim().match(/^(\d+):(\d{1,2}(?:\.\d+)?)$/); return m? (+m[1])+(+m[2])/60 : parseFloat(s)||NaN; }
@@ -1262,6 +1270,7 @@ function renderRace(){
   }
   $('banners').innerHTML=ban;
   renderRaceSwitch(lv);
+  const rb=$('raceRadar'); if(rb){ const on=radarOn()&&!!trackLL(); rb.style.display=on?'':'none'; if(on&&!rb.innerHTML) rb.innerHTML=ic('radar')+' Radar'; }
   if(!lv.finished){ const nx=st.slice(ci+(lv.inPit?0:1)).slice(0,3);
     $('upNextBody').innerHTML=nx.length?nx.map(s=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><span class="dot" style="background:${dcol(s.driver)}"></span>${esc(S.drivers[s.driver]?.name)}</span><span>${clockAt(s.start)} → ${clockAt(s.end)} <span style="color:var(--muted)">(${fmt(s.dur)})</span></span></div>`).join(''):'Last stint: bring it home';
   } else $('upNextBody').textContent='—';
@@ -1400,7 +1409,7 @@ function fixStopSheet(){
   draw();
 }
 const lv0=()=>live();
-document.addEventListener('click',ev=>{ const b=ev.target.closest('[data-act="fix"]'); if(b){ ev.stopPropagation(); fixStopSheet(); } });
+document.addEventListener('click',ev=>{ const b=ev.target.closest('[data-act="fix"]'); if(b){ ev.stopPropagation(); fixStopSheet(); return; } const rd=ev.target.closest('[data-radar]'); if(rd){ ev.stopPropagation(); if(rd.closest('#homeBody')){ const nr=nextRace(); if(nr&&nr.id!==DB.activeRaceId){ dbSave(); DB.activeRaceId=nr.id; reloadActive(); } } radarSheet(); } });
 function show(tab){ document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+tab)); document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab)); $('actionBar').style.display=tab==='race'?'block':'none'; window.scrollTo(0,0); }
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); show(b.dataset.tab); if(b.dataset.tab==='lab') renderLab(); if(b.dataset.tab==='home') renderHome(); });
 
@@ -1434,7 +1443,7 @@ function renderCCWx(){
   const c=WX.j.current||{}, h=WX.j.hourly||{}, d=WX.j.daily||{}; const pp=(h.precipitation_probability||[]).slice(0,8), ht=(h.time||[]).slice(0,8);
   const dirs=['N','NE','E','SE','S','SW','W','NW']; const wd=dirs[Math.round(((c.wind_direction_10m||0)%360)/45)%8];
   const age=Math.round((Date.now()-WX.at)/60000); const sun=d.sunset&&d.sunset[0]?d.sunset[0].slice(11,16):'';
-  box.innerHTML=`<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><div class="cc-lbl">${TRACKS[S.race.track]?TRACKS[S.race.track][0]:'Track'}</div><div class="v mono" style="font-size:24px;font-weight:700">${Math.round(c.temperature_2m)}°${WX.imp?'F':'C'}</div>
+  box.innerHTML=`<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><div class="cc-lbl">${TRACKS[S.race.track]?TRACKS[S.race.track][0]:'Track'}</div>${radarOn()?`<button class="rdbtn" data-radar="1">${ic('radar')} Radar</button>`:''}<div class="v mono" style="font-size:24px;font-weight:700">${Math.round(c.temperature_2m)}°${WX.imp?'F':'C'}</div>
     <div class="cc-sub" style="font-size:11px;margin:0">${WMO[c.weather_code]||''} · ${Math.round(c.wind_speed_10m)} ${WX.imp?'mph':'km/h'} ${wd}${sun?' · sunset '+sun:''}${age>15?' · '+age+'m old':''}</div></div>
     <div style="min-width:0"><div class="cc-lbl">Rain % · next 8h</div><div class="cc-bars">${pp.map((p,i)=>`<div style="height:${Math.max(4,p)}%;background:var(--blue);opacity:${p>=60?1:p>=30?.6:.3}" title="${p}%"><span>${i%2?'':(ht[i]||'').slice(11,13)}</span></div>`).join('')}</div></div>`;
 }
@@ -1862,7 +1871,7 @@ function renderHome(){
     h+=`<div class="card" data-help="home_next"><h2><span>${today?'Race day':'Next race'}</span><span>${esc(dayLabel(nr.rules.date))}</span></h2>
       <div class="hname">${esc(nr.rules.name||'Race')}</div>
       <div class="sub" style="margin:2px 0 10px">${esc(ser.label||'')}${TRACKS[nr.rules.track]&&nr.rules.track!=='none'?' · '+esc(TRACKS[nr.rules.track][0]):''} · ${ser.sched?`${esc(nr.rules.start)}–${esc(nr.rules.end)}`:fmt(nr.rules.len||0)} · ${esc(car?car.name:'')}</div>
-      ${f?`<div class="fcast">${ic(f.rain>=50?'rain':'sun')}<b>${Math.round(f.hi)}° / ${Math.round(f.lo)}°${f.imp?'F':'C'}</b><span>${WMO[f.code]||''} · rain ${f.rain??'–'}% · wind ${Math.round(f.wind)} ${f.imp?'mph':'km/h'}</span></div>`:''}
+      ${f?`<div class="fcast">${ic(f.rain>=50?'rain':'sun')}<b>${Math.round(f.hi)}° / ${Math.round(f.lo)}°${f.imp?'F':'C'}</b><span>${WMO[f.code]||''} · rain ${f.rain??'–'}% · wind ${Math.round(f.wind)} ${f.imp?'mph':'km/h'}</span>${today&&radarOn()?`<button class="rdbtn" data-radar="1" style="margin-left:auto">${ic('radar')} Radar</button>`:''}</div>`:''}
       <div class="pick" style="margin:6px 0 12px">${nr.drivers.map((d,i)=>{ const m=member(d.mid); return m?`<span class="hdrv" style="--c:${safeColor(m.color,i)}">${i+1}. ${esc(m.name)}</span>`:''; }).join('')}</div>
       ${glanceHTML(ser.glance)}
       <div class="row" style="gap:8px"><button class="btn full" id="hOpen" style="margin:0;font-weight:800;flex:2">${today?ic('race')+' Open the race screen':ic('plan')+' Plan this race'}</button><button class="btn" id="hNew3" style="margin:0;flex:1">+ New race</button></div></div>`;
@@ -2237,13 +2246,14 @@ const HELP={
   debrief_notes:{t:'Notes',read:'Free notes for this race.',means:'',can:'Write what went well and what to change; saved with the race.',cant:''},
   sync:{t:'Team sync',read:'Signed out: a Google button. Signed in: put your team online, or join one with its 8-character code. Online: your role, the join code (owners), and the sync state.',means:'Every device keeps the whole team and works offline. Pit stops and flags logged anywhere reach the others when there’s signal; nothing is overwritten.',can:'Invite the crew with the link, sync now, stop syncing on this device, sign out.',cant:'Sign-in needs signal once. Crew can log but not change the plan; viewers only watch.'},
   raceswitch:{t:'Which race',read:'The race this screen is for, and its day. Shown before the green flag and after the finish.',means:'',can:'Start a new race, switch to another planned race, or after the finish set up the next day or open the debrief.',cant:'You can’t switch races mid-race from here: finish the race first.'},
+  radar:{t:'Weather radar',read:'Rain over the last ~2 hours around your track, animated every 10 minutes. The dot is the track; the dashed ring is 50 km. Light blue = light rain, yellow/red = heavy, pink = hail or very heavy.',means:'Storms usually move 30–60 km/h: something at the ring can reach you in about an hour.',can:'Pause and scrub through the frames.',cant:'It needs signal, and radar lags 10–20 minutes. It doesn’t forecast: check the hourly rain chance too.'},
   cc_tl:{t:'Race timeline',read:'Every stint as a coloured bar, stops hatched, yellows and reds marked on top, and a white line for now.',means:'Faded bars are stints already driven.',can:'',cant:''},
 };
 const HELP_AT={'#bigBtn':'bigbtn','#ccGo':'bigbtn','#yBtn':'yellow','#ccY':'yellow','#rBtn':'red','#ccR':'red','#undoBtn':'undo','#ccU':'undo','#banners':'strip',
   '#trackCard':'hero','#nextStop':'hero','#stintBar':'stint','#trackCard .driver':'stint','#fuelFact':'fuel','#lapsDone':'laps','#trackCard .fact:nth-child(2)':'laps',
   '#pitTimer':'pittimer','#pitTarget':'pittimer','#kindChips':'pittimer','#jugChips':'jugs','#fullTgl':'full','#nextDrv':'nextdrv','.rstrip':'racestrip',
   '#upNextBody':'upnext','#teamList':'crew','#fuelUsed':'fuelcard','#burnMeas':'fuelcard','#fuelNeed':'fuelcard','#raceClock':'clock','#statusPill':'pill','.tabbar':'tabs',
-  '#tab-team':'team','#syncPill':'sync','#tab-plan':'plan','#tab-lab':'lab','#tab-log':'log',
+  '#tab-team':'team','#raceRadar':'radar','.rdbtn':'radar','#syncPill':'sync','#tab-plan':'plan','#tab-lab':'lab','#tab-log':'log',
   '.cc-top .cc-flagbar':'cc_flag','#ccClock':'cc_clock','#ccCar':'cc_car','#ccRoster':'cc_crew','#ccTank':'cc_fuel','#ccWx':'cc_fuel','#ccFuel':'cc_fuel','#ccStopsList':'cc_stops','#ccAlerts':'cc_stops','#ccTl':'cc_tl'};
 let HELP_ON=false, HELP_AT_T=0, HELP_EL=null;
 function helpTag(){ Object.entries(HELP_AT).forEach(([sel,k])=>document.querySelectorAll(sel).forEach(e=>{ if(!e.dataset.help) e.dataset.help=k; })); }
@@ -2457,6 +2467,62 @@ function renderSyncCard(){ const box=$('syncBody'); if(!box) return;
     <div class="hint">Roles: owner and pit wall can change the plan; crew can log pit stops and flags; viewers watch. Owners change roles in the admin console.</div>`;
   const inv=$('syncInvite'); if(inv) inv.onclick=()=>{ const txt='Join our PitDog team: '+link; try{ if(navigator.share){ navigator.share({title:'PitDog team',text:txt,url:link}).catch(()=>{}); return; } navigator.clipboard.writeText(link).then(()=>toast2('Invite link copied'),()=>prompt('Invite link:',link)); }catch(e){ prompt('Invite link:',link); } };
   $('syncNow').onclick=()=>pushAll().then(()=>pull(false)); $('syncLeave').onclick=leaveTeam; $('syncOut2').onclick=signOut; }
+
+/* ================= WEATHER RADAR ================= */
+// RainViewer radar (free for personal use, attribution required; the free tier serves radar up to zoom 6) over
+// OpenStreetMap tiles (light use, attribution required; CARTO now needs a key). Drawn on a canvas centred on the track; the last ~2 h
+// animate every 10 min. Needs signal: offline it says so. Can be switched off by an admin (features.radar=false).
+const RADAR={frames:[],host:'',i:0,timer:null,imgs:{},z:7,rz:6,size:640};
+const radarOn=()=>!(APPSET.features&&APPSET.features.radar===false);
+function lonLatToPx(lon,lat,z){ const n=256*2**z, s=Math.sin(lat*Math.PI/180); return [(lon+180)/360*n,(0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*n]; }
+function loadImg(src){ if(RADAR.imgs[src]) return RADAR.imgs[src]; const p=new Promise(res=>{ const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>res(im); im.onerror=()=>res(null); im.src=src; }); RADAR.imgs[src]=p; return p; }
+async function radarSheet(){
+  const ll=trackLL(); if(!ll){ alert('Pick your track in Plan → Race to see the radar.'); return; }
+  const name=TRACKS[S.race.track]?TRACKS[S.race.track][0]:'Track';
+  openSheet('Radar · '+name,`<div class="radarbox"><canvas id="rdCanvas" width="${RADAR.size}" height="${RADAR.size}"></canvas><div class="rdtime" id="rdTime">Loading radar…</div></div>
+    <div class="row" style="gap:8px;margin-top:10px;align-items:center"><button class="btn" id="rdPlay" style="flex:0 0 auto">${ic('pause')}</button><input type="range" id="rdSlider" min="0" max="0" value="0" style="flex:1"><span class="sub" id="rdAge" style="margin:0;flex:0 0 auto"></span></div>
+    <div class="rdkey"><span>Rain: light</span><i></i><span>heavy</span><b></b><span>Snow</span></div>
+    <div class="hint rdattr">Radar: <a href="https://www.rainviewer.com" target="_blank" rel="noopener">RainViewer</a> · Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors. Ring = 50 km around the track. Radar can lag 10–20 min.</div>`,
+    [{label:'Close',cls:'pri',fn:()=>{ radarStop(); closeSheet(); }}]);
+  $('sheetX').onclick=()=>{ radarStop(); closeSheet(); };
+  try{ const j=await (await fetch('https://api.rainviewer.com/public/weather-maps.json')).json(); RADAR.host=j.host; RADAR.frames=(j.radar&&j.radar.past||[]).slice(-12); }
+  catch(e){ $('rdTime').textContent='Radar needs signal. Try again when you have coverage.'; await drawRadar(ll,null); return; }
+  if(!RADAR.frames.length){ $('rdTime').textContent='No radar frames available right now.'; return; }
+  const sl=$('rdSlider'); sl.max=RADAR.frames.length-1; RADAR.i=RADAR.frames.length-1; sl.value=RADAR.i;
+  sl.oninput=()=>{ radarStop(); RADAR.i=+sl.value; drawRadar(ll,RADAR.frames[RADAR.i]); $('rdPlay').innerHTML=ic('play'); };
+  $('rdPlay').onclick=()=>{ if(RADAR.timer){ radarStop(); $('rdPlay').innerHTML=ic('play'); } else { radarPlay(ll); $('rdPlay').innerHTML=ic('pause'); } };
+  await drawRadar(ll,RADAR.frames[RADAR.i]);
+  RADAR.frames.forEach(f=>radarTiles(ll,f).forEach(t=>loadImg(t.src)));   // preload the loop
+  radarPlay(ll);
+}
+function radarStop(){ clearInterval(RADAR.timer); RADAR.timer=null; }
+function radarPlay(ll){ radarStop(); RADAR.timer=setInterval(()=>{ if(!$('rdCanvas')){ radarStop(); return; } RADAR.i=(RADAR.i+1)%RADAR.frames.length; const sl=$('rdSlider'); if(sl) sl.value=RADAR.i; drawRadar(ll,RADAR.frames[RADAR.i]); },700); }
+function radarView(ll){ const [cx,cy]=lonLatToPx(ll[1],ll[0],RADAR.z); return {x0:cx-RADAR.size/2,y0:cy-RADAR.size/2}; }
+function radarTiles(ll,frame){   // radar tiles at zoom 6, drawn 2x onto the zoom-7 canvas
+  const {x0,y0}=radarView(ll), k=2**(RADAR.z-RADAR.rz), ts=256*k, out=[];
+  for(let tx=Math.floor(x0/ts);tx<=Math.floor((x0+RADAR.size)/ts);tx++) for(let ty=Math.floor(y0/ts);ty<=Math.floor((y0+RADAR.size)/ts);ty++)
+    out.push({src:`${RADAR.host}${frame.path}/256/${RADAR.rz}/${tx}/${ty}/2/1_1.png`,x:tx*ts-x0,y:ty*ts-y0,s:ts});
+  return out; }
+async function drawRadar(ll,frame){
+  const cv=$('rdCanvas'); if(!cv) return; const ctx=cv.getContext('2d'), {x0,y0}=radarView(ll), dark=!['sunlight','sheet'].includes(document.documentElement.dataset.skin);
+  const base=[];
+  for(let tx=Math.floor(x0/256);tx<=Math.floor((x0+RADAR.size)/256);tx++) for(let ty=Math.floor(y0/256);ty<=Math.floor((y0+RADAR.size)/256);ty++)
+    base.push({src:`https://tile.openstreetmap.org/${RADAR.z}/${tx}/${ty}.png`,x:tx*256-x0,y:ty*256-y0,s:256});
+  const rad=frame?radarTiles(ll,frame):[];
+  const [bi,ri]=await Promise.all([Promise.all(base.map(t=>loadImg(t.src))),Promise.all(rad.map(t=>loadImg(t.src)))]);
+  if(!$('rdCanvas')) return;
+  ctx.fillStyle=dark?'#0b0d11':'#e9edf2'; ctx.fillRect(0,0,RADAR.size,RADAR.size);
+  ctx.filter=dark?'invert(1) hue-rotate(180deg) brightness(.75) contrast(.9) saturate(.4)':'saturate(.5) contrast(.95)';   // OSM is a light map: dark skins get it inverted
+  bi.forEach((im,i)=>{ if(im) ctx.drawImage(im,base[i].x,base[i].y,256,256); }); ctx.filter='none';
+  ctx.globalAlpha=0.85; ri.forEach((im,i)=>{ if(im){ ctx.imageSmoothingEnabled=true; ctx.drawImage(im,rad[i].x,rad[i].y,rad[i].s,rad[i].s); } }); ctx.globalAlpha=1;
+  // track marker + 50 km ring
+  const c=RADAR.size/2, mpp=156543.03*Math.cos(ll[0]*Math.PI/180)/2**RADAR.z, r50=50000/mpp;
+  ctx.strokeStyle=dark?'rgba(255,255,255,.75)':'rgba(0,0,0,.6)'; ctx.lineWidth=1.5; ctx.setLineDash([6,5]); ctx.beginPath(); ctx.arc(c,c,r50,0,7); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--brand').trim()||'#ff3b30'; ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(c,c,7,0,7); ctx.fill(); ctx.stroke();
+  if(frame){ const t=new Date(frame.time*1000), age=Math.round((Date.now()-t)/60000);
+    $('rdTime').textContent=t.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+(RADAR.i===RADAR.frames.length-1?' · latest':'');
+    const ag=$('rdAge'); if(ag) ag.textContent=age<1?'now':age+' min ago'; }
+}
 
 /* ================= SKINS ================= */
 const SKINS=[{k:'night',t:'Night race',d:'Floodlit pit lane. The default.'},{k:'sunlight',t:'Sunlight',d:'Maximum contrast for the midday pit wall.'},

@@ -14,6 +14,14 @@ __run(() => {
   applyAppSettings({}); update();
   expect(SERIES.luckydog.race.maxStint === 120 && !/Track closes/.test(txt('ccAlerts') + txt('ccTopAlert')), 'clearing the settings restores the presets and removes the banner');
   expect(getComputedStyle($('ccFlag'), '::after').content === 'none' && $('ccFlag').classList.contains('n'), 'pre-race flag has no crew-set note');
+  // radar button: only with a track set, and an admin can switch it off
+  localStorage.setItem('pitdog_view', 'phone'); applyView(); show('race'); update();
+  expect(getComputedStyle($('raceRadar')).display === 'none', 'no track set: no radar button');
+  S.race.track = 'roadamerica'; update();
+  expect(getComputedStyle($('raceRadar')).display !== 'none' && /Radar/.test(txt('raceRadar')), 'track set: radar button on the race screen');
+  applyAppSettings({ features: { radar: false } }); update();
+  expect(getComputedStyle($('raceRadar')).display === 'none', 'admin switch features.radar=false hides it');
+  applyAppSettings({}); localStorage.setItem('pitdog_view', 'cc'); applyView(); update();
   adv(2.5); click('ccGo');
   expect(/crew-set/.test(getComputedStyle($('ccFlag'), '::after').content) && txt('ccFlag') === 'GREEN', 'GREEN is labelled crew-set (visual only)');
 });
