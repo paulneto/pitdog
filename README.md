@@ -12,7 +12,7 @@
 - **Race (phone):** one big button (GREEN → PIT IN → PIT OUT), stop-type and jug logging, next-driver picker with rest timers, BOX / on-deck / stint-limit / yellow-window alerts, YELLOW / RED / UNDO
 - **Command center (iPad landscape):** flag bar, race clock, car/pit panel with ring timer, crew rotation, fuel gauge, track weather, alerts and the full race timeline on one screen
 - **Team / Log:** seat time, rest status, measured fuel burn, event log, multi-day archive, share-a-plan link
-- **Skins:** Night race, Sunlight (for midday glare), Timing tower and Stint sheet, chosen per device (Log → Look, or SKIN on the command center). See `docs/design-review.md`
+- **Skins:** Night race, Sunlight (for midday glare) and six F1-team-inspired liveries (Rosso, Papaya, Silver Arrow, Midnight, Racing Green, Grove Blue), chosen per device (Log → Look, or SKIN on the command center). See `docs/design-review.md`
 - **Offline-first:** installs to the home screen and runs with no signal (service worker); race state survives reloads
 
 ## Platform notes
@@ -30,6 +30,7 @@ app/                 the app: deployed as-is, no build step
   index.html         the whole app (HTML + CSS + JS in one file)
   sw.js              offline cache (version stamped on deploy)
   manifest.webmanifest, icon*.png/svg
+  fonts/             bundled Barlow + Barlow Condensed (OFL), precached for offline
 tests/e2e/           headless-Chrome scenarios with a fake race clock
   run.sh             run all scenarios (or: run.sh <name-filter>)
   harness.js         fake clock + helpers injected into the app

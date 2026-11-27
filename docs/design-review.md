@@ -24,9 +24,17 @@ A crew reading a screen at arm's length, under time pressure, in glare or at nig
 ## Skins (Log → Look; SKIN button on the command center)
 | Skin | Source | Character |
 |---|---|---|
-| Night race | floodlit pit lane | blue-black, teal instruments, mono digits (the original, refined) |
+| Night race | floodlit pit lane | blue-black, teal instruments (the default) |
 | Sunlight | midday glare | cool white, black ink, saturated status colours, heavy digits |
-| Timing tower | scoring pylons | true black, amber LED digits with glow, DIN Condensed, boxy corners |
-| Stint sheet | engineer's timing sheet | graph paper, navy ink, red pencil for danger only, highlighter on the current driver, italic serif headings |
+| Rosso | Ferrari | racing red chrome, giallo headings, black |
+| Papaya | McLaren | papaya on anthracite, blue bars |
+| Silver Arrow | Mercedes | black and silver, teal accents |
+| Midnight | Red Bull | navy, red corners, yellow headings |
+| Racing Green | Aston Martin | British racing green, lime accents |
+| Grove Blue | Williams | navy, Williams blue, white |
 
-Everything visual runs on tokens (`--bg`, `--cc-*`, `--font-*`, `--r-*`). A new skin is one `[data-skin="x"]{…}` block plus an entry in `SKINS`.
+The F1 skins are colour-inspired only (no team logos or marks). Team colours go on chrome: the brand, panel corners, headings, progress bars and a livery stripe under the top bar. **Status colours (red/amber/green/yellow) are identical across the F1 skins**, so red still only means danger even in Rosso. Timing tower and Stint sheet were retired on 27 Nov 2026; a device that had one saved falls back to Night.
+
+**Type:** Barlow (UI) and Barlow Condensed (numbers, headings) are bundled in `app/fonts/` (OFL) and precached by the service worker, so they render the same on every device with no signal.
+
+Everything visual runs on tokens (`--bg`, `--cc-*`, `--font-*`, `--r-*`, `--livery`). A new skin is one `[data-skin="x"]{…}` block plus an entry in `SKINS` and `SKIN_BAR`.

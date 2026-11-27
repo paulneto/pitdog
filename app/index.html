@@ -14,6 +14,15 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
+  /* Bundled fonts (OFL, see fonts/OFL.txt): served from the app and precached by sw.js so they work with no signal */
+  @font-face{font-family:"Barlow";src:url(fonts/barlow-latin-400-normal.woff2) format("woff2");font-weight:300 500;font-style:normal;font-display:swap}
+  @font-face{font-family:"Barlow";src:url(fonts/barlow-latin-600-normal.woff2) format("woff2");font-weight:600 700;font-style:normal;font-display:swap}
+  @font-face{font-family:"Barlow";src:url(fonts/barlow-latin-800-normal.woff2) format("woff2");font-weight:800 900;font-style:normal;font-display:swap}
+  @font-face{font-family:"Barlow";src:url(fonts/barlow-latin-800-italic.woff2) format("woff2");font-weight:300 900;font-style:italic;font-display:swap}
+  @font-face{font-family:"Barlow Condensed";src:url(fonts/barlow-condensed-latin-600-normal.woff2) format("woff2");font-weight:300 600;font-style:normal;font-display:swap}
+  @font-face{font-family:"Barlow Condensed";src:url(fonts/barlow-condensed-latin-700-normal.woff2) format("woff2");font-weight:700;font-style:normal;font-display:swap}
+  @font-face{font-family:"Barlow Condensed";src:url(fonts/barlow-condensed-latin-800-normal.woff2) format("woff2");font-weight:800 900;font-style:normal;font-display:swap}
+  @font-face{font-family:"Barlow Condensed";src:url(fonts/barlow-condensed-latin-800-italic.woff2) format("woff2");font-weight:300 900;font-style:italic;font-display:swap}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:15px/1.4 var(--font-ui);overscroll-behavior:none}
   body{padding-top:env(safe-area-inset-top)}
@@ -266,19 +275,19 @@
     --bg:#0b0d11;--panel:#151921;--panel2:#0f1218;--line:#262c38;--text:#eef0f5;--muted:#8f98a8;
     --red:#ff3b30;--green:#30d158;--amber:#ffb340;--blue:#0a84ff;--yellow:#ffd60a;--info:#8cc4ff;
     --btn:#20252f;--bar:rgba(11,13,17,.92);--brand:#ff3b30;--go-ink:#002a0c;
-    --r-card:18px;--r-btn:12px;--font-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;--font-num:var(--font-ui);--font-head:var(--font-ui);
+    --r-card:18px;--r-btn:12px;--font-ui:"Barlow",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--font-num:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;--font-head:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;
     --cc-bg:#05070a;--cc-panel:rgba(10,16,18,.88);--cc-line:#16302d;--cc-line2:#1d2c2b;--cc-deep:#071010;--cc-kv:#081110;
     --cc-acc:#2de0c0;--cc-acc2:#4fb8a8;--cc-acc3:#1a8f7d;--cc-accl:#9fe9dc;--cc-text:#e6f1ef;--cc-hi:#ffffff;--cc-mid:#8aa8a4;--cc-dim:#5f7a78;
-    --cc-grid:rgba(0,255,200,.025);--cc-glow:0 0 24px rgba(45,224,192,.25);--cc-fuel:#2de0c0;--cc-bar:linear-gradient(90deg,#1a8f7d,#2de0c0);--cc-barglow:0 0 10px #2de0c0;--cc-r:10px;--cc-num:ui-monospace,"SF Mono",Menlo,monospace;--cc-corner:1;--cc-scan:1;
+    --cc-grid:rgba(0,255,200,.025);--cc-glow:0 0 24px rgba(45,224,192,.25);--cc-fuel:#2de0c0;--cc-bar:linear-gradient(90deg,#1a8f7d,#2de0c0);--cc-barglow:0 0 10px #2de0c0;--cc-r:10px;--cc-num:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;--cc-corner:1;--cc-scan:1;--livery:none;
   }
   [data-skin="sunlight"]{
     --bg:#eef1f5;--panel:#ffffff;--panel2:#e6eaf0;--line:#c3ccd8;--text:#05080f;--muted:#465263;
     --red:#d1001f;--green:#007a2b;--amber:#b35a00;--blue:#0050c8;--yellow:#f2c200;--info:#0047b3;
     --btn:#dde3eb;--bar:rgba(255,255,255,.96);--brand:#d1001f;--go-ink:#ffffff;
-    --r-card:14px;--r-btn:12px;--font-num:-apple-system,"SF Pro Display",BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    --r-card:14px;--r-btn:12px;--font-num:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;
     --cc-bg:#e9edf2;--cc-panel:#ffffff;--cc-line:#c3ccd8;--cc-line2:#d3dae4;--cc-deep:#eef1f5;--cc-kv:#f4f6f9;
     --cc-acc:#0050c8;--cc-acc2:#0050c8;--cc-acc3:#0050c8;--cc-accl:#05080f;--cc-text:#05080f;--cc-hi:#000000;--cc-mid:#3b4655;--cc-dim:#5b6675;
-    --cc-grid:transparent;--cc-glow:none;--cc-r:12px;--cc-fuel:#0050c8;--cc-bar:#0050c8;--cc-barglow:none;--cc-num:-apple-system,"SF Pro Display",BlinkMacSystemFont,sans-serif;
+    --cc-grid:transparent;--cc-glow:none;--cc-r:12px;--cc-fuel:#0050c8;--cc-bar:#0050c8;--livery:none;--cc-barglow:none;--cc-num:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;
   }
   [data-skin="tower"]{
     --bg:#000000;--panel:#111111;--panel2:#060606;--line:#2b2b2b;--text:#f4f4f4;--muted:#9a9a9a;
@@ -298,25 +307,81 @@
     --cc-acc:#c4261d;--cc-acc2:#14233a;--cc-acc3:#1d4fa0;--cc-accl:#14233a;--cc-text:#14233a;--cc-hi:#14233a;--cc-mid:#3d4e63;--cc-dim:#5f6f82;
     --cc-grid:rgba(29,79,160,.08);--cc-glow:none;--cc-r:2px;--cc-fuel:#1d4fa0;--cc-bar:#1d4fa0;--cc-barglow:none;--cc-num:"Avenir Next Condensed","Avenir Next","DIN Alternate",sans-serif;
   }
+  /* F1-team-inspired skins: team colours go on chrome (brand, panel corners, headers, bars, the livery stripe).
+     Status colours (red/amber/green/yellow) are the same in every F1 skin, so red still only means danger. */
+  [data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]{
+    --red:#ff3b30;--green:#30d158;--amber:#ffb340;--blue:#0a84ff;--yellow:#ffd60a;--info:#8cc4ff;--go-ink:#002a0c;
+    --r-card:8px;--r-btn:8px;--cc-r:6px;
+    --font-ui:"Barlow",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;--font-num:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;--font-head:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;--cc-num:"Barlow Condensed","Barlow",-apple-system,"Segoe UI",Roboto,sans-serif;--cc-text:#f2f4f6;--cc-hi:#ffffff;--cc-grid:transparent;
+  }
+  [data-skin="ferrari"]{
+    --bg:#0f0909;--panel:#1b1111;--panel2:#130b0b;--line:#3b2020;--text:#f7eeee;--muted:#b09a9a;
+    --btn:#271717;--bar:rgba(15,9,9,.94);--brand:#ff2800;
+    --cc-bg:#0b0606;--cc-panel:rgba(27,14,14,.92);--cc-line:#45191a;--cc-line2:#331818;--cc-deep:#130808;--cc-kv:#180c0c;
+    --cc-acc:#ff2800;--cc-acc2:#ffd400;--cc-acc3:#a31400;--cc-accl:#ffd8cf;--cc-mid:#bfa3a3;--cc-dim:#8c7070;
+    --cc-glow:0 0 24px rgba(255,40,0,.28);--cc-fuel:#ffd400;--cc-bar:linear-gradient(90deg,#d41c00,#ff2800);--cc-barglow:0 0 10px rgba(255,40,0,.6);
+    --livery:linear-gradient(90deg,#ff2800 0 78%,#ffd400 78% 90%,#ffffff 90%);
+  }
+  [data-skin="mclaren"]{
+    --bg:#111214;--panel:#1c1d20;--panel2:#141518;--line:#2f3136;--text:#f4f4f5;--muted:#9a9ca3;
+    --btn:#25272b;--bar:rgba(17,18,20,.94);--brand:#ff8000;
+    --cc-bg:#0c0d0f;--cc-panel:rgba(28,29,32,.92);--cc-line:#3a2a19;--cc-line2:#2a2b30;--cc-deep:#101114;--cc-kv:#15161a;
+    --cc-acc:#ff8000;--cc-acc2:#ff8000;--cc-acc3:#47c7fc;--cc-accl:#ffc58a;--cc-mid:#a3a6ad;--cc-dim:#767981;
+    --cc-glow:0 0 24px rgba(255,128,0,.25);--cc-fuel:#47c7fc;--cc-bar:linear-gradient(90deg,#1e9ad6,#47c7fc);--cc-barglow:0 0 10px rgba(71,199,252,.6);
+    --livery:linear-gradient(90deg,#ff8000 0 80%,#47c7fc 80%);
+  }
+  [data-skin="mercedes"]{
+    --bg:#060707;--panel:#131616;--panel2:#0b0d0d;--line:#2a3030;--text:#eef2f2;--muted:#97a3a3;
+    --btn:#1c2121;--bar:rgba(6,7,7,.94);--brand:#00d2be;
+    --cc-bg:#040505;--cc-panel:rgba(19,22,22,.92);--cc-line:#24302f;--cc-line2:#1e2424;--cc-deep:#090b0b;--cc-kv:#0d1010;
+    --cc-acc:#00d2be;--cc-acc2:#c6cccc;--cc-acc3:#00a19c;--cc-accl:#dfe5e5;--cc-mid:#9aa6a6;--cc-dim:#6c7777;
+    --cc-glow:0 0 22px rgba(0,210,190,.22);--cc-fuel:#00d2be;--cc-bar:linear-gradient(90deg,#8d9595,#00d2be);--cc-barglow:0 0 10px rgba(0,210,190,.5);
+    --livery:linear-gradient(90deg,#c6cccc 0 70%,#00d2be 70%);
+  }
+  [data-skin="redbull"]{
+    --bg:#0a1128;--panel:#121c3d;--panel2:#0d1532;--line:#26346a;--text:#eef1fb;--muted:#99a3c7;
+    --btn:#1a2550;--bar:rgba(10,17,40,.94);--brand:#ffc906;
+    --cc-bg:#070d22;--cc-panel:rgba(18,28,61,.92);--cc-line:#2a3a78;--cc-line2:#1f2b5c;--cc-deep:#0a1230;--cc-kv:#0e1738;
+    --cc-acc:#e8174b;--cc-acc2:#ffc906;--cc-acc3:#3d6bff;--cc-accl:#ffe58a;--cc-mid:#a6afd3;--cc-dim:#7480ad;
+    --cc-glow:0 0 22px rgba(232,23,75,.25);--cc-fuel:#3d6bff;--cc-bar:linear-gradient(90deg,#2a4fe0,#5c84ff);--cc-barglow:0 0 10px rgba(61,107,255,.6);
+    --livery:linear-gradient(90deg,#1e41ff 0 62%,#e8174b 62% 84%,#ffc906 84%);
+  }
+  [data-skin="aston"]{
+    --bg:#03201b;--panel:#082e27;--panel2:#05261f;--line:#145246;--text:#eef6f3;--muted:#93b5ab;
+    --btn:#0c3a31;--bar:rgba(3,32,27,.94);--brand:#cedc00;
+    --cc-bg:#021813;--cc-panel:rgba(8,46,39,.92);--cc-line:#1a5c4f;--cc-line2:#124338;--cc-deep:#03201b;--cc-kv:#062720;
+    --cc-acc:#cedc00;--cc-acc2:#cedc00;--cc-acc3:#00796b;--cc-accl:#e9f08a;--cc-mid:#9dbcb3;--cc-dim:#6c8f85;
+    --cc-glow:0 0 22px rgba(206,220,0,.2);--cc-fuel:#cedc00;--cc-bar:linear-gradient(90deg,#8f9900,#cedc00);--cc-barglow:0 0 10px rgba(206,220,0,.45);
+    --livery:linear-gradient(90deg,#00665a 0 80%,#cedc00 80%);
+  }
+  [data-skin="williams"]{
+    --bg:#03112b;--panel:#0b1e44;--panel2:#071737;--line:#1d3870;--text:#eef4fc;--muted:#97abcc;
+    --btn:#12295a;--bar:rgba(3,17,43,.94);--brand:#37bef2;
+    --cc-bg:#020c21;--cc-panel:rgba(11,30,68,.92);--cc-line:#21427f;--cc-line2:#183263;--cc-deep:#04122e;--cc-kv:#081a3d;
+    --cc-acc:#00a0de;--cc-acc2:#64c8f5;--cc-acc3:#00a0de;--cc-accl:#bfe7fb;--cc-mid:#a3b6d6;--cc-dim:#7186ab;
+    --cc-glow:0 0 22px rgba(0,160,222,.28);--cc-fuel:#00a0de;--cc-bar:linear-gradient(90deg,#0072b0,#37bef2);--cc-barglow:0 0 10px rgba(0,160,222,.6);
+    --livery:linear-gradient(90deg,#00a0de 0 72%,#ffffff 72% 82%,#041e42 82%);
+  }
+  /* livery stripe (only skins that set --livery show it) */
+  .appbar::after,.cc-top::after,.skin-tile::before{content:"";position:absolute;left:0;right:0;height:3px;background:var(--livery);pointer-events:none}
+  .appbar::after{bottom:-1px;height:4px}
+  .cc-top{position:relative}.cc-top::after{bottom:-5px;border-radius:2px}
+  .skin-tile::before{top:0;height:5px}
   /* skin-specific character */
-  [data-skin="sunlight"] #cc::after,[data-skin="tower"] #cc::after,[data-skin="sheet"] #cc::after{display:none}
-  [data-skin="sunlight"] .cc-p::before,[data-skin="sunlight"] .cc-p::after,[data-skin="sheet"] .cc-p::before,[data-skin="sheet"] .cc-p::after{display:none}
+  [data-skin="sunlight"] #cc::after{display:none}
+  [data-skin="sunlight"] .cc-p::before,[data-skin="sunlight"] .cc-p::after{display:none}
   [data-skin="sunlight"] .cc-p,[data-skin="sunlight"] .card{box-shadow:0 1px 2px rgba(5,8,15,.08)}
-  [data-skin="sunlight"] .cc-h i,[data-skin="sheet"] .cc-h i{box-shadow:none}
+  [data-skin="sunlight"] .cc-h i{box-shadow:none}
   [data-skin="sunlight"] .clock,[data-skin="sunlight"] .timer,[data-skin="sunlight"] .cc-big{font-weight:800;letter-spacing:-2px}
-  [data-skin="tower"] .cc-p::before,[data-skin="tower"] .cc-p::after{border-color:#ffb000;opacity:1;width:8px;height:8px;border-radius:0}
-  [data-skin="tower"] .clock,[data-skin="tower"] .timer,[data-skin="tower"] .cc-big,[data-skin="tower"] .cc-mid{color:#ffc21a;text-shadow:0 0 18px rgba(255,176,0,.35);letter-spacing:1px;font-weight:700}
-  [data-skin="tower"] .card h2,[data-skin="tower"] .cc-h{letter-spacing:2.5px;font-size:13px}
-  [data-skin="tower"] .cc-drv,[data-skin="tower"] .driver .n{text-transform:uppercase;letter-spacing:1px}
-  [data-skin="tower"] .pill,[data-skin="tower"] .cc-tag,[data-skin="tower"] .chipbtn,[data-skin="tower"] .big,[data-skin="tower"] .cc-go{border-radius:3px}
-  [data-skin="tower"] .big,[data-skin="tower"] .cc-go{font-family:var(--font-head);letter-spacing:3px}
-  [data-skin="sheet"] body,html[data-skin="sheet"] body{background-image:linear-gradient(rgba(29,79,160,.09) 1px,transparent 1px),linear-gradient(90deg,rgba(29,79,160,.09) 1px,transparent 1px);background-size:22px 22px}
-  [data-skin="sheet"] .card,[data-skin="sheet"] .cc-p{border:1.5px solid var(--text);box-shadow:3px 3px 0 rgba(20,35,58,.14)}
-  [data-skin="sheet"] .card h2,[data-skin="sheet"] .cc-h{text-transform:none;letter-spacing:0;font-size:15px;font-style:italic;color:var(--text);font-weight:600}
-  [data-skin="sheet"] .clock,[data-skin="sheet"] .cc-big,[data-skin="sheet"] .timer{font-weight:700;letter-spacing:-1px}
-  [data-skin="sheet"] .cc-drv,[data-skin="sheet"] .driver .n{font-family:var(--font-head);font-style:italic}
-  [data-skin="sheet"] tr.cur td,[data-skin="sheet"] .cc-tag.d{background:linear-gradient(transparent 35%,rgba(255,225,77,.85) 35%,rgba(255,225,77,.85) 85%,transparent 85%);color:var(--text)}
-  [data-skin="sheet"] .big,[data-skin="sheet"] .cc-go{box-shadow:4px 4px 0 rgba(20,35,58,.25)}
+  /* F1 TV-graphics character: heavy italic names and headings, square-ish accent corners, no scanlines */
+  :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) #cc::after{display:none}
+  :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .cc-p::before,
+  :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .cc-p::after{opacity:1;border-radius:0;width:12px;height:12px}
+  :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) :is(.cc-drv,.driver .n){text-transform:uppercase;font-style:italic;font-weight:900;letter-spacing:0}
+  :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) :is(.card h2,.cc-h,.big,.cc-go,.cc-flag){font-style:italic}
+  :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) :is(.clock,.timer,.cc-big,.cc-mid){font-weight:800;letter-spacing:-1.5px}
+  :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .card{border-top:3px solid var(--cc-acc)}
+  :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .card h2{color:var(--cc-acc2);font-weight:800}
   /* skin picker tiles */
   .skins{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .skin-tile{background:var(--bg);color:var(--text);border:2px solid var(--line);border-radius:var(--r-card);padding:12px;cursor:pointer;text-align:left;font:inherit;font-family:var(--font-ui);position:relative;overflow:hidden}
@@ -380,7 +445,7 @@
         <div class="cc-ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" style="stroke:var(--cc-line2)" stroke-width="8"/><circle id="ccRingArc" cx="50" cy="50" r="44" fill="none" stroke="#ff3b30" stroke-width="8" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="276.5"/></svg>
           <div class="t"><div class="cc-mid mono" id="ccPitT">0:00</div><div class="cc-lbl" id="ccPitMin"></div></div></div>
         <div class="cc-lbl">Stop type</div><div class="cc-chips" id="ccKinds"></div>
-        <div id="ccJugBox"><div class="cc-lbl">Fuel added <span id="ccJugPlan" style="color:#ffb340"></span></div><div class="cc-chips" id="ccJugs"></div></div>
+        <div id="ccJugBox"><div class="cc-lbl">Fuel added <span id="ccJugPlan" style="color:var(--amber)"></span></div><div class="cc-chips" id="ccJugs"></div></div>
         <div class="cc-lbl">Next driver</div><div class="cc-chips" id="ccDrvs"></div>
       </div>
       <div class="cc-ctl">
@@ -427,7 +492,7 @@
 
 <div class="appbar">
   <h1>PIT<b>DOG</b><span class="ser" id="serName"></span></h1>
-  <button id="ccOpen" style="display:none;background:#10201e;color:#2de0c0;border:1px solid #1d3a36;border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:800;letter-spacing:1px;cursor:pointer">⊞ COMMAND CENTER</button>
+  <button id="ccOpen" style="display:none;background:var(--cc-kv);color:var(--cc-acc);border:1px solid var(--cc-line);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:800;letter-spacing:1px;cursor:pointer">⊞ COMMAND CENTER</button>
   <span class="pill" id="statusPill">SETUP</span>
 </div>
 
@@ -1654,8 +1719,10 @@ $('labPlay').onclick=()=>startSim({cond:LAB.cond,speed:30,auto:false});
 
 /* ================= SKINS ================= */
 const SKINS=[{k:'night',t:'Night race',d:'Floodlit pit lane. The default.'},{k:'sunlight',t:'Sunlight',d:'Maximum contrast for the midday pit wall.'},
-  {k:'tower',t:'Timing tower',d:'Amber digits on black, like a scoring pylon.'},{k:'sheet',t:'Stint sheet',d:"The engineer's paper sheet: ink, red pencil, highlighter."}];
-const SKIN_BAR={night:'#0b0d11',sunlight:'#eef1f5',tower:'#000000',sheet:'#e7ece4'};
+  {k:'ferrari',t:'Rosso',d:'Ferrari: racing red, giallo, black.'},{k:'mclaren',t:'Papaya',d:'McLaren: papaya, anthracite, blue.'},
+  {k:'mercedes',t:'Silver Arrow',d:'Mercedes: black, silver, teal.'},{k:'redbull',t:'Midnight',d:'Red Bull: navy, red, yellow.'},
+  {k:'aston',t:'Racing Green',d:'Aston Martin: green and lime.'},{k:'williams',t:'Grove Blue',d:'Williams: navy, blue, white.'}];
+const SKIN_BAR={night:'#0b0d11',sunlight:'#eef1f5',ferrari:'#0f0909',mclaren:'#111214',mercedes:'#060707',redbull:'#0a1128',aston:'#03201b',williams:'#03112b'};
 function setSkin(k){ if(!SKINS.some(x=>x.k===k)) k='night'; document.documentElement.dataset.skin=k; store.set('pitdog_skin',k);
   const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content=SKIN_BAR[k]; renderSkins(); }
 function renderSkins(){ const cur=document.documentElement.dataset.skin||'night'; const box=$('skinTiles'); if(!box) return;
