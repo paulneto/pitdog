@@ -438,6 +438,23 @@
   :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .card{border-top:3px solid var(--cc-acc)}
   :is([data-skin="ferrari"],[data-skin="mclaren"],[data-skin="mercedes"],[data-skin="redbull"],[data-skin="aston"],[data-skin="williams"]) .card h2{color:var(--cc-acc2);font-weight:800}
   /* skin picker tiles */
+  /* help mode: a ? toggle; while on, tapping/hovering any [data-help] section explains it instead of acting */
+  .helpbtn{width:34px;height:34px;flex:none;border-radius:50%;border:1.5px solid var(--line);background:var(--btn);color:var(--text);font:inherit;font-weight:900;font-size:16px;cursor:pointer}
+  body.help-on .helpbtn,body.help-on #ccHelp{background:var(--text);color:var(--bg);border-color:var(--text)}
+  .helpbar{display:none;position:fixed;left:0;right:0;top:0;z-index:90;padding:calc(env(safe-area-inset-top) + 8px) 14px 8px;background:var(--text);color:var(--bg);font-weight:700;font-size:14px;align-items:center;gap:10px}
+  .helpbar button{margin-left:auto;flex:none;background:var(--bg);color:var(--text);border:0;border-radius:999px;padding:6px 14px;font:inherit;font-weight:800;cursor:pointer}
+  body.help-on .helpbar{display:flex}
+  body.help-on [data-help]{cursor:help}
+  .help-target{outline:3px solid var(--text)!important;outline-offset:2px;border-radius:6px}
+  .helpcard{display:none;position:fixed;z-index:91;left:50%;transform:translateX(-50%);bottom:calc(var(--tab) + env(safe-area-inset-bottom) + 10px);width:min(540px,calc(100vw - 20px));max-height:55vh;overflow:auto;
+    background:var(--panel);color:var(--text);border:2px solid var(--text);border-radius:var(--r-card);padding:14px 16px;box-shadow:0 12px 40px rgba(0,0,0,.45);font-size:14px;line-height:1.45}
+  body.cc-on .helpcard{bottom:16px}
+  .helpcard.on{display:block}
+  .helpcard h3{margin:0 0 8px;font-size:17px;display:flex;align-items:center;gap:8px}
+  .helpcard h3 button{margin-left:auto;background:none;border:0;color:var(--muted);font-size:20px;cursor:pointer}
+  .helpcard dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px}
+  .helpcard dt{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);padding-top:2px}
+  .helpcard dd{margin:0}
   /* skin picker: a list. Each row's preview chip renders in its own skin's tokens (data-skin on the chip). */
   .skinlist{display:flex;flex-direction:column;gap:6px}
   .skin-row{display:flex;align-items:center;gap:12px;width:100%;min-height:58px;padding:8px 12px;border-radius:var(--r-btn);border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;text-align:left;cursor:pointer}
@@ -457,6 +474,8 @@
   <span class="tr" id="simTruth"></span>
   <button id="simEnd">End</button>
 </div></div>
+<div class="helpbar" id="helpBar">Help mode · tap (or hover over) any section to see what it is. Buttons won’t do anything until you leave help. <button id="helpExit">Done</button></div>
+<div class="helpcard" id="helpCard" role="dialog" aria-live="polite"></div>
 <div class="sheet-bg" id="sheetBg"><div class="sheet"><div class="sheet-h"><b id="sheetT"></b><button id="sheetX">✕</button></div><div id="sheetB"></div><div class="sheet-f" id="sheetF"></div></div></div>
 
 <div id="cc">
@@ -464,6 +483,7 @@
     <div class="cc-brand">PIT<b>DOG</b><small>COMMAND CENTER</small></div>
     <div class="cc-flagbar" id="ccFlagBar"><div class="cc-flag n" id="ccFlag">PRE-RACE</div><div class="cc-topalert" id="ccTopAlert"></div></div>
     <div class="cc-wall mono" id="ccWall">--:--:--</div>
+    <button class="cc-tbtn" id="ccHelp" aria-pressed="false">HELP</button>
     <button class="cc-tbtn" id="ccSkin">SKIN</button>
     <button class="cc-tbtn" id="ccSetup">SETUP</button>
   </div>
@@ -551,6 +571,7 @@
   <h1>PIT<b>DOG</b></h1>
   <span class="aclock" id="raceClock">0:00:00</span>
   <button id="ccOpen" style="display:none;background:var(--cc-kv);color:var(--cc-acc);border:1px solid var(--cc-line);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:800;letter-spacing:1px;cursor:pointer">⊞ COMMAND CENTER</button>
+  <button class="helpbtn" id="helpBtn" aria-pressed="false" aria-label="Help mode">?</button>
   <span class="pill" id="statusPill">SETUP</span>
 </div>
 
@@ -1950,6 +1971,72 @@ function renderLabResults(){
 $('labRun').onclick=()=>labCompare();
 $('labExample').onclick=()=>{ if(!DB) return; S.drivers.forEach((d,i)=>{ const m=member(d.mid); if(m) Object.assign(m,EXAMPLE_PROF[i%EXAMPLE_PROF.length]); }); DB.team.exampleProfiles=true; hydrate(); dbSave(); update(); renderLab(); };
 $('labPlay').onclick=()=>startSim({cond:LAB.cond,speed:30,auto:false});
+
+/* ================= HELP MODE ================= */
+// One card per section: what it is, how to read it, what it means, what you can and can't do.
+// Keys are attached to elements by selector (HELP_AT below), so the markup stays clean.
+const HELP={
+  bigbtn:{t:'The big button',read:'It always shows the next thing to log: GREEN FLAG before the start, PIT IN on track, PIT OUT in the pits.',means:'Each tap writes one entry to the race log, with the time. Everything else (stints, fuel, alerts) is worked out from that log.',can:'Tap once at the moment it happens. A second tap within 1.5 s is ignored. Amber PIT OUT means the minimum stop time isn’t up yet.',cant:'It can’t see the car: if nobody taps, the app doesn’t know. Use UNDO for a wrong tap.'},
+  yellow:{t:'YELLOW',read:'Lit = a full-course yellow is logged.',means:'Under yellow the app shows “PIT NOW” if a stop is due soon (a cheap stop), and warns if this series closes the pits.',can:'Tap when race control throws the yellow, tap again when it clears.',cant:'It doesn’t come from race control. It’s whatever the crew taps.'},
+  red:{t:'RED',read:'Lit = a red flag is logged.',means:'Work in the pits must stop; PIT IN asks before logging; the timer keeps counting.',can:'Tap when the red comes out (it asks to confirm), tap again when it’s lifted.',cant:'It doesn’t stop the race clock: the race runs to scheduled time in most series.'},
+  undo:{t:'UNDO',read:'Removes the last entry in the race log, after asking.',means:'Use it for a mistaken tap (e.g. PIT IN when the car didn’t pit).',can:'Undo one entry at a time.',cant:'To correct a stop’s fuel, type or driver, use “Fix” on the “Logged” line instead.'},
+  strip:{t:'Status strip',read:'The most urgent thing is the big line; anything else is in the small chips under it. Red = act now, amber = soon, green = an opportunity, blue = information.',means:'BOX = bring the car in. “Logged: …” shows what PIT OUT just recorded.',can:'Tap “Fix” on a Logged line to correct the last stop.',cant:'Alerts are worked out from the plan and the log; they can’t see the track.'},
+  hero:{t:'Next stop',read:'The big number counts down to the planned stop, then who goes out next. Amber in the last 3 minutes, red with a minus sign when overdue. “PIT NOW” under a yellow means a stop is due soon anyway, so take it now.',means:'It’s the plan’s stop time, re-planned live from the log.',can:'Bring the car in when it hits zero, or earlier on a cheap yellow.',cant:'It can’t know about damage or a driver who needs to come in: you can always pit early.'},
+  stint:{t:'Stint bar and driver',read:'The bar fills through the planned stint: green, amber near the end, red past the limit. Below: who’s driving, time in the seat now and today.',means:'Series limits (e.g. 2:00 max) and each driver’s own max are checked against this.',can:'Change a driver’s max stint in Plan → Drivers this race.',cant:'It doesn’t know if drivers swapped without a stop being logged.'},
+  fuel:{t:'Fuel in tank (estimate)',read:'Fuel left, worked out from the last fill and the burn per lap. Quiet when fine; amber when range is under 10 minutes or won’t reach the planned stop; red on reserve.',means:'It’s an estimate, not a gauge. After a stop logged “filled to full” the estimate resets to a full tank.',can:'Keep it honest by logging fuel at PIT OUT and marking full fills.',cant:'It can’t read the real tank. The app plans with a safety margin until it has measured your burn.'},
+  laps:{t:'Laps (estimate)',read:'Laps in this stint, from time in the seat ÷ the planned lap time.',means:'Approximate: yellows and traffic aren’t counted.',can:'Use it as a rough guide.',cant:'It isn’t a timing feed.'},
+  pittimer:{t:'Pit stop timer',read:'Time since PIT IN. Red until the series minimum is served (plus 5 s margin), then green.',means:'Leaving before the minimum earns a penalty in most series.',can:'Pick the stop type: Fuel, Driver only, Fix or Black flag. Only some types have a minimum.',cant:'It isn’t the official timer: the pit marshal’s is.'},
+  jugs:{t:'Fuel added',read:'How many jugs went in, in half jugs. Starts at the planned amount.',means:'The app uses this to know what’s in the tank and to measure your burn.',can:'Use − / + to log what really went in. Set “Filled to full” if the tank was topped up.',cant:'Don’t guess high or low on purpose: the next plan depends on it.'},
+  full:{t:'Filled to full',read:'On = the tank was topped up to full at this stop.',means:'A full tank resets the estimate, and full-to-full stints are how the app measures your real burn.',can:'Switch it off if you stopped pouring before full.',cant:'“No fuel” can’t be a full tank, so it switches off by itself.'},
+  nextdrv:{t:'Next driver',read:'Who goes out at PIT OUT. Dimmed drivers are still resting (series rest rule), with time left.',means:'Picking someone else re-plans the rest of the race.',can:'Tap the driver who is actually getting in.',cant:'It doesn’t stop you picking a resting driver, but the plan will flag the rule break.'},
+  racestrip:{t:'Race clock',read:'Series and race name, wall-clock time, time to go and the checkered flag time, with a progress bar.',means:'Most series run to scheduled times; PCA counts from the green.',can:'Set times and length in Plan → Race.',cant:'The clock starts when GREEN is logged.'},
+  upnext:{t:'Up next',read:'The next three stints: driver, out and in times, and length.',means:'The plan as it stands now. It changes as the race is logged.',can:'Change the order or drivers in the Plan tab.',cant:''},
+  crew:{t:'Crew today',read:'Each driver: stints and time driven, time planned, and DRIVING / RESTING / READY.',means:'Resting counts down the series’ minimum rest between stints.',can:'',cant:''},
+  fuelcard:{t:'Fuel summary',read:'Fuel added so far, the measured burn per lap, and fuel still to add.',means:'Measured burn appears after the first full-to-full stint.',can:'Turn “Re-plan with measured burn” off to plan on your own estimate only.',cant:''},
+  clock:{t:'Race time',read:'Race time elapsed (or a countdown to the scheduled start).',means:'',can:'',cant:''},
+  pill:{t:'Status',read:'PRE-RACE, ON TRACK, IN PITS or FINISHED.',means:'Comes from the race log.',can:'',cant:''},
+  tabs:{t:'Tabs',read:'Race (pit wall), Team (people, cars, races, simulator), Plan (stints and rules), Lab (strategy comparison), Log (history, look, export).',means:'',can:'',cant:''},
+  team:{t:'Team',read:'Your team: people, cars and races, saved on this device.',means:'',can:'Add people and cars, start a race, run a simulated race.',cant:'Until team sync is on, each device keeps its own copy.'},
+  plan:{t:'Plan',read:'KPIs, the stint timeline, rule checks, the stint table, and the race, car and driver settings.',means:'Green check = the plan is legal under the series rules. Red = a rule break to fix.',can:'Change anything here; the plan updates instantly.',cant:'Rules come from each series’ published rulebook. Check the event supplementals.'},
+  lab:{t:'Strategy Lab',read:'Compares strategies over many simulated races with the same yellows and reds.',means:'The simulated crew follows the app exactly, so “ran dry” means the plan was wrong.',can:'Edit driver profiles, pick conditions, run, then “Use this plan” or “Watch one”.',cant:'Results are only as good as the driver profiles.'},
+  log:{t:'Log',read:'The race log, finishing a race into team history, the look (skin), sharing, export and reset.',means:'',can:'Export all data to a file, restore the automatic backup, change the look.',cant:'Reset everything can’t be undone except from the backup or an export.'},
+  cc_flag:{t:'Flag bar',read:'GREEN, YELLOW, RED or CHECKERED, as logged by the crew. The most urgent alert sits next to it.',means:'It isn’t race control: it shows what has been tapped.',can:'Use YELLOW / RED on the car panel to change it.',cant:''},
+  cc_clock:{t:'Race clock',read:'Elapsed race time, time to go, checkered time and stops made / planned.',means:'',can:'',cant:''},
+  cc_car:{t:'Car',read:'On track: driver, stint bar and the countdown to the next stop. In the pits: the stop timer ring, stop type, fuel and next driver.',means:'Same as the phone’s race screen, sized for the wall.',can:'Use the big button and YELLOW / RED / UNDO here.',cant:''},
+  cc_crew:{t:'Crew rotation',read:'Every driver: time driven / planned, next stint time, and DRIVING / ON DECK / REST / READY.',means:'ON DECK = gear up, they’re next.',can:'',cant:''},
+  cc_fuel:{t:'Fuel and weather',read:'Tank gauge (dashed line = reserve), estimated fuel, range, next fill and race total. Below: track weather and rain chance.',means:'All fuel figures are estimates from the log.',can:'Pick your track in Setup → Race for weather.',cant:'Weather needs signal; offline it shows the last reading and its age.'},
+  cc_stops:{t:'Next stops',read:'The next four stops: time, countdown, fuel to add and who goes out. Extra alerts sit above.',means:'',can:'',cant:''},
+  cc_tl:{t:'Race timeline',read:'Every stint as a coloured bar, stops hatched, yellows and reds marked on top, and a white line for now.',means:'Faded bars are stints already driven.',can:'',cant:''},
+};
+const HELP_AT={'#bigBtn':'bigbtn','#ccGo':'bigbtn','#yBtn':'yellow','#ccY':'yellow','#rBtn':'red','#ccR':'red','#undoBtn':'undo','#ccU':'undo','#banners':'strip',
+  '#trackCard':'hero','#nextStop':'hero','#stintBar':'stint','#trackCard .driver':'stint','#fuelFact':'fuel','#lapsDone':'laps','#trackCard .fact:nth-child(2)':'laps',
+  '#pitTimer':'pittimer','#pitTarget':'pittimer','#kindChips':'pittimer','#jugChips':'jugs','#fullTgl':'full','#nextDrv':'nextdrv','.rstrip':'racestrip',
+  '#upNextBody':'upnext','#teamList':'crew','#fuelUsed':'fuelcard','#burnMeas':'fuelcard','#fuelNeed':'fuelcard','#raceClock':'clock','#statusPill':'pill','.tabbar':'tabs',
+  '#tab-team':'team','#tab-plan':'plan','#tab-lab':'lab','#tab-log':'log',
+  '.cc-top .cc-flagbar':'cc_flag','#ccClock':'cc_clock','#ccCar':'cc_car','#ccRoster':'cc_crew','#ccTank':'cc_fuel','#ccWx':'cc_fuel','#ccFuel':'cc_fuel','#ccStopsList':'cc_stops','#ccAlerts':'cc_stops','#ccTl':'cc_tl'};
+let HELP_ON=false, HELP_AT_T=0, HELP_EL=null;
+function helpTag(){ Object.entries(HELP_AT).forEach(([sel,k])=>document.querySelectorAll(sel).forEach(e=>{ if(!e.dataset.help) e.dataset.help=k; })); }
+function setHelp(on){ HELP_ON=on; HELP_AT_T=Date.now(); document.body.classList.toggle('help-on',on); $('helpBtn').setAttribute('aria-pressed',on); $('ccHelp').setAttribute('aria-pressed',on);
+  if(on) helpTag(); else { $('helpCard').classList.remove('on'); if(HELP_EL) HELP_EL.classList.remove('help-target'); HELP_EL=null; } }
+function showHelp(el){ const h=HELP[el.dataset.help]; if(!h) return; HELP_AT_T=Date.now();
+  if(HELP_EL) HELP_EL.classList.remove('help-target'); HELP_EL=el; el.classList.add('help-target');
+  const row=(l,v)=>v?`<dt>${l}</dt><dd>${v}</dd>`:'';
+  $('helpCard').innerHTML=`<h3>${ic('clock')} ${h.t}<button aria-label="Close help card" data-helpclose="1">✕</button></h3><dl>${row('How to read',h.read)}${row('What it means',h.means)}${row('You can',h.can)}${row('You can’t',h.cant)}</dl>`;
+  $('helpCard').classList.add('on'); }
+// capture phase: in help mode a tap explains instead of acting (PIT IN must never fire from help mode)
+document.addEventListener('click',e=>{ if(!HELP_ON) return;
+  if(e.target.closest('#helpBtn,#ccHelp,#helpExit')) return;
+  const tabBtn=e.target.closest('.tabbar button');   // moving between tabs is harmless: let it through, and explain the tab
+  if(tabBtn){ setTimeout(()=>{ helpTag(); const sec=$('tab-'+tabBtn.dataset.tab); if(sec&&sec.dataset.help) showHelp(sec); },0); return; }
+  e.preventDefault(); e.stopPropagation();
+  if(e.target.closest('[data-helpclose]')){ $('helpCard').classList.remove('on'); return; }
+  if(e.target.closest('#helpCard')) return;
+  const el=e.target.closest('[data-help]'); if(el) showHelp(el); },true);
+// hover explains too, on devices that have hover (laptops); touch screens use taps
+document.addEventListener('mouseover',e=>{ if(!HELP_ON||!matchMedia('(hover:hover)').matches) return; const el=e.target.closest('[data-help]'); if(el&&el!==HELP_EL) showHelp(el); });
+$('helpBtn').onclick=()=>setHelp(!HELP_ON); $('ccHelp').onclick=()=>setHelp(!HELP_ON); $('helpExit').onclick=()=>setHelp(false);
+// never left on by accident: help switches itself off after 3 minutes without use
+setInterval(()=>{ if(HELP_ON&&Date.now()-HELP_AT_T>180000) setHelp(false); },5000);
 
 /* ================= SKINS ================= */
 const SKINS=[{k:'night',t:'Night race',d:'Floodlit pit lane. The default.'},{k:'sunlight',t:'Sunlight',d:'Maximum contrast for the midday pit wall.'},
