@@ -1118,7 +1118,7 @@ function update(){
 let wake=null; async function keepAwake(){ try{ if('wakeLock' in navigator && document.visibilityState==='visible') wake=await navigator.wakeLock.request('screen'); }catch(e){} }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'){ keepAwake(); update(); } });
 /* ===================== COMMAND CENTER ===================== */
-const TRACKS={none:['No weather',null,null],roadamerica:['Road America',43.797,-87.989],glen:['Watkins Glen',42.336,-76.927],vir:['VIR',36.568,-79.206],ctmp:['CTMP (Mosport)',44.050,-78.676],
+const TRACKS={none:['No weather',null,null],roadamerica:['Road America',43.797,-87.989],glen:['Watkins Glen',42.336,-76.927],vir:['VIR',36.568,-79.206],ctmp:['CTMP (Mosport)',44.050,-78.676],calabogie:['Calabogie',45.3028,-76.6722],shannonville:['Shannonville',44.2254,-77.1600],
   thunderhill:['Thunderhill',39.539,-122.331],roadatlanta:['Road Atlanta',34.146,-83.815],barber:['Barber',33.532,-86.619],sebring:['Sebring',27.455,-81.348],midohio:['Mid-Ohio',40.689,-82.636],
   summit:['Summit Point',39.236,-77.973],nola:['NOLA Motorsports',29.876,-90.025],amp:['Atlanta Motorsports Park',34.432,-84.176],cota:['COTA',30.133,-97.641],sonoma:['Sonoma',38.161,-122.455],
   laguna:['Laguna Seca',36.584,-121.753],ncm:['NCM Motorsports Park',37.030,-86.370],estoril:['Estoril',38.751,-9.394],custom:['Custom (lat/lon)',null,null]};
