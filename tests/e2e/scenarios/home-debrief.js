@@ -42,6 +42,13 @@ __run(() => {
   expect(document.querySelectorAll('#homeBody [data-prep]').length === 6 && /jug/.test(H), 'Home: prep checklist from the plan (fuel, jugs, first driver…)');
   tap('#homeBody [data-prep="fuel"]');
   expect(nr.prep.fuel === true && /1\/6/.test(txt('homeBody')), 'ticking a prep item is saved');
+  // this device: no offline copy in the test browser, so it's flagged with the fix; once saved, it reads ready
+  SND.on = true; DEVOK.off = false; renderHome();
+  expect($('devCard') && /Works with no signal/.test(txt('devCard')) && /1 to fix/i.test(txt('devCard')) && /once with signal/.test(txt('devCard')), 'Home: device check flags a missing offline copy, with the fix: ' + ($('devCard') ? txt('devCard') : 'no card'));
+  DEVOK.off = true; renderHome();
+  expect(/ready/i.test(txt('devCard')) && !/to fix/i.test(txt('devCard')), 'Home: device check reads ready once everything is in place');
+  SND.on = false; renderHome();
+  expect(/Sound alerts on/.test(txt('devCard')) && /Menu/.test(txt('devCard')), 'device check: sound off is flagged');
   expect(/Last race/i.test(H) && document.getElementById('hDebrief'), 'Home: last race with a link to its debrief');
   click('hDebrief'); expect($('tab-debrief').classList.contains('on') && /Fuel man was slow/.test($('dbNotes').value), 'Home opens the last debrief');
   show('home'); renderHome();

@@ -27,4 +27,7 @@ __run(() => {
   // the simulator stays quiet
   SND.on = true; startSim({ speed: 0 }); SND.log = []; simStep(200, true); tick();
   expect(!SND.log.length, 'no tones in the simulator'); endSim(true);
+  // iOS 17+: the audio session API replaces the silent clip (no lock-screen player)
+  try { Object.defineProperty(navigator, 'audioSession', { value: { type: 'auto' }, configurable: true }); } catch (e) {}
+  if (navigator.audioSession) { expect(audioSess(true) && navigator.audioSession.type === 'playback', 'audio session set to playback'); audioSess(false); expect(navigator.audioSession.type === 'auto', 'audio session back to auto when muted'); }
 });
