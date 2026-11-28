@@ -1007,7 +1007,11 @@ let SAVE_FAIL=false, OTHER_TAB=false;
 const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},
   set(k,v){ try{ localStorage.setItem(k,v); if(k==='pitdog_db') SAVE_FAIL=false; return true; }catch(e){ if(k==='pitdog_db') SAVE_FAIL=true; return false; } }};
 /* a copy of the whole database before anything destructive (clear log, reset, import), restorable from the Log tab */
-function backupDB(why){ if(!DB||SIM.on) return; try{ localStorage.setItem('pitdog_backup',JSON.stringify({at:Date.now(),why,db:DB})); }catch(e){} }
+// the last five copies of this device's data, taken before anything risky (join, abandon, reset, import, restore)
+function backups(){ try{ const a=JSON.parse(localStorage.getItem('pitdog_backups')||'null'); if(Array.isArray(a)) return a.filter(b=>b&&b.db); }catch(e){}
+  try{ const b=JSON.parse(localStorage.getItem('pitdog_backup')||'null'); return b&&b.db?[b]:[]; }catch(e){ return []; } }
+function backupDB(why,db){ db=db||DB; if(!db||SIM.on) return; const b={at:Date.now(),why,db}; let list=[b,...backups()].slice(0,5);
+  for(;list.length;list.pop()){ try{ localStorage.setItem('pitdog_backups',JSON.stringify(list)); localStorage.setItem('pitdog_backup',JSON.stringify(b)); return; }catch(e){} } }
 const save=()=>dbSave();
 const $=id=>document.getElementById(id);
 const buzz=(p=30)=>{try{navigator.vibrate&&navigator.vibrate(p);}catch(e){}};
@@ -1520,12 +1524,18 @@ $('importFile').onchange=()=>{ const f=$('importFile').files[0]; if(!f) return; 
 function importDbObject(raw){ const db=normalizeDB(raw?JSON.parse(JSON.stringify(raw)):null); if(!db){ alert('That file isn\'t a PitDog export.'); return false; }
   if(!confirm(`Replace everything on this device with "${db.team.name}" (${db.races.length} race${db.races.length===1?'':'s'})? A backup of the current data is kept.`)) return false;
   dbSave(); backupDB('before import'); DB=db; if(!activeRace()) DB.activeRaceId=(DB.races.find(r=>r.status!=='done')||DB.races[0]||{}).id; reloadActive(); renderBackup(); show('team'); return true; }
-function renderBackup(){ const b=$('restoreBk'); let bk=null; try{ bk=JSON.parse(localStorage.getItem('pitdog_backup')||'null'); }catch(e){}
-  if(!bk||!bk.db){ b.style.display='none'; return; } b.style.display='';
-  b.innerHTML=`${ic('clock')} Restore backup (${new Date(bk.at).toLocaleString([], {weekday:'short',hour:'2-digit',minute:'2-digit'})}, ${esc(bk.why||'')})`;
-  b.onclick=()=>{ const db=normalizeDB(bk.db); if(!db) return; if(!confirm('Restore the backup? What\'s on this device now is kept as the new backup.')) return;
-    const cur=DB; if(cur){ dbSave(); try{ localStorage.setItem('pitdog_backup',JSON.stringify({at:Date.now(),why:'before restoring',db:cur})); }catch(e){} }
-    closeSheet(); DB=db; if(!activeRace()) DB.activeRaceId=(DB.races.find(r=>r.status!=='done')||DB.races[0]||{}).id; reloadActive(); renderBackup(); show('team'); }; }
+function renderBackup(){ const b=$('restoreBk'), list=backups();
+  if(!list.length){ b.style.display='none'; return; } b.style.display='';
+  b.innerHTML=`${ic('clock')} Restore a backup (${list.length})`;
+  b.onclick=()=>{ const L=backups(), when=t=>new Date(t).toLocaleString([], {weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    openSheet('Restore a backup',`<div class="sub" style="margin:0 0 10px">Copies of this device’s data, taken before anything risky. Restoring keeps what’s here now as a new backup.</div>`+
+      L.map((x,i)=>{ const n=(x.db.races||[]).filter(r=>!r.sim).length, live=(x.db.races||[]).reduce((a,r)=>a+((r.events||[]).length),0);
+        return `<button class="mrow" data-bk="${i}">${ic('clock')}<span><b>${esc(when(x.at))}</b><small>${esc(x.why||'')} · ${esc((x.db.team||{}).name||'')} · ${n} race${n===1?'':'s'} · ${live} log entries</small></span></button>`; }).join(''),
+      [{label:'Close',cls:'pri',fn:closeSheet}]);
+    $('sheetB').querySelectorAll('[data-bk]').forEach(el=>el.onclick=()=>{ const x=L[+el.dataset.bk], db=normalizeDB(JSON.parse(JSON.stringify(x.db))); if(!db) return;
+      if(!confirm('Restore the backup from '+when(x.at)+'? What’s on this device now is kept as a new backup.')) return;
+      if(DB){ dbSave(); backupDB('before restoring',JSON.parse(JSON.stringify(DB))); }
+      closeSheet(); DB=db; if(!activeRace()) DB.activeRaceId=(DB.races.find(r=>r.status!=='done')||DB.races[0]||{}).id; ensureActiveRace(); reloadActive(); renderBackup(); go('team'); }); }; }
 $('share').onclick=()=>{ const s=clone(S); delete s.events; delete s.archive; const url=location.href.split('#')[0]+'#'+btoa(unescape(encodeURIComponent(JSON.stringify(s))));
   const done=()=>{ $('share').textContent='Link copied ✓'; setTimeout(()=>$('share').textContent='Send plan to teammates',1500); };
   try{ if(navigator.share){ navigator.share({title:'PitDog plan',text:'Our stint plan',url}).catch(()=>{}); return; } navigator.clipboard.writeText(url).then(done,()=>prompt('Copy this link:',url)); }catch(e){ prompt('Copy this link:',url); } };
@@ -1916,7 +1926,7 @@ function finishOnboarding(){
 function seatByMember(){ const m={}; (DB?DB.races:[]).forEach(r=>{ if(r.summary&&r.summary.seat) for(const [k,v] of Object.entries(r.summary.seat)) m[k]=(m[k]||0)+v; }); return m; }
 function raceStatus(r){ if(SIM.on&&r.sim) return ['SIM','live']; if(r.status==='done') return ['DONE','done']; if(r.id===DB.activeRaceId) return [r.status==='live'?'LIVE':'ACTIVE',r.status==='live'?'live':'active']; return ['PLANNED','']; }
 function renderTeamTab(){
-  renderSyncCard(); renderSyncPill();
+  renderSyncCard(); renderSyncPill(); renderBackup();
   if(!DB){ $('teamTitle').textContent='No team yet'; $('teamSub').textContent=''; ['memberList','carList','raceList'].forEach(i=>$(i).innerHTML=''); return; }
   const T=DB.team, seat=seatByMember(), done=DB.races.filter(r=>r.status==='done');
   $('teamTitle').textContent=T.name;

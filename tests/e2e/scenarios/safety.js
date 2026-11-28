@@ -35,7 +35,7 @@ __run(() => {
   // clear the log → backup → restore
   const nEv = S.events.length; click('endRace');
   expect(S.events.length === 0 && $('restoreBk').style.display !== 'none', 'clearing the log keeps a restorable backup');
-  click('restoreBk');
+  click('restoreBk'); document.querySelector('#sheetB [data-bk]').click();     // newest backup
   expect(S.events.length === nEv, 'restore brings the cleared log back');
 
   // export → import round trip
@@ -43,7 +43,7 @@ __run(() => {
   const copy = JSON.parse(JSON.stringify(DB)); copy.team.name = 'Imported team';
   expect(importDbObject(copy) && DB.team.name === 'Imported team', 'import replaces the data (after confirming)');
   expect(!importDbObject({ hello: 'world' }) && DB.team.name === 'Imported team', 'a non-PitDog file is refused, nothing changes');
-  click('restoreBk'); expect(DB.team.name === 'Test team', 'the pre-import data is one tap away');
+  click('restoreBk'); document.querySelector('#sheetB [data-bk]').click(); expect(DB.team.name === 'Test team', 'the pre-import data is the newest backup');
 
   // another tab writing the same storage
   window.dispatchEvent(new StorageEvent('storage', { key: 'pitdog_db' }));
