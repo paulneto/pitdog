@@ -40,7 +40,7 @@ function run(st) {
     return { data: null, error: null };
   }
   if (st.op === 'delete') {
-    const del = T.filter(match).filter(r => st.table !== 'memberships' || r.role !== 'owner' || SRV.memberships.filter(m => m.team_id === r.team_id && m.role === 'owner').length > 1);
+    const del = T.filter(match).filter(r => st.table !== 'teams' || roleOf(r.id) === 'owner').filter(r => st.table !== 'memberships' || r.role !== 'owner' || SRV.memberships.filter(m => m.team_id === r.team_id && m.role === 'owner').length > 1);
     del.forEach(r => SRV.history.push({ team_id: r.team_id, user_id: r.user_id, last_role: r.role, removed: r.user_id !== SRV.user.id }));
     SRV[st.table] = T.filter(r => !del.includes(r)); return { data: del.map(out), error: null }; }
 }
@@ -268,6 +268,11 @@ setTimeout(async () => {
     become('A'); const evN = SRV.events.length; delete DB.team.sid; delete DB.team.role; dbSave(); hydrate();
     await putTeamOnline(); await wait(20);
     expect(SRV.teams.length === 2 && SYNC.status === 'live' && pendingCount() === 0 && SRV.events.length > evN, 'putting a team online again gives fresh ids: no clash, everything uploads');
+    // --- the owner deletes the team for everyone (typed name); a wrong name deletes nothing
+    window.prompt = () => 'nope'; await deleteTeam(); expect(SRV.teams.length === 2 && teamOnline(), 'a mistyped name deletes nothing');
+    window.prompt = () => DB.team.name; await deleteTeam();
+    expect(SRV.teams.length === 1 && !DB && txt('sheetT') === 'Welcome to PitDog', 'the owner deletes the shared team; this device starts over');
+    window.prompt = (m, d) => d;
   } catch (e) { R.fails.push('EXCEPTION ' + e.message + ' @ ' + (e.stack || '').split('\n')[1]); }
   const p = document.createElement('pre'); p.id = 'RESULT'; p.textContent = JSON.stringify(R); document.body.appendChild(p);
 }, 400);

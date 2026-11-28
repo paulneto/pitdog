@@ -141,6 +141,7 @@
   .mnet{text-align:right;flex:none}.mnet b{display:block;font-variant-numeric:tabular-nums}.mnet small{color:var(--muted);font-size:12px}
   .mshare{width:96px;min-height:44px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;text-align:right}
   .toast2{position:fixed;left:50%;bottom:calc(var(--tab) + 176px);transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;z-index:95;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}.toast2.on{opacity:1}
+  .wgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.wgrid .btn{min-height:64px;font-weight:800;font-size:15px;padding:10px;text-align:center}.wgrid .btn small{display:block;font-weight:500;font-size:12px;opacity:.75;margin-top:3px}.wgrid #wNow{grid-column:1/3;min-height:72px;font-size:20px;letter-spacing:1px}
   .btn.pri2{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:800}
   .code{font-family:var(--font-num);letter-spacing:3px}
   .radarbox{position:relative;border-radius:var(--r-card);overflow:hidden;border:1px solid var(--line);background:var(--panel2)}
@@ -1952,9 +1953,18 @@ const fld=(label,inner)=>`<label class="f">${label} ${inner}</label>`;
 let ONB=null;
 function startOnboarding(){
   SHEET_LOCK=true;
-  openSheet('Welcome to PitDog',`<div class="sub" style="margin:0 0 14px">The pit wall for endurance race teams: stints, fuel, drivers and race-day pit stops, on your phone and an iPad command center.</div>`,
-   [{label:'Try a simulated race',fn:()=>{ SHEET_LOCK=false; closeSheet(); startSim({demo:true}); }},{label:'Full team setup',fn:()=>{ ONB={step:1,name:'',series:'luckydog',car:{name:'',unit:'gal',cap:16.4,burn:0.38,lap:'2:20'},people:[]}; onbStep(); }},{label:'RACE NOW',cls:'pri',id:'wNow',fn:()=>raceNow()}]);
+  openSheet('Welcome to PitDog',`<div class="sub" style="margin:0 0 14px">The pit wall for endurance race teams: stints, fuel, drivers and race-day pit stops, on your phone and an iPad command center.</div>`+
+    `<div class="wgrid"><button class="btn pri2" id="wNow">RACE NOW<small>Drivers, hours, go</small></button><button class="btn" id="wSetup">Full team setup<small>Team, car, people</small></button><button class="btn" id="wSim">Try a simulated race<small>Nothing is saved</small></button><button class="btn" id="wHome">Skip: go to Home<small>Set things up later, or join your team</small></button></div>`,[]);
+  $('wNow').onclick=()=>raceNow();
+  $('wSetup').onclick=()=>{ ONB={step:1,name:'',series:'luckydog',car:{name:'',unit:'gal',cap:16.4,burn:0.38,lap:'2:20'},people:[]}; onbStep(); };
+  $('wSim').onclick=()=>{ SHEET_LOCK=false; closeSheet(); startSim({demo:true}); };
+  $('wHome').onclick=()=>skipToHome();
 }
+// Skip the welcome: an empty team (one default car, no people yet), straight to Home. Everything else (sign in and join a
+// team, Race now, add people) is reachable from there.
+function skipToHome(){ SHEET_LOCK=false; closeSheet();
+  DB={v:2,team:{id:uid(),name:'My team',series:'luckydog',members:[],cars:[Object.assign({id:uid(),name:'Car 1',measured:{}},clone(DEFAULT.car))]},races:[],activeRaceId:null,ledger:{items:[],voids:[],outbox:[]}};
+  ensureActiveRace(); reloadActive(); if(typeof applyView==='function') applyView(); go('home'); }
 function onbStep(){
   SHEET_LOCK=true; const st=`<div class="steps"><i class="on"></i><i class="${ONB.step>=2?'on':''}"></i><i class="${ONB.step>=3?'on':''}"></i></div>`;
   if(ONB.step===1) openSheet('Your team',st+fld('Team name',`<input id="oName" type="text" placeholder="Dawg Days" value="${esc(ONB.name)}">`)+fld('Series',`<select id="oSeries">${seriesOpts(ONB.series)}</select>`),
@@ -2005,13 +2015,28 @@ function renderTeamTab(){
     :'<div class="sub" style="margin:0">Save a setup you race often (series, hours, track, car, drivers, rules) and start it with one tap in Race now. Save one from the Race now sheet or Plan → Save as a preset.</div>';
   $('presetList').querySelectorAll('[data-delpr]').forEach(b=>b.onclick=()=>{ const x=ps.find(q=>q.id===b.dataset.delpr); if(!x||!confirm(`Delete the preset “${x.name}”?`)) return; T.presets=(DB.team.presets||[]).filter(q=>q.id!==x.id); T.presetDel=[...(T.presetDel||[]),x.id].slice(-200); dbSave(); pushSoon(); renderTeamTab(); });
 }
+// Delete the team. A local team: same as Start over (a backup is kept). An online team: only the owner, for everyone, typed
+// name to confirm; other devices then see "no longer a member" and keep their own copy.
+async function deleteTeam(){ if(!DB||SIM.on) return;
+  if(!teamOnline()){ closeSheet(); $('reset').click(); return; }
+  if(DB.team.role!=='owner'){ alert('Only the team’s owner can delete it for everyone.\n\nTo drop it from this device only: Team sync → Stop syncing here, then Menu → Start over on this device.'); return; }
+  const nm=prompt(`Delete “${DB.team.name}” for everyone? Every device loses the shared team: races, race logs and team money. This can’t be undone (this device keeps a backup).\n\nType the team name to confirm:`);
+  if(nm===null) return; if(nm.trim()!==DB.team.name){ alert('The name didn’t match. Nothing was deleted.'); return; }
+  const sb=sbClient(); if(!sb||!SYNC.user||navigator.onLine===false){ toast2('Deleting a shared team needs signal and sign-in.'); return; }
+  const {data,error}=await sb.from('teams').delete().eq('id',DB.team.sid).select();
+  if(error||!Array.isArray(data)||!data.length){ toast2('Couldn’t delete the team: '+(error?error.message:'not allowed')); return; }
+  stopSync(); dbSave(); backupDB('before deleting the team '+DB.team.name); try{ localStorage.removeItem('pitdog_db'); localStorage.removeItem('pitdog'); }catch(e){}
+  DB=null; S=clone(DEFAULT); SHEET_LOCK=false; closeSheet(); setSync('off'); bind(); update(); toast2('Team deleted'); startOnboarding(); }
 function memberSheet(id){
   dbSave();
   const m=id?member(id):{id:null,name:'',role:'driver',maxStint:(SERIES[DB.team.series].race||{}).maxStint||120,color:COLORS[DB.team.members.length%COLORS.length]};
   let color=m.color;
-  const inUse=id&&DB.races.some(r=>r.status!=='done'&&r.drivers.some(d=>d.mid===id));
+  const upcoming=id?DB.races.filter(r=>!r.sim&&r.status!=='done'&&r.drivers.some(d=>d.mid===id)):[];
   openSheet(id?'Edit person':'Add person',fld('Name',`<input id="mName" type="text" value="${esc(m.name)}">`)+fld('Role',`<select id="mRole">${Object.entries(ROLES).map(([k,v])=>`<option value="${k}" ${k===m.role?'selected':''}>${v}</option>`).join('')}</select>`)+fld('Default max stint (min)',`<input id="mMax" type="number" inputmode="numeric" step="5" value="${m.maxStint}">`)+`<div class="sub" style="margin:10px 0 4px">Colour</div><div class="colors" id="mColors">${COLORS.map(c=>`<button style="background:${c}" class="${c===color?'sel':''}" data-c="${c}"></button>`).join('')}</div>`,
-    [...(id&&!inUse?[{label:'Remove',cls:'dng',fn:()=>{ if(confirm('Remove '+m.name+' from the team?')){ DB.team.members=DB.team.members.filter(x=>x.id!==id); DB.races.forEach(r=>{ if(r.status!=='done') r.drivers=r.drivers.filter(d=>d.mid!==id); }); closeSheet(); reloadActive(); } }}]:[]),
+    [...(id?[{label:'Remove',cls:'dng',fn:()=>{
+        if(raceIsLive()&&activeRace().drivers.some(d=>d.mid===id)){ alert(m.name+' is in the race that’s running. Remove them after it finishes (or take them out of the rotation in Plan).'); return; }
+        if(!confirm('Remove '+m.name+' from the team?'+(upcoming.length?`\n\nThey’ll also come off ${upcoming.length} upcoming race${upcoming.length===1?'':'s'} (${upcoming.map(r=>r.rules.name||'Race').join(', ')}).`:'')+'\n\nFinished races and team money keep their name as a former member.')) return;
+        DB.team.members=DB.team.members.filter(x=>x.id!==id); DB.races.forEach(r=>{ if(r.status!=='done') r.drivers=r.drivers.filter(d=>d.mid!==id); }); closeSheet(); reloadActive(); pushSoon(); toast2(m.name+' removed'); }}]:[]),
      {label:'Save',cls:'pri',fn:()=>{ const n=val('mName').trim(); if(!n) return; Object.assign(m,{name:n,role:val('mRole'),maxStint:parseFloat(val('mMax'))||120,color}); if(!id){ m.id=uid(); DB.team.members.push(m); } closeSheet(); reloadActive(); }}]);
   $('mColors').querySelectorAll('button').forEach(b=>b.onclick=()=>{ color=b.dataset.c; $('mColors').querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===b)); });
 }
@@ -2027,7 +2052,7 @@ function carSheet(id){
 }
 function teamSheet(){
   openSheet('Team',fld('Team name',`<input id="tName" type="text" value="${esc(DB.team.name)}">`)+fld('Default series',`<select id="tSeries">${seriesOpts(DB.team.series)}</select>`),
-    [{label:'Save',cls:'pri',fn:()=>{ DB.team.name=val('tName').trim()||DB.team.name; DB.team.series=val('tSeries'); closeSheet(); dbSave(); update(); }}]);
+    [{label:'Delete team',cls:'dng',id:'tDelete',fn:()=>deleteTeam()},{label:'Save',cls:'pri',fn:()=>{ DB.team.name=val('tName').trim()||DB.team.name; DB.team.series=val('tSeries'); closeSheet(); dbSave(); update(); }}]);
 }
 function newRaceSheet(base){
   if(!planGate()) return; dbSave();
@@ -3229,13 +3254,14 @@ function renderMoney(){ const box=$('moneyBody'); if(!box||!DB) return; const L=
     box.querySelectorAll('[data-rule]').forEach(b=>b.onclick=()=>{ const m=b.dataset.rule, prev=ruleFor(scope); if((prev?prev.m:(scope==='team'?'equal':'inherit'))===m) return; saveRule(m,prev&&prev.sh); });
     if($('mRuleSave')) $('mRuleSave').onclick=()=>{ const sh={}; box.querySelectorAll('[data-rsh]').forEach(i=>{ const v=parseFloat(i.value); if(v>0) sh[i.dataset.rsh]=v; }); if(!Object.keys(sh).length){ alert('Give at least one person a share.'); return; } saveRule('shares',sh); toast2('Shares saved'); };
     if($('mCur')) $('mCur').onchange=()=>{ const c=str(val('mCur'),4); if(!c) return; const prev=ruleFor('team'); moneyAdd({k:'rule',scope:'team',m:prev?prev.m:'equal',sh:prev?prev.sh:{},cur:c}); renderMoney(); }; } }
-function expenseSheet(id,preset){ if(!canMoney()) return; dbSave(); const e=id?moneyItems().find(x=>x.id===id):null; if(id&&!e) return;
+function expenseSheet(id,preset){ if(!DB) return; const e=id?moneyItems().find(x=>x.id===id):null; if(id&&!e){ toast2('That entry was removed on another device.'); renderMoney(); return; }
+  if(!e&&!canMoney()){ toast2('Team money is read-only during a simulation.'); return; } if(!SIM.on) dbSave();
   const M=DB.team.members, ro=!!e&&!canEditMoney(e); if(!M.length){ alert('Add people to the team first (Team → People).'); return; }
   const d=e?clone(e):Object.assign({k:'exp',amt:0,date:todayISO(),cat:'parts',note:'',by:member(store.get('pitdog_paidby'))?store.get('pitdog_paidby'):M[0].id,race:MONEY_F.startsWith('race:')?MONEY_F.slice(5):null,car:MONEY_F.startsWith('car:')?MONEY_F.slice(4):null,split:{m:'auto',who:null,sh:{}}},preset||{});
   let who=d.split.who&&d.split.who.length?d.split.who.filter(x=>member(x)):M.map(m=>m.id);
   const forVal=d.race?'race:'+d.race:d.car?'car:'+d.car:'team', races=moneyRaces();
   const dis=ro?'disabled':'';
-  openSheet(e?(ro?'Expense':'Edit expense'):'Add expense',
+  openSheet(e?(ro?'Expense'+(SIM.on?' (read-only in the simulator)':''):'Edit expense'):'Add expense',
     fld('Amount ('+esc(curSym())+')',`<input id="xAmt" type="number" inputmode="decimal" step="0.01" min="0" value="${d.amt?(d.amt/100).toFixed(2):''}" ${dis}>`)+
     fld('What for',`<select id="xCat" ${dis}>${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${k===d.cat?'selected':''}>${v}</option>`).join('')}</select>`)+
     fld('Note',`<input id="xNote" type="text" maxlength="200" placeholder="e.g. brake pads, hotel 2 nights" value="${esc(d.note)}" ${dis}>`)+
@@ -3262,7 +3288,7 @@ function expenseSheet(id,preset){ if(!canMoney()) return; dbSave(); const e=id?m
   const preview=()=>{ const x=draft(); if(!(x.amt>0)||!x.split.who.length){ $('xPrev').textContent=''; return; } const s=splitOf(x);
     $('xPrev').textContent=Object.entries(s.parts).sort((a,b)=>b[1]-a[1]).map(([id,v])=>nameOf(id)+' '+money(v)).join(' · ')+(s.note?' ('+s.note+')':''); };
   fillSplit(); $('xFor').onchange=()=>{ fillSplit(); preview(); }; $('xSplit').onchange=drawWho; $('xAmt').oninput=preview; drawWho(); }
-function paySheet(id,sug){ if(!canMoney()) return; const p=id?moneyItems().find(x=>x.id===id):null; if(id&&!p) return; const M=DB.team.members, ro=!!p&&!canEditMoney(p), dis=ro?'disabled':'';
+function paySheet(id,sug){ if(!DB) return; const p=id?moneyItems().find(x=>x.id===id):null; if(id&&!p){ toast2('That entry was removed on another device.'); renderMoney(); return; } if(!p&&!canMoney()){ toast2('Team money is read-only during a simulation.'); return; } const M=DB.team.members, ro=!!p&&!canEditMoney(p), dis=ro?'disabled':'';
   const d=p||{from:sug?sug.from:M[0].id,to:sug?sug.to:(M[1]||M[0]).id,amt:sug?sug.amt:0,date:todayISO(),note:''};
   const sel=(idf,v)=>`<select id="${idf}" ${dis}>${M.map(m=>`<option value="${m.id}" ${m.id===v?'selected':''}>${esc(m.name)}</option>`).join('')}${member(v)?'':`<option value="${esc(v)}" selected>Former member</option>`}</select>`;
   openSheet(p?'Payment':'Record a payment',`<div class="sub" style="margin:0 0 8px">Money paid between teammates to settle up. It moves both balances.</div>`+fld('Who paid',sel('yFrom',d.from))+fld('To',sel('yTo',d.to))+

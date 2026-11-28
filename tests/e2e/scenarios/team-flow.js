@@ -5,7 +5,7 @@ __run(() => {
   expect(txt('sheetT') === 'Welcome to PitDog', 'welcome title: ' + txt('sheetT'));
   const btn = l => [...document.querySelectorAll('#sheetF button')].find(b => b.textContent.includes(l)).click();
   const setv = (id, v) => { document.getElementById(id).value = v; };
-  btn('Full team setup'); setv('oName', 'Dawg Days'); setv('oSeries', 'luckydog'); btn('Next');
+  click('wSetup'); setv('oName', 'Dawg Days'); setv('oSeries', 'luckydog'); btn('Next');
   setv('oCar', 'E30 #42'); setv('oCap', '16.4'); setv('oBurn', '0.38'); setv('oLap', '2:20'); btn('Next');
   ['Paul', 'Luc', 'Marco'].forEach(n => { setv('oPerson', n); click('oAdd'); });
   setv('oPerson', 'Sam'); setv('oRole', 'crew'); click('oAdd');
