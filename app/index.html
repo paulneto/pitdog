@@ -217,6 +217,7 @@
   .w-bad{background:color-mix(in srgb,var(--red) 12%,transparent);border:1px solid color-mix(in srgb,var(--red) 40%,transparent)}
   .w-warn{background:color-mix(in srgb,var(--amber) 10%,transparent);border:1px solid color-mix(in srgb,var(--amber) 35%,transparent)}
   .dvrow{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}.dvrow:last-child{border-bottom:0}.dvrow .i{flex:none;width:20px;height:20px;margin-top:1px}.dvrow.ok .i{color:var(--green)}.dvrow.no .i{color:var(--amber)}.dvrow small{display:block;color:var(--muted);margin-top:2px;font-size:13px}.dv-warn{color:var(--amber)}.dv-ok{color:var(--green)}
+  .mvsteps{margin:0;padding-left:20px;font-size:14px;line-height:1.5}.mvsteps li{margin:4px 0}
   .w-ok{background:color-mix(in srgb,var(--green) 10%,transparent);border:1px solid color-mix(in srgb,var(--green) 35%,transparent)}
   .log{list-style:none;padding:0;margin:0}
   .log li{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
@@ -807,6 +808,8 @@
     <button class="btn full" id="exportDb"><span data-ic="pitout"></span> Export all data (file)</button>
     <button class="btn full" id="importDb"><span data-ic="pitin"></span> Import data from a file</button>
     <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+    <button class="btn full" id="moveBtn" style="display:none;font-weight:800"><span data-ic="flag"></span> Move this device to pitdogracecontrol.com</button>
+    <button class="btn full" id="pasteMove"><span data-ic="pitin"></span> Bring data from the old address</button>
     <button class="btn full" id="restoreBk" style="display:none"></button>
     <button class="btn full" id="reset" style="color:var(--muted)">Reset everything</button>
     <div class="hint">Add to your home screen (iPhone: Share → Add to Home Screen; Android: ⋮ → Add to Home screen) to run it full-screen. The race keeps running even if you close the app. One phone runs the pit wall; the share link sends the plan to the others.</div>
@@ -1534,6 +1537,7 @@ $('sameDay').onclick=()=>{ if(DB&&!SIM.on) raceNow(); };
 $('endRace').onclick=()=>{ if(confirm('Clear the race log and clock? Your plan stays. (A backup is kept: Team → Data on this device.)')){ backupDB('before clearing the race log'); [...S.events].forEach(voidEvent); save(); update(); renderBackup(); pushSoon(); } };
 $('reset').onclick=()=>{ if(SIM.on) return; if(confirm('Delete the team and ALL races on this device? (A backup is kept: Team → Data on this device.)')){ backupDB('before reset'); try{ localStorage.removeItem('pitdog_db'); localStorage.removeItem('pitdog'); }catch(e){} DB=null; S=clone(DEFAULT); bind(); update(); startOnboarding(); } };
 $('print').onclick=()=>printSheet();
+$('moveBtn').onclick=()=>moveSheet(); $('pasteMove').onclick=()=>pasteMoveSheet();
 $('exportDb').onclick=()=>{ if(!DB) return; dbSave(); const blob=new Blob([JSON.stringify({app:'pitdog',v:DB.v||2,exported:new Date().toISOString(),db:DB},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`pitdog-${(DB.team.name||'team').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-${new Date().toISOString().slice(0,10)}.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000); };
 $('importDb').onclick=()=>{ if(SIM.on) return; $('importFile').value=''; $('importFile').click(); };
@@ -1929,8 +1933,9 @@ const fld=(label,inner)=>`<label class="f">${label} ${inner}</label>`;
 let ONB=null;
 function startOnboarding(){
   SHEET_LOCK=true;
-  openSheet('Welcome to PitDog',`<div class="sub" style="margin:0 0 14px">The pit wall for endurance race teams: stints, fuel, drivers and race-day pit stops, on your phone and an iPad command center.</div>`,
+  openSheet('Welcome to PitDog',`<div class="sub" style="margin:0 0 14px">The pit wall for endurance race teams: stints, fuel, drivers and race-day pit stops, on your phone and an iPad command center.</div>${MOVE.old?'':'<button class="btn full" id="wMove" style="margin:0 0 6px">Used PitDog at the old address? Bring your data</button>'}`,
    [{label:'Try a simulated race',fn:()=>{ SHEET_LOCK=false; closeSheet(); startSim({demo:true}); }},{label:'Full team setup',fn:()=>{ ONB={step:1,name:'',series:'luckydog',car:{name:'',unit:'gal',cap:16.4,burn:0.38,lap:'2:20'},people:[]}; onbStep(); }},{label:'RACE NOW',cls:'pri',id:'wNow',fn:()=>raceNow()}]);
+  const wm=$('wMove'); if(wm) wm.onclick=()=>pasteMoveSheet();
 }
 function onbStep(){
   SHEET_LOCK=true; const st=`<div class="steps"><i class="on"></i><i class="${ONB.step>=2?'on':''}"></i><i class="${ONB.step>=3?'on':''}"></i></div>`;
@@ -2179,6 +2184,7 @@ function menuSheet(){
   if(DB) items.push(['home','Home','Next race, last race, your team'+(cc?' (leaves the command center; ⊞ COMMAND CENTER brings it back)':''),()=>leaveCC('home')]);
   if(cc) items.push(['user','Phone view','The race screen in the phone layout',()=>leaveCC('race')]);
   items.push([SND.on?'bolt':'clock',SND.on?'Sound alerts: on':'Sound alerts: off',SND.on?'Tap to mute the gear-up, box and stop-served tones on this device':'Tap to hear gear-up, box and stop-served tones on this device',()=>setSound(!SND.on)]);
+  if(MOVE.show) items.push(['flag','Move to pitdogracecontrol.com','PitDog’s new address: bring this device’s team and races',()=>moveSheet()]);
   items.push(['alert','Start over on this device','Delete the team and races here (a backup is kept)',()=>$('reset').click()]);
   SHEET_LOCK=false;
   openSheet('Menu',items.map((it,i)=>`<button class="mrow${['userx','alert'].includes(it[0])?' dng':''}" data-i="${i}">${ic(it[0])}<span><b>${it[1]}</b><small>${it[2]}</small></span></button>`).join(''),[{label:'Close',cls:'pri',fn:closeSheet}]);
@@ -2220,6 +2226,7 @@ function renderHome(){
   if(!DB){ box.innerHTML='<div class="card"><div class="sub">Create a team to get started.</div></div>'; return; }
   const nr=nextRace(), lr=lastRace(), T=DB.team, liveR=raceIsLive(); let h='';
   const ar=activeRace(), ready=!liveR&&ar&&!ar.sim&&ar.status!=='done'&&!ar.events.length&&(!ar.rules.date||ar.rules.date===todayISO())&&ar.drivers.length;
+  h+=moveCardHTML();
   h+=`<button class="big green racenow" id="hNow">${liveR?'BACK TO THE RACE':'RACE NOW'}<small>${liveR?esc(ar.rules.name||'Race')+' is running':ready?esc(ar.rules.name||'Race')+' · '+withRace(ar,()=>fmt(raceLen()))+' · '+ar.drivers.map(d=>esc((member(d.mid)||{}).name||'')).join(', '):'Drivers, hours, go'}</small></button>`;
   if(nr){ const car=carById(nr.carId), today=nr.rules.date===todayISO(), ser=SERIES[nr.series]||{}, pr=prepList(nr), f=FC[nr.rules.track+'|'+nr.rules.date];
     nr.prep=nr.prep||{};
@@ -2249,6 +2256,7 @@ function renderHome(){
   const on=(id,fn)=>{ const e=$(id); if(e) e.onclick=fn; };
   on('hOpen',()=>{ if(nr.id!==DB.activeRaceId){ dbSave(); DB.activeRaceId=nr.id; reloadActive(); } show(nr.rules.date===todayISO()?'race':'plan'); });
   on('hNow',()=>{ if(liveR||ready){ show('race'); update(); } else raceNow(); }); on('hNew',()=>newRaceSheet(null)); on('hNew2',()=>newRaceSheet(null)); on('hNew3',()=>newRaceSheet(null)); on('hSim',()=>startSim({})); on('hLab',()=>{ show('lab'); renderLab(); });
+  on('mvOpen',()=>store.get('pitdog_moved')?moveOut(false):moveSheet());
   on('hDebrief',()=>openDebrief(lr.id)); on('hRecords',openRecords);
   box.querySelectorAll('[data-prep]').forEach(c=>c.onchange=()=>{ nr.prep[c.dataset.prep]=c.checked; dbSave(); renderHome(); });
 }
@@ -3036,6 +3044,51 @@ function skinSheet(){ openSheet('Look','<div class="skinlist" id="skinSheetList"
 $('ccSkin').onclick=skinSheet;
 setSkin(document.documentElement.dataset.skin||'night');
 
+/* ================= MOVING HOUSE: paulneto.github.io/pitdog → pitdogracecontrol.com =================
+   A browser keeps PitDog's data per web address, so the new address starts empty. The old one offers "Move this device":
+   the device's whole database rides in the link's #fragment (browsers never send that part to any server), gzipped, and the
+   new address takes it in. The banner appears only once the new address really serves PitDog (it answers move.json). */
+const MOVE_TO='https://pitdogracecontrol.com/', MOVE_KEYS=['pitdog_device','pitdog_sound','pitdog_view','pitdog_skin'];
+const MOVE={old:/(^|\.)github\.io$/.test(location.hostname), show:false, reload:()=>location.reload()};
+let MOVE_IN=null; if(location.hash.startsWith('#move=')){ MOVE_IN=location.hash.slice(6); try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} }
+const b64u={enc:u=>{ let t=''; for(let i=0;i<u.length;i+=0x8000) t+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000)); return btoa(t).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); },
+  dec:t=>{ const b=atob(t.replace(/-/g,'+').replace(/_/g,'/')), u=new Uint8Array(b.length); for(let i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u; }};
+async function packMove(o){ const u=new TextEncoder().encode(JSON.stringify(o));
+  if(window.CompressionStream){ const z=new Blob([u]).stream().pipeThrough(new CompressionStream('gzip')); return 'z.'+b64u.enc(new Uint8Array(await new Response(z).arrayBuffer())); }
+  return 'j.'+b64u.enc(u); }
+async function unpackMove(t){ t=String(t||'').trim().replace(/^[\s\S]*#move=/,''); const k=t.slice(0,2); let u=b64u.dec(t.slice(2));
+  if(k==='z.'){ const z=new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip')); u=new Uint8Array(await new Response(z).arrayBuffer()); } else if(k!=='j.') throw new Error('not a move link');
+  return JSON.parse(new TextDecoder().decode(u)); }
+async function moveLink(){ dbSave(); const prefs={}; MOVE_KEYS.forEach(k=>{ const v=store.get(k); if(v!=null) prefs[k]=v; });
+  return MOVE_TO+'#move='+await packMove({app:'pitdog',move:1,at:Date.now(),db:DB,prefs}); }
+async function moveIn(t){ let p, nd=null; try{ p=await unpackMove(t); nd=p&&p.app==='pitdog'&&p.db?normalizeDB(p.db):null; }catch(e){}
+  if(!nd){ toast2('That move link is incomplete or damaged. Copy it again from the old address.'); return false; }
+  const n=nd.races.filter(r=>!r.sim).length, mine=DB&&(DB.races.some(r=>r.events.length)||DB.team.members.length>1);
+  if(mine&&!confirm(`Replace the data on this device with ${nd.team.name} (${n} race${n===1?'':'s'}) from the old address? This device’s current data is kept as a backup.`)) return false;
+  if(DB) backupDB('before moving in');
+  if(!store.set('pitdog_db',JSON.stringify(nd))){ toast2('Couldn’t save: this device’s storage is full.'); return false; }
+  Object.entries(p.prefs||{}).forEach(([k,v])=>{ if(MOVE_KEYS.includes(k)&&typeof v==='string'&&v.length<200) store.set(k,v); });
+  store.set('pitdog_movedin',String(Date.now())); MOVE.reload(); return true; }
+async function moveOut(copy){ try{ if(SIM.on){ toast2('End the simulator first (Menu ☰).'); return; } if(!copy&&raceIsLive()&&!confirm('A race is running. Move this device now anyway? (Finish it here first if you can.)')) return;
+    const url=await moveLink(); store.set('pitdog_moved',String(Date.now()));
+    if(copy){ try{ await navigator.clipboard.writeText(url); toast2('Move link copied. Paste it on the new address’s first screen.'); }catch(e){ openSheet('Move link',`<div class="sub">Copy all of this:</div><textarea id="mvTxt" rows="6" style="width:100%" readonly>${esc(url)}</textarea>`,[{label:'Close',cls:'pri',fn:closeSheet}]); } MOVE.copied=url; return; }
+    MOVE.went=url; if(!MOVE.noNav) location.href=url;
+  }catch(e){ toast2('Couldn’t pack the data here: use Team → Data → Export instead.'); } }
+async function moveProbe(){ if(!MOVE.old) return; try{ const j=await (await fetch(MOVE_TO+'move.json',{cache:'no-store'})).json(); MOVE.show=!!(j&&j.pitdog===1); }catch(e){ MOVE.show=false; }
+  if(MOVE.show){ if($('tab-home').classList.contains('on')) renderHome(); renderMoveBits(); } }
+function moveCardHTML(){ if(!MOVE.show) return ''; const done=store.get('pitdog_moved');
+  return `<div class="card movecard" id="moveCard"><h2><span>${done?'This device has moved':'PitDog has moved'}</span><span>${ic('flag')}</span></h2>
+    <div class="sub" style="margin:0 0 12px">${done?'Use <b>pitdogracecontrol.com</b> from now on, and delete this old icon. This copy stays here as a spare.':'PitDog now lives at <b>pitdogracecontrol.com</b>. Your team, races and settings come with you, inside the link: nothing goes to a server.'}</div>
+    <button class="btn full" id="mvOpen" style="font-weight:800;margin:0">${done?'Open pitdogracecontrol.com':'Move this device'} ›</button></div>`; }
+function moveSheet(){ SHEET_LOCK=false;
+  openSheet('Move to pitdogracecontrol.com',`<div class="sub" style="margin:0 0 12px">A browser keeps PitDog’s data per web address, so the new address starts empty until this device brings its team, races and settings over. They travel inside the link: nothing is sent to a server.</div>
+    <ol class="mvsteps"><li>Tap <b>Move this device</b>. The new address opens with your data.</li><li>Add it to your home screen${IOS?' (Share → Add to Home Screen)':''} and delete the old icon.</li><li>On a team that syncs, sign in again on the Team tab.</li></ol>
+    ${IOS?'<div class="hint" style="margin-top:10px"><b>Using the home-screen icon?</b> iPhone icons keep their own data. Copy the move link, add pitdogracecontrol.com to your home screen, open it, and paste the link on its first screen.</div>':''}`,
+    [{label:'Copy move link',fn:()=>moveOut(true)},{label:'Move this device',cls:'pri',id:'mvGo',fn:()=>{ closeSheet(); moveOut(false); }}]); }
+function pasteMoveSheet(){ SHEET_LOCK=false;
+  openSheet('Bring data from the old address',`<div class="sub" style="margin:0 0 10px">On the old PitDog (paulneto.github.io), open Move this device → <b>Copy move link</b>, then paste it here.</div><textarea id="mvPaste" rows="5" style="width:100%" placeholder="https://pitdogracecontrol.com/#move=…"></textarea>`,
+    [{label:'Cancel',fn:()=>DB?closeSheet():startOnboarding()},{label:'Bring my data',cls:'pri',id:'mvIn',fn:()=>moveIn(val('mvPaste'))}]); }
+function renderMoveBits(){ const b=$('moveBtn'); if(b) b.style.display=MOVE.show?'':'none'; const pb=$('pasteMove'); if(pb) pb.style.display=MOVE.old?'none':''; }
 try{ loadDB(); migrateDocHash(DB); }catch(e){ DB=null; }
 fetchAppSettings(); setInterval(fetchAppSettings,15*60000);
 SYNC.joinCode=new URLSearchParams(location.search).get('join');
@@ -3096,6 +3149,7 @@ setInterval(()=>{ try{ const lv=live(); P=plan(lv); renderRace(); soundTick(lv,P
 show(SYNC.joinCode&&DB?'team':startTab()); if(SYNC.joinCode) setTimeout(()=>{ const sc=$('syncCard'); if(sc) sc.scrollIntoView({block:'start'}); },60); if($('tab-home').classList.contains('on')) renderHome(); if($('tab-team').classList.contains('on')) renderTeamTab();
 restoreSession();
 applyView();
+moveProbe(); renderMoveBits(); if(MOVE_IN){ const t=MOVE_IN; MOVE_IN=null; moveIn(t); }
 devCheck(); if(navigator.serviceWorker) navigator.serviceWorker.addEventListener('controllerchange',devCheck);
 </script>
 <!-- ================= PRINTED RACE-DAY SHEET: the paper backup when phones die or there's no signal at all ================= -->
