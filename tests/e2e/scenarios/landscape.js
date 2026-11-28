@@ -1,4 +1,4 @@
-// @window 900,430
+// @window 667,518
 // A phone on its side: never the command center (even if it was picked), the race screen side by side.
 __run(() => {
   store.set('pitdog_view', 'cc');
@@ -14,6 +14,7 @@ __run(() => {
   adv(2); click('bigBtn'); TAP_AT = 0; adv(40); click('bigBtn'); TAP_AT = 0;
   expect(getComputedStyle($('pitCard')).display === 'grid', 'pit stop card goes two columns');
   const t = $('pitTimer').getBoundingClientRect(), k = $('kindChips').getBoundingClientRect();
-  expect(t.bottom <= innerHeight && k.top < innerHeight && k.left > t.left, 'timer and stop type both on screen, side by side');
+  const bar = document.querySelector('.tabbar').getBoundingClientRect().top, vis = id => { const q = $(id).getBoundingClientRect(); return q.height > 0 && q.bottom <= bar + 1; };
+  expect(t.bottom <= bar && vis('jugChips') && vis('nextDrv') && $('jugChips').getBoundingClientRect().left > t.left, 'iPhone SE on its side: timer, fuel stepper and next driver all on screen without scrolling (bar at ' + Math.round(bar) + ')');
   go('home'); expect(document.body.dataset.tab === 'home' && getComputedStyle($('actionBar')).display === 'none', 'other tabs use the full width');
 });

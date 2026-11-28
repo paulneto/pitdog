@@ -82,7 +82,20 @@
   body.land #pitCard .timer{font-size:clamp(44px,8vw,64px)}
   body.land #pitCard .chips,body.land #pitCard .stepper{margin-bottom:8px}
   body.land #pitCard h2{margin-bottom:6px}
-  body.land #pitCard .chipbtn{padding:8px 6px;min-width:56px}
+  body.land #pitCard .chipbtn{padding:7px 6px;min-width:56px}
+  body.land .pitR{display:flex;flex-direction:column}
+  body.land .pitR>#fuelBox{order:1}
+  body.land .pitR>h2:nth-of-type(2){order:2}
+  body.land .pitR>#nextDrv{order:3}
+  body.land .pitR>h2:nth-of-type(1){order:4}
+  body.land .pitR>#kindChips{order:5}
+  body.land .pitR>#pitRem,body.land #pitCard .chipbtn small{display:none}
+  body.land #pitCard .stepper{min-height:0;gap:8px}
+  body.land #pitCard .stepper .stp{width:clamp(44px,8vw,76px);min-height:52px;font-size:28px}
+  body.land #pitCard .stepper .sv{min-width:0}
+  body.land #pitCard .stepper .sv b{font-size:20px;white-space:nowrap}
+  body.land #pitCard .stepper .sv small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  body.land #pitCard #fullTgl .chipbtn{padding:6px}
   .big.racenow{display:block;width:100%;height:auto;padding:22px 16px;margin:0 0 14px}
   #tab-race.fin #upNextCard,#tab-race.fin #fuelCard,.action.fin .side{display:none}
   body.nodb main,body.nodb .action,body.nodb .tabbar,body.nodb #statusPill,body.nodb .aclock{visibility:hidden}
@@ -1307,7 +1320,7 @@ function stopBrief(s,nx,lv){ const st=s.stop; if(!st||!nx) return ''; const R=S.
   const yl=R.pitsUnderYellow&&R.yellowWindow?` · <span class="yl">yellow after ${clockAt(Math.max(0,s.end-R.yellowWindow))}: box early</span>`:'';
   return `<div class="cc-lbl">Stop ${P.stints.indexOf(s)+1} brief${yl}</div><div class="g">`+
     tile('Type',esc(k.t),esc(k.s))+
-    tile('Fuel',st.add>0?`${r1(st.add)} ${esc(C.unit)}`:'none',st.add>0?`${st.jugs} jug${st.jugs===1?'':'s'} of ${C.jug}`:'')+
+    tile('Fuel',st.add>0?`${r1(st.add)} ${esc(C.unit)}`:'none',st.add>0?`${jugLbl(st.jugs)} jug${st.jugs===1?'':'s'} of ${C.jug}`:'')+
     tile('Hold',hold?fmt(hold):'none',hold?'minimum':'go when ready')+
     tile('Next driver',`<span style="color:${dcol(nx.driver)}">${esc(nd.name)}</span>`,gearNow?'GEAR UP NOW':onDeck?'gear up '+clockAt(gearAt):'',gearNow?'warn':'')+
     `</div>`; }
@@ -1526,7 +1539,8 @@ $('openLog').onclick=()=>go('log'); $('openLab').onclick=()=>go('lab');
 $('savePreset').onclick=()=>{ if(!DB||SIM.on) return; if(teamOnline()&&!canPlan()){ toast2('Only the owner or pit wall can save presets.'); return; } const r=activeRace(); if(!r) return;
   const nm=(prompt('Name this preset (e.g. “Calabogie 8 h”)', r.rules.name||'')||'').trim(); if(!nm) return; dbSave();
   const x={id:uid(),name:nm.slice(0,40),series:r.series,hours:Math.round(raceLen()/30)/2,track:r.rules.track||'none',carId:r.carId,drivers:r.drivers.map(d=>d.mid),rules:clone(r.rules)};
-  DB.team.presets=(DB.team.presets||[]).filter(q=>q.name.toLowerCase()!==x.name.toLowerCase()).concat(x); dbSave(); pushSoon(); toast2('Preset saved: '+x.name+'. It’s in Race now.'); };
+  const gone=(DB.team.presets||[]).filter(q=>q.name.toLowerCase()===x.name.toLowerCase()).map(q=>q.id); DB.team.presetDel=[...(DB.team.presetDel||[]),...gone].slice(-200);
+  DB.team.presets=(DB.team.presets||[]).filter(q=>!gone.includes(q.id)).concat(x); dbSave(); pushSoon(); toast2('Preset saved: '+x.name+'. It’s in Race now.'); };
 
 /* ================= loop ================= */
 function update(){ document.body.classList.toggle('nodb',!DB&&!SIM.on);
@@ -1576,7 +1590,7 @@ function ccWanted(){ const v=ccView(); if(v==='cc') return true; if(v==='phone')
 const ccTall=()=>window.innerHeight>window.innerWidth&&window.innerWidth>=740&&window.innerHeight>=1000;   // a tablet in portrait
 const ccFits=()=>(window.innerWidth>=900&&window.innerHeight>=600)||ccTall();
 function applyView(){ const on=ccFits()&&ccWanted(); document.body.classList.toggle('cc-on',on); const b=$('ccOpen'); if(b) b.style.display=(!on&&ccFits())?'inline-block':'none';
-  document.body.classList.toggle('land',!on&&window.innerWidth>window.innerHeight&&window.innerHeight<560); if(on){ renderCC(); fetchWx(); } }
+  document.body.classList.toggle('land',!on&&window.innerWidth>window.innerHeight&&window.innerHeight<560&&window.innerWidth>=560); if(on){ renderCC(); fetchWx(); } }
 window.addEventListener('resize',applyView); window.addEventListener('orientationchange',()=>setTimeout(applyView,200));
 function renderCC(){
   if(!document.body.classList.contains('cc-on')) return;
@@ -1758,6 +1772,7 @@ function normalizeDB(db){
     ['pace','cons','ff','fade'].forEach(k=>{ if(m[k]===undefined) return; const x=+m[k]; if(m[k]===null||!isFinite(x)) delete m[k]; else m[k]=x; }); });
   T.presets=(Array.isArray(T.presets)?T.presets:[]).filter(x=>x&&typeof x==='object').slice(0,24).map(x=>({id:safeId(x.id),name:str(x.name,40)||'Preset',series:safeSeries(x.series),hours:Math.min(48,Math.max(0.5,+x.hours||4)),
     track:own(TRACKS,x.track)?x.track:'none',carId:typeof x.carId==='string'?x.carId:null,drivers:(Array.isArray(x.drivers)?x.drivers:[]).filter(d=>typeof d==='string').slice(0,12),rules:x.rules&&typeof x.rules==='object'?cleanRules(x.rules):null}));
+  T.presetDel=(Array.isArray(T.presetDel)?T.presetDel:[]).filter(x=>typeof x==='string').slice(-200);
   T.cars=T.cars.filter(c=>c&&typeof c==='object'); if(!T.cars.length) return null;
   T.cars.forEach(c=>{ const meas={}; Object.entries(c.measured&&typeof c.measured==='object'?c.measured:{}).forEach(([k,v])=>{ if(own(TRACKS,k)&&isFinite(+v)&&+v>0) meas[k]=+v; });
     Object.assign(c,cleanCar(c),{id:safeId(c.id),name:str(c.name,40)||'Car',measured:meas}); });
@@ -1904,7 +1919,7 @@ function renderTeamTab(){
   const ps=T.presets||[];
   $('presetList').innerHTML=ps.length?ps.map(x=>`<div class="lrow" style="cursor:default"><div class="lmain"><b>${esc(x.name)}</b><small>${esc((SERIES[x.series]||{}).label||'')} · ${x.hours} h${TRACKS[x.track]&&x.track!=='none'?' · '+esc(TRACKS[x.track][0]):''} · ${x.drivers.map(id=>esc((member(id)||{}).name||'')).filter(Boolean).join(' → ')||'drivers picked on the day'}${x.rules?' · custom rules':''}</small></div>${canPlan()?`<button class="mini" data-delpr="${esc(x.id)}" aria-label="Delete ${esc(x.name)}">✕</button>`:''}</div>`).join('')
     :'<div class="sub" style="margin:0">Save a setup you race often (series, hours, track, car, drivers, rules) and start it with one tap in Race now. Save one from the Race now sheet or Plan → Save as a preset.</div>';
-  $('presetList').querySelectorAll('[data-delpr]').forEach(b=>b.onclick=()=>{ const x=ps.find(q=>q.id===b.dataset.delpr); if(!x||!confirm(`Delete the preset “${x.name}”?`)) return; T.presets=ps.filter(q=>q!==x); dbSave(); pushSoon(); renderTeamTab(); });
+  $('presetList').querySelectorAll('[data-delpr]').forEach(b=>b.onclick=()=>{ const x=ps.find(q=>q.id===b.dataset.delpr); if(!x||!confirm(`Delete the preset “${x.name}”?`)) return; T.presets=(DB.team.presets||[]).filter(q=>q.id!==x.id); T.presetDel=[...(T.presetDel||[]),x.id].slice(-200); dbSave(); pushSoon(); renderTeamTab(); });
 }
 function memberSheet(id){
   dbSave();
@@ -2009,7 +2024,8 @@ function raceNow(){
   const sv=$('nSave'); if(sv) sv.onclick=()=>{ const nm=(prompt('Name this preset (e.g. “Calabogie 8 h”)', (st.preset&&st.preset.name)||'')||'').trim(); if(!nm) return;
     const x={id:uid(),name:nm.slice(0,40),series:st.series,hours:st.hours,track:(st.preset&&st.preset.track)||(last&&last.series===st.series?last.rules.track:'none'),carId:st.carId,drivers:st.sel.filter(id=>member(id)),
       rules:untouched&&cur0.series===st.series?clone(cur0.rules):(st.preset&&st.preset.rules?clone(st.preset.rules):null)};
-    T.presets=(T.presets||[]).filter(q=>q.name.toLowerCase()!==x.name.toLowerCase()).concat(x); st.preset=x; dbSave(); pushSoon(); drawPresets(); toast2('Preset saved: '+x.name); };
+    const gone=(T.presets||[]).filter(q=>q.name.toLowerCase()===x.name.toLowerCase()).map(q=>q.id); T.presetDel=[...(T.presetDel||[]),...gone].slice(-200);
+    T.presets=(T.presets||[]).filter(q=>!gone.includes(q.id)).concat(x); st.preset=x; dbSave(); pushSoon(); drawPresets(); toast2('Preset saved: '+x.name); };
   drawPresets(); drawPick(); drawHours(); drawCar();
   function go(){
     if(val('nName').trim()) addName();
@@ -2198,7 +2214,7 @@ function computeDebrief(r){
 /* ================= TEAM RECORDS ================= */
 // Season records from finished races: each race goes through computeDebrief (log-based, no network), cached per race.
 const REC_CACHE={};
-function raceDebrief(r){ const k=r.id+'|'+r.events.length+'|'+(r.date||0); if(REC_CACHE[r.id]&&REC_CACHE[r.id].k===k) return REC_CACHE[r.id].d;
+function raceDebrief(r){ const k=r.id+'|'+hashOf({e:r.events.map(e=>[e.id,e.t,e.type,e.kind,e.fuel,e.full,e.driver,e.on]),c:r.carId,ru:r.rules,d:r.drivers,dt:r.date||0,car:carById(r.carId)||null}); if(REC_CACHE[r.id]&&REC_CACHE[r.id].k===k) return REC_CACHE[r.id].d;
   let d=null; try{ d=computeDebrief(r); }catch(e){ d={err:String(e)}; } REC_CACHE[r.id]={k,d}; return d; }
 const raceYear=r=>new Date(r.date||r.created||0).getFullYear();
 function computeRecords(year){
@@ -2661,7 +2677,16 @@ const toRow=(e,r)=>({id:e.id,race_id:r.sid,team_id:DB.team.sid,t:Math.round(e.t)
 const fromRow=row=>cleanEvents([Object.assign({},row.payload||{},{id:row.id,t:+row.t,type:row.type})])[0];
 const raceSettings=r=>{ const o={}; ['id','series','rules','carId','drivers','status','summary','date','notes','prep','planAtGreen','created','copy','abandoned','anchor'].forEach(k=>{ if(r[k]!==undefined) o[k]=r[k]; }); return o; };
 const settingsKey=r=>{ const o=raceSettings(r); delete o.status; delete o.planAtGreen; return o; };   // derived/local fields aren't plan edits
-const teamDoc=()=>({name:DB.team.name,series:DB.team.series,members:DB.team.members,cars:DB.team.cars,presets:DB.team.presets||[],exampleProfiles:!!DB.team.exampleProfiles});
+const docOf=T=>({name:T.name,series:T.series,members:T.members,cars:T.cars,presets:T.presets||[],presetDel:T.presetDel||[],exampleProfiles:!!T.exampleProfiles});
+const teamDoc=()=>docOf(DB.team);
+// The team doc gained fields (presets, presetDel). A device whose stored hash came from an older shape of the SAME data must not
+// think its doc is dirty and push a stale copy over the server's: if the hash matches an older shape, re-stamp it.
+const DOC_OLD_SHAPES=[['presets','presetDel'],['presetDel']];
+function migrateDocHash(db){ if(!db||!db.team||db.team.docHash==null) return; const cur=docOf(db.team); if(hashOf(cur)===db.team.docHash) return;
+  for(const drop of DOC_OLD_SHAPES){ const o=Object.assign({},cur); drop.forEach(k=>delete o[k]); if(hashOf(o)===db.team.docHash){ db.team.docHash=hashOf(cur); return; } } }
+// presets merge by id (deletes are tombstones), so two planners saving presets offline don't drop each other's
+function mergePresets(d){ const T=DB.team, del=[...new Set([...(T.presetDel||[]),...(Array.isArray(d.presetDel)?d.presetDel:[])])].slice(-200), mine=T.presets||[], ids=new Set(mine.map(x=>x.id));
+  T.presetDel=del; T.presets=mine.concat((Array.isArray(d.presets)?d.presets:[]).filter(x=>x&&x.id&&!ids.has(x.id))).filter(x=>!del.includes(x.id)); const n=normalizeDB(DB); if(n) DB=n; }
 // key-order-independent: Postgres jsonb hands objects back with its own key order
 const stable=o=>Array.isArray(o)?'['+o.map(stable).join(',')+']':o&&typeof o==='object'?'{'+Object.keys(o).filter(k=>o[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+stable(o[k])).join(',')+'}':JSON.stringify(o===undefined?null:o);
 const hashOf=o=>{ const s=stable(o); let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return h; };
@@ -2774,7 +2799,8 @@ async function pull(full){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline(
     DB.team.role=me[0].role; DB.team.name=t.name;
     if(['owner','pitwall'].includes(DB.team.role)){ const {data:c}=await sb.from('team_codes').select('join_code').eq('team_id',tid); DB.team.joinCode=c&&c[0]?c[0].join_code:DB.team.joinCode; } else delete DB.team.joinCode;
     const d=t.doc||{}, docDirty=hashOf(teamDoc())!==DB.team.docHash;
-    if(d.members&&(full||!docDirty||!canPlan())){ Object.assign(DB.team,{series:d.series||DB.team.series,members:d.members||[],cars:(d.cars&&d.cars.length?d.cars:DB.team.cars),presets:Array.isArray(d.presets)?d.presets:(DB.team.presets||[]),exampleProfiles:!!d.exampleProfiles}); DB.team.docHash=hashOf(teamDoc()); }
+    if(d.members&&(full||!docDirty||!canPlan())){ Object.assign(DB.team,{series:d.series||DB.team.series,members:d.members||[],cars:(d.cars&&d.cars.length?d.cars:DB.team.cars),presets:Array.isArray(d.presets)?d.presets:(DB.team.presets||[]),presetDel:Array.isArray(d.presetDel)?d.presetDel:(DB.team.presetDel||[]),exampleProfiles:!!d.exampleProfiles}); DB.team.docHash=hashOf(teamDoc()); }
+    else if(d.members) mergePresets(d);                   // our unsent team edits win, but nobody's presets get lost
     races.forEach(row=>{ let r=DB.races.find(x=>x.sid===row.id); const st=row.settings||{};
       if(!r){ r=Object.assign(newRaceObj({}),st,{id:st.id||uid(),sid:row.id,events:[],outbox:[],voids:[]}); DB.races.push(r); r.settingsHash=hashOf(settingsKey(r)); r.isNew=false; return; }
       const dirty=hashOf(settingsKey(r))!==r.settingsHash;
@@ -2795,8 +2821,8 @@ function applyRemoteRace(row){ if(!teamOnline()||SIM.on||!row) return; let r=DB.
   else{ if(canPlan()&&hashOf(settingsKey(r))!==r.settingsHash) return;    // we have unsent edits; ours go up next
     const keep={id:r.id,planAtGreen:r.planAtGreen}; Object.assign(r,row.settings||{},{id:keep.id}); if(!r.planAtGreen&&keep.planAtGreen) r.planAtGreen=keep.planAtGreen; }
   r.settingsHash=hashOf(settingsKey(r)); const n=normalizeDB(DB); if(n) DB=n; if(r.id===DB.activeRaceId){ hydrate(); bind(); } store.set('pitdog_db',JSON.stringify(DB)); update(); }
-function applyRemoteTeam(row){ if(!teamOnline()||SIM.on||!row) return; if(canPlan()&&hashOf(teamDoc())!==DB.team.docHash) return; const d=row.doc||{};
-  DB.team.name=row.name; if(d.members){ Object.assign(DB.team,{series:d.series||DB.team.series,members:d.members,cars:d.cars&&d.cars.length?d.cars:DB.team.cars,presets:Array.isArray(d.presets)?d.presets:(DB.team.presets||[])}); }
+function applyRemoteTeam(row){ if(!teamOnline()||SIM.on||!row) return; if(canPlan()&&hashOf(teamDoc())!==DB.team.docHash){ mergePresets(row.doc||{}); return; } const d=row.doc||{};
+  DB.team.name=row.name; if(d.members){ Object.assign(DB.team,{series:d.series||DB.team.series,members:d.members,cars:d.cars&&d.cars.length?d.cars:DB.team.cars,presets:Array.isArray(d.presets)?d.presets:(DB.team.presets||[]),presetDel:Array.isArray(d.presetDel)?d.presetDel:(DB.team.presetDel||[])}); }
   DB.team.docHash=hashOf(teamDoc()); const n=normalizeDB(DB); if(n) DB=n; hydrate(); bind(); store.set('pitdog_db',JSON.stringify(DB)); update(); }
 function startSync(){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline()) return; stopSync(); setSync('syncing'); watchAuth();
   measureSkew().then(()=>pull(false)).then(pushAll);
@@ -2924,7 +2950,7 @@ function skinSheet(){ openSheet('Look','<div class="skinlist" id="skinSheetList"
 $('ccSkin').onclick=skinSheet;
 setSkin(document.documentElement.dataset.skin||'night');
 
-try{ loadDB(); }catch(e){ DB=null; }
+try{ loadDB(); migrateDocHash(DB); }catch(e){ DB=null; }
 fetchAppSettings(); setInterval(fetchAppSettings,15*60000);
 SYNC.joinCode=new URLSearchParams(location.search).get('join');
 if(DB) hydrate(); else S=clone(DEFAULT);
@@ -2939,23 +2965,32 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigat
 // Short tones for the moments that matter, so the pit wall hears them over the noise: gear up, box in 3 min, box now,
 // minimum stop served, and the cheap stop under yellow. Each fires once; on (re)opening, alerts already passed stay quiet.
 const SND={on:store.get('pitdog_sound')!=='0',ctx:null,fired:new Set(),race:null,log:[]};
-function sndUnlock(){ try{ if(!SND.ctx){ const A=window.AudioContext||window.webkitAudioContext; if(A) SND.ctx=new A(); } if(SND.ctx&&SND.ctx.state==='suspended') SND.ctx.resume(); }catch(e){} }
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+// iPhone: Web Audio obeys the silent switch, but a playing <audio> element moves the page into "playback" mode, where it doesn't.
+// A looping, silent clip does that (only while sound alerts are on).
+function silentLoop(on){ try{ if(!IOS) return; if(!on){ if(SND.el) SND.el.pause(); return; } if(!SND.el){ const n=800, b=new Uint8Array(44+n), v=new DataView(b.buffer), w=(o,t)=>[...t].forEach((c,i)=>{ b[o+i]=c.charCodeAt(0); });
+    w(0,'RIFF'); v.setUint32(4,36+n,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true); v.setUint32(24,8000,true); v.setUint32(28,8000,true); v.setUint16(32,1,true); v.setUint16(34,8,true); w(36,'data'); v.setUint32(40,n,true); b.fill(128,44);
+    SND.el=new Audio(URL.createObjectURL(new Blob([b],{type:'audio/wav'}))); SND.el.loop=true; SND.el.setAttribute('playsinline',''); }
+  const pr=SND.el.play(); if(pr&&pr.catch) pr.catch(()=>{}); }catch(e){} }
+function sndUnlock(){ try{ if(!SND.ctx){ const A=window.AudioContext||window.webkitAudioContext; if(A) SND.ctx=new A(); } if(SND.ctx&&SND.ctx.state!=='running') SND.ctx.resume(); if(SND.on) silentLoop(true); }catch(e){} }
 document.addEventListener('pointerdown',sndUnlock,true);
 const SOUNDS={gear:[[880,.14]],box3:[[880,.14],[880,.14]],box:[[988,.18],[988,.18],[1319,.4]],served:[[660,.12],[990,.3]],pitnow:[[740,.16],[740,.16],[740,.16],[988,.3]]};
 function tone(name){ SND.log.push(name); if(!SND.on) return; buzz(name==='box'||name==='pitnow'?[120,80,120,80,240]:80);
-  const c=SND.ctx; if(!c) return; try{ if(c.state==='suspended') c.resume(); let t=c.currentTime+0.02;
-    SOUNDS[name].forEach(([f,d])=>{ const o=c.createOscillator(), g=c.createGain(); o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.5,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+d+0.03); t+=d+0.07; }); }catch(e){} }
+  const c=SND.ctx; if(!c) return; try{ if(c.state!=='running') c.resume(); let t=Math.max(c.currentTime+0.02,SND.at||0);   // queued: two alerts never garble
+    SOUNDS[name].forEach(([f,d])=>{ const o=c.createOscillator(), g=c.createGain(); o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.5,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+d+0.03); t+=d+0.07; }); SND.at=t+0.12; }catch(e){} }
 function soundTick(lv,P){ const r=activeRace(); if(!r||SIM.on||!P||P.err||!lv.started||lv.finished) return;
-  const quiet=SND.race!==r.id; if(quiet){ SND.race=r.id; SND.fired.clear(); }          // first look at this race: mark, don't play
+  const key=r.id+'|'+((S.events.find(e=>e.type==='green')||{}).id||''), quiet=SND.race!==key;   // a cleared log / new green = a new race
+  if(quiet){ SND.race=key; SND.fired.clear(); }                                                     // first look at it: mark, don't play
   const fire=(k,n)=>{ if(SND.fired.has(k)) return; SND.fired.add(k); if(!quiet) tone(n); };
   const R=S.race, st=P.stints, ci=curIdx(P), cur=st[ci];
   if(lv.inPit){ const a=lv.stops[lv.stops.length-1], mn=minFor(pend.kind||'fuel'); if(mn&&lv.now-a.in>=mn+5/60) fire('served'+lv.stops.length,'served'); return; }
   if(!cur||ci>=st.length-1) return; const tt=cur.end-lv.now;
-  if(R.onDeck&&tt<=R.onDeck) fire('gear'+ci,'gear');
-  if(tt<=3) fire('box3'+ci,'box3');
-  if(tt<=0) fire('box'+ci,'box');
+  const at=(k,n,thr)=>{ if(tt<=thr) fire(k+ci,n); else if(tt>thr+1) SND.fired.delete(k+ci); };      // re-arms if a re-plan pushes the stop later
+  if(R.onDeck) at('gear','gear',R.onDeck);
+  at('box3','box3',3);
+  at('box','box',0);
   if(pitNow(lv,tt)) fire('pitnow'+lv.flags.length,'pitnow'); }
-function setSound(on){ SND.on=on; store.set('pitdog_sound',on?'1':'0'); if(on){ sndUnlock(); tone('served'); } toast2(on?'Sound alerts on':'Sound alerts off'); }
+function setSound(on){ SND.on=on; store.set('pitdog_sound',on?'1':'0'); if(on){ sndUnlock(); tone('served'); } else silentLoop(false); toast2(on?'Sound alerts on'+(IOS?' (they play even with the silent switch on)':''):'Sound alerts off'); }
 setInterval(()=>{ try{ const lv=live(); P=plan(lv); renderRace(); soundTick(lv,P); if($('tab-race').classList.contains('on')) renderTeam(lv); if($('tab-plan').classList.contains('on')) renderPlan(P,lv); }catch(e){} },500);
 show(SYNC.joinCode&&DB?'team':startTab()); if($('tab-home').classList.contains('on')) renderHome(); if($('tab-team').classList.contains('on')) renderTeamTab();
 restoreSession();
