@@ -886,7 +886,7 @@
   </div>
   <div class="card">
     <h2>Share &amp; try</h2>
-    <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="share">Send plan to teammates</button><button class="btn" id="print">Print plan</button><button class="btn" id="savePreset">☆ Save as a preset</button></div>
+    <div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="share">Send plan to teammates</button><button class="btn" id="print">Print plan</button><button class="btn" id="savePreset">☆ Save as a preset</button><button class="btn" id="copySched">Copy schedule</button></div>
     <button class="btn full" id="openLab" style="margin-top:10px;font-weight:800"><span data-ic="lab"></span> Strategy Lab: compare strategies over many simulated races ›</button>
   </div>
 </section>
@@ -1567,6 +1567,14 @@ function show(tab){ const par=TAB_PARENT[tab]||tab; document.body.dataset.tab=ta
 function go(tab){ show(tab); if(tab==='records') renderRecords(); if(tab==='lab') renderLab(); if(tab==='home') renderHome(); if(tab==='log') renderLog(); if(tab==='team') renderTeamTab(); }
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); go(b.dataset.tab); });
 document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>go(b.dataset.back));
+// the plan as text for the team chat: stints in order with each stop's fuel, then each driver's times
+function scheduleText(){ const lv=live(), P2=plan(lv); if(P2.err) return null; const R=S.race, C=S.car, ser=SERIES[S.series]||{}, nm=i=>(S.drivers[i]||{}).name||'?';
+  const head=`${R.name||'Race'} · ${ser.label||''}${TRACKS[R.track]&&R.track!=='none'?' · '+TRACKS[R.track][0]:''} · ${clockAt(0)}–${clockAt(raceLen())} (${fmt(raceLen())})`;
+  const rows=P2.stints.map((x,i)=>`${i+1}. ${nm(x.driver)}  ${clockAt(x.start)}–${clockAt(x.end)} (${fmt(x.dur)})`+(x.stop?`\n   Stop ${i+1} at ${clockAt(x.stop.in)}${x.stop.add>0?` · ${r1(x.stop.add)} ${C.unit} (${jugLbl(x.stop.jugs)} jug${x.stop.jugs===1?'':'s'})`:''}${x.stop.kind==='fuel'&&R.minStop?` · hold ${fmt(R.minStop)}`:''}`:''));
+  const per=S.drivers.map((d,i)=>{ const st=P2.stints.filter(x=>x.driver===i); return st.length?`${d.name}: ${st.map(x=>clockAt(x.start)+'–'+clockAt(x.end)).join(', ')} (${fmt(st.reduce((a,x)=>a+x.dur,0))})`:''; }).filter(Boolean);
+  return [head,'',...rows,'','Who drives when',...per,'','Fuel for the day: '+Math.round(C.cap+P2.stints.reduce((a,x)=>a+(x.stop?x.stop.add:0),0))+' '+C.unit+' (car starts full)'].join('\n'); }
+$('copySched').onclick=()=>{ const t=scheduleText(); if(!t){ toast2('Fix the plan first (see the warnings).'); return; }
+  try{ if(navigator.share){ navigator.share({title:'PitDog schedule',text:t}).catch(()=>{}); return; } navigator.clipboard.writeText(t).then(()=>toast2('Schedule copied: paste it in the team chat'),()=>prompt('Copy the schedule:',t)); }catch(e){ prompt('Copy the schedule:',t); } };
 $('openLog').onclick=()=>go('log'); $('openLab').onclick=()=>go('lab'); $('pbOpen').onclick=()=>pitBoard();
 $('syncPill').style.cursor='pointer'; $('syncPill').onclick=()=>{ if(HELP_ON) return; go('team'); setTimeout(()=>{ const sc=$('syncCard'); if(sc) sc.scrollIntoView({block:'start',behavior:'smooth'}); },30); };
 $('savePreset').onclick=()=>{ if(!DB||SIM.on) return; if(teamOnline()&&!canPlan()){ toast2('Only the owner or pit wall can save presets.'); return; } const r=activeRace(); if(!r) return;
