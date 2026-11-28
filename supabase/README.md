@@ -19,8 +19,9 @@ team with its 8-character join code. Allowed redirect URLs: `https://paulneto.gi
 | `memberships` | user ↔ team with role `owner` · `pitwall` · `crew` · `viewer` | only via `create_team()` / `join_team()`; owner changes roles |
 | `races` | one race's plan (`settings` JSON, last write wins) | owner / pit wall |
 | `events` | the race log, **append-only** (device-generated ids; UNDO = a `void` event) | owner / pit wall / crew, as themselves only |
+| `ledger` | team money (expenses, settle-up payments, split rules), **append-only**; an edit = `void` + new entry | any member adds, as themselves; split rules: owner / pit wall; a void: whoever added the entry, or owner / pit wall (trigger `ledger_guard`) |
 
-Row-level security is on for every table; realtime is enabled on `events`, `races` and `teams`.
+Row-level security is on for every table; realtime is enabled on `events`, `races`, `teams` and `ledger`.
 
 **Membership rules** (hardened after an independent review): join codes live in `team_codes`, readable only by owners
 and pit wall. Leaving and re-joining gives back your previous role; someone removed by an owner can't re-join until
@@ -47,7 +48,7 @@ delete), **App settings** (`app_settings`: banner, maintenance, series_overrides
 **Admins** (add/remove; the last admin can't be removed) and **Audit log**. Destructive actions need the name typed.
 
 ## Checks
-`python3 supabase/tests/rls_check.py` runs 64 permission checks (team roles, join codes, membership history, last owner, platform admins, admin console RPCs) **inside the real database** (simulated users,
+`python3 supabase/tests/rls_check.py` runs 87 permission checks (team roles, team money, join codes, membership history, last owner, platform admins, admin console RPCs) **inside the real database** (simulated users,
 everything it creates is deleted in the same request). Run it after any migration.
 
 ## Applying a migration

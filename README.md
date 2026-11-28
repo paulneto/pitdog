@@ -27,6 +27,7 @@
 - **Team / Race log:** people, cars, races, presets, sync, look and device data on Team; the race log (fix, finish or clear) from the race screen; send or print the plan from Plan
 - **Skins:** Night race, Sunlight (for midday glare) and six F1-team-inspired liveries (Rosso, Papaya, Silver Arrow, Midnight, Racing Green, Grove Blue), chosen per device (Team → Look, or SKIN on the command center). See `docs/design-review.md`
 - **Team sync (optional):** Team tab → sign in with Google (in-page button) → put your team online (you're the owner) or join with an 8-character code / invite link. Every device keeps the whole team and works offline; race-log entries get ids and go up from an outbox when there's signal (append-only: UNDO and Fix send a *void*, nothing is overwritten), other devices' entries arrive live. Roles: owner and pit wall change the plan, crew log stops and flags, viewers watch. The top bar shows SYNC ✓ / OFFLINE · n / SIGNED OUT
+- **Team money:** Team tab → Team money. Log who paid for parts, fuel, tyres, repairs, entry fees, accommodation and travel, for the team, a race or a car. Costs split **equally** by default, **by seat time** or by **fixed shares** (e.g. car owner 50%, two renters 25%), set per expense, per race ("split this weekend by seat time") or as the team default; the most specific wins. Balances show each person's spend against their share and the fewest payments that square everyone; tap **Paid** to record one. Totals by category, race and car (a car includes its races). On a shared team it syncs like the race log (append-only, works offline): anyone can add, people edit their own, the owner and pit wall fix anyone's and set the rules.
 - **Track maps:** a small outline of the circuit (pit lane dashed) on the race screen, the iPad clock panel and Home, for the built-in tracks. Drawn from [OpenStreetMap](https://www.openstreetmap.org/copyright) (© OpenStreetMap contributors) by `tools/trackmaps.py` and baked into the app, so they work offline. No live car position yet.
 - **Weather radar:** the Radar button (race screen, iPad weather panel, Home on race day) animates the last ~2 h of rain around the track ([RainViewer](https://www.rainviewer.com), free for personal use, over OpenStreetMap tiles), with a 50 km ring. Needs signal. Admins can switch it off (`features.radar`)
 - **Offline-first:** installs to the home screen and runs with no signal (service worker); race state survives reloads
@@ -50,7 +51,7 @@ app/                 the app: deployed as-is, no build step
 tests/e2e/           headless-Chrome scenarios with a fake race clock
   run.sh             run all scenarios (or: run.sh <name-filter>)
   harness.js         fake clock + helpers injected into the app
-  scenarios/*.js     39 scenarios: glove-sized tap targets (phone, phone on its side, two iPad sizes), app updates, race day, sync (fake Supabase), race now, menu, records, presets,
+  scenarios/*.js     40 scenarios: team money, glove-sized tap targets (phone, phone on its side, two iPad sizes), app updates, race day, sync (fake Supabase), race now, menu, records, presets,
                      sound, landscape, command center, simulator, sim-sweep (25 races), series-sweep, …
                      (no network: every scenario uses fakes; the suite runs in ~30 s)
 docs/

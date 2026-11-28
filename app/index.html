@@ -137,6 +137,9 @@
   .syncpill.ok{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}.syncpill.warn{background:color-mix(in srgb,var(--amber) 15%,transparent);color:var(--amber)}.syncpill.bad{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
   .updbar{position:fixed;left:50%;bottom:calc(var(--tab) + 14px + env(safe-area-inset-bottom));transform:translateX(-50%);display:none;align-items:center;gap:12px;background:var(--panel);color:var(--text);border:1.5px solid var(--line);padding:8px 8px 8px 16px;border-radius:14px;font-weight:700;z-index:90;max-width:92vw;box-shadow:0 6px 24px rgba(0,0,0,.35)}.updbar.on{display:flex}body[data-tab="race"]:not(.land) .updbar{bottom:calc(var(--tab) + 170px + env(safe-area-inset-bottom))}body.land[data-tab="race"] .updbar{left:calc((100% - var(--landw)) / 2)}.updbar span{white-space:nowrap}.updbar button{min-height:44px;padding:0 18px;border-radius:10px;border:0;background:var(--text);color:var(--bg);font:inherit;font-weight:800;cursor:pointer}
   .mver{text-align:center;color:var(--muted);font-size:12px;margin-top:10px}
+  .mbar{margin:0 0 8px}.mbl{display:flex;justify-content:space-between;gap:10px;font-size:14px;margin-bottom:4px}.mbl span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mbar i{display:block;height:6px;border-radius:3px;background:var(--muted);opacity:.7}
+  .mnet{text-align:right;flex:none}.mnet b{display:block;font-variant-numeric:tabular-nums}.mnet small{color:var(--muted);font-size:12px}
+  .mshare{width:96px;min-height:44px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--panel2);color:var(--text);font:inherit;text-align:right}
   .toast2{position:fixed;left:50%;bottom:calc(var(--tab) + 176px);transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;z-index:95;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}.toast2.on{opacity:1}
   .btn.pri2{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:800}
   .code{font-family:var(--font-num);letter-spacing:3px}
@@ -721,6 +724,7 @@
 <section class="tab" id="tab-home"><div id="homeBody"></div></section>
 <!-- ================= DEBRIEF (opened from Home, a finished race, or the end of a race) ================= -->
 <section class="tab" id="tab-records"><div class="backbar"><button class="btn" data-back="home">‹ Home</button><b>Team records</b></div><div id="recordsBody"></div></section>
+<section class="tab" id="tab-money"><div class="backbar"><button class="btn" data-back="team">‹ Team</button><b>Team money</b></div><div id="moneyBody"></div></section>
 <section class="tab" id="tab-debrief"><div class="backbar"><button class="btn" data-back="home">‹ Home</button><b>Debrief</b></div><div id="debriefBody"></div></section>
 <!-- ================= RACE ================= -->
 <section class="tab on" id="tab-race">
@@ -799,6 +803,11 @@
   <div class="card">
     <h2><span>Races</span><button class="mini" id="newRaceBtn">+ New race</button></h2>
     <div id="raceList"></div>
+  </div>
+  <div class="card" id="moneyCard" data-help="money">
+    <h2><span>Team money</span><button class="mini" id="addExpense">+ Expense</button></h2>
+    <div id="moneySum"></div>
+    <button class="btn full" id="openMoney">Expenses, balances and settle up</button>
   </div>
   <div class="card" data-help="presets">
     <h2>Race presets</h2>
@@ -1593,7 +1602,7 @@ const lv0=()=>live();
 document.addEventListener('click',ev=>{ const b=ev.target.closest('[data-act="fix"]'); if(b){ ev.stopPropagation(); fixStopSheet(); return; } const rd=ev.target.closest('[data-radar]'); if(rd){ ev.stopPropagation(); if(rd.closest('#homeBody')){ const nr=nextRace(); if(nr&&nr.id!==DB.activeRaceId){ dbSave(); DB.activeRaceId=nr.id; reloadActive(); } } radarSheet(); } });
 const TAB_PARENT={lab:'plan',log:'race',debrief:'home',records:'home'};
 function show(tab){ const par=TAB_PARENT[tab]||tab; document.body.dataset.tab=tab; document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='tab-'+tab)); document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('on',b.dataset.tab===par)); $('actionBar').style.display=tab==='race'?'block':'none'; window.scrollTo(0,0); }
-function go(tab){ show(tab); if(tab==='records') renderRecords(); if(tab==='lab') renderLab(); if(tab==='home') renderHome(); if(tab==='log') renderLog(); if(tab==='team') renderTeamTab(); }
+function go(tab){ show(tab); if(tab==='records') renderRecords(); if(tab==='lab') renderLab(); if(tab==='home') renderHome(); if(tab==='log') renderLog(); if(tab==='team') renderTeamTab(); if(tab==='money') renderMoney(); }
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); go(b.dataset.tab); });
 document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>go(b.dataset.back));
 // the plan as text for the team chat: stints in order with each stop's fuel, then each driver's times
@@ -1858,6 +1867,7 @@ function normalizeDB(db){
     r.outbox=Array.isArray(r.outbox)?r.outbox.filter(o=>o&&(o.op==='ins'||o.op==='void')&&typeof o.id==='string').map(o=>o.op==='void'?{op:'void',id:o.id,target:String(o.target||''),t:+o.t||0}:{op:'ins',id:o.id}):[];
     r.prep=r.prep&&typeof r.prep==='object'?Object.fromEntries(Object.entries(r.prep).filter(([k,v])=>/^[a-z0-9_]{1,30}$/.test(k)).map(([k,v])=>[k,!!v])):{};
     r.planAtGreen=Array.isArray(r.planAtGreen)?r.planAtGreen.slice(0,60).filter(x=>x&&typeof x==='object').map(x=>({d:Number.isInteger(x.d)?x.d:0,s:+x.s||0,e:+x.e||0})):null; });
+  db.ledger=cleanLedger(db.ledger);
   return db; }
 let DB=null;
 const activeRace=()=>DB&&DB.races.find(r=>r.id===DB.activeRaceId);
@@ -1870,7 +1880,7 @@ function dbFromS(s,teamName){
   const car=Object.assign({id:uid(),name:'Car 1',measured:{}},clone(DEFAULT.car),s.car||{}); car.id=car.id||uid(); car.measured=car.measured||{};
   const rules=Object.assign(clone(DEFAULT.race),s.race||{});
   const race=newRaceObj({series:s.series||'luckydog',rules,carId:car.id,drivers:members.map((m,i)=>({mid:m.id,max:(s.drivers[i]&&s.drivers[i].max)||m.maxStint})),events:s.events||[]});
-  const db={v:2,team:{id:uid(),name:teamName||'My team',series:s.series||'luckydog',members,cars:[car]},races:[race],activeRaceId:race.id};
+  const db={v:2,team:{id:uid(),name:teamName||'My team',series:s.series||'luckydog',members,cars:[car]},races:[race],activeRaceId:race.id,ledger:{items:[],voids:[],outbox:[]}};
   (s.archive||[]).forEach(a=>db.races.push(newRaceObj({series:race.series,rules:Object.assign(clone(rules),{name:a.name}),carId:car.id,drivers:clone(race.drivers),events:a.events||[],status:'done',date:a.date})));
   return db;
 }
@@ -1967,7 +1977,7 @@ function finishOnboarding(){
   const car=Object.assign({id:uid(),measured:{}},clone(DEFAULT.car),ONB.car);
   const rules=Object.assign(clone(DEFAULT.race),SERIES[ONB.series].race||{},{name:'Race 1'});
   const r=newRaceObj({series:ONB.series,rules,carId:car.id,drivers:members.filter(m=>isDriverRole(m.role)).map(m=>({mid:m.id,max:m.maxStint}))});
-  DB={v:2,team:{id:uid(),name:ONB.name,series:ONB.series,members,cars:[car]},races:[r],activeRaceId:r.id};
+  DB={v:2,team:{id:uid(),name:ONB.name,series:ONB.series,members,cars:[car]},races:[r],activeRaceId:r.id,ledger:{items:[],voids:[],outbox:[]}};
   ONB=null; closeSheet(); hydrate(); dbSave(); bind(); update(); show('team');
 }
 
@@ -1976,6 +1986,7 @@ function seatByMember(){ const m={}; (DB?DB.races:[]).forEach(r=>{ if(r.summary&
 function raceStatus(r){ if(SIM.on&&r.sim) return ['SIM','live']; if(r.status==='done') return ['DONE','done']; if(r.id===DB.activeRaceId) return [r.status==='live'?'LIVE':'ACTIVE',r.status==='live'?'live':'active']; return ['PLANNED','']; }
 function renderTeamTab(){
   renderSyncCard(); renderSyncPill(); renderBackup();
+  if($('moneySum')){ $('moneySum').innerHTML=DB?moneySummaryHTML():''; $('addExpense').onclick=()=>{ if(DB) expenseSheet(null); }; $('openMoney').onclick=()=>{ if(DB) go('money'); }; $('addExpense').disabled=$('openMoney').disabled=!DB||SIM.on; }
   if(!DB){ $('teamTitle').textContent='No team yet'; $('teamSub').textContent=''; ['memberList','carList','raceList'].forEach(i=>$(i).innerHTML=''); return; }
   const T=DB.team, seat=seatByMember(), done=DB.races.filter(r=>r.status==='done');
   $('teamTitle').textContent=T.name;
@@ -2108,7 +2119,7 @@ function raceNow(){
     if(needCar){ carPatch={name:val('nCarName').trim()||'Car 1',unit:val('nUnit'),cap:parseFloat(val('nCap')),burn:parseFloat(val('nBurn')),lap:val('nLap').trim()};
       if(!carReady(carPatch)){ alert('The car needs a tank size, burn per lap and a lap time (like 2:20).'); return; } }
     const ser=SERIES[st.series], maxS=(ser.race||{}).maxStint||120;
-    if(!DB){ DB={v:2,team:{id:uid(),name:val('nTeam').trim()||'My team',series:st.series,members:[],cars:[]},races:[],activeRaceId:null}; }
+    if(!DB){ DB={v:2,team:{id:uid(),name:val('nTeam').trim()||'My team',series:st.series,members:[],cars:[]},races:[],activeRaceId:null,ledger:{items:[],voids:[],outbox:[]}}; }
     const TM=DB.team, idMap={};
     st.names.forEach((n,i)=>{ const ex=TM.members.find(m=>m.name.toLowerCase()===n.toLowerCase()); const m=ex||{id:uid(),name:n,role:TM.members.length?'driver':'owner',maxStint:maxS,color:COLORS[TM.members.length%COLORS.length]}; if(!ex) TM.members.push(m); idMap['new'+i]=m.id; });
     let car=carById(st.carId); if(carPatch){ if(car) Object.assign(car,carPatch); else { car=Object.assign({id:uid(),measured:{}},clone(DEFAULT.car),carPatch); TM.cars.push(car); } }
@@ -2671,6 +2682,10 @@ const HELP={
   cc_fuel:{t:'Fuel and weather',read:'Tank gauge (dashed line = reserve), estimated fuel, range, next fill and race total. Below: track weather and rain chance.',means:'All fuel figures are estimates from the log.',can:'Pick your track in Setup → Race for weather.',cant:'Weather needs signal; offline it shows the last reading and its age.'},
   cc_stops:{t:'Next stops',read:'The next four stops: time, countdown, fuel to add and who goes out. Extra alerts sit above.',means:'',can:'',cant:''},
   home_next:{t:'Next race',read:'Your next planned race: day, series, track, times, car, driver order, the rules at a glance and (with a track set) the race-day forecast.',means:'On race day the app opens straight to the race screen instead of here.',can:'Open the race screen or the plan. Change the date in Plan → Race.',cant:'The forecast needs signal and is only available up to 15 days ahead.'},
+  money:{t:'Team money',read:'Who paid what for the team: parts, fuel, tyres, repairs, entry fees, accommodation, travel. Each expense is for the team, a race or a car.',means:'PitDog works out each person’s share and the fewest payments that square everyone up. Shared with the whole team when it’s online; works with no signal.',can:'Anyone on the team can add an expense. Edit or delete your own (the owner and pit wall can fix anyone’s).',cant:'It doesn’t move money: record payments when people actually pay each other.'},
+  money_bal:{t:'Balances',read:'Paid = what someone spent for the team; share = their part of the costs. A + means the team owes them; a − means they owe.',means:'“Settle up” lists the fewest payments that make everyone square.',can:'Tap Paid when a settle-up payment happens: it’s recorded and both balances move.',cant:'Balances cover everything logged, whatever the Show filter says.'},
+  money_totals:{t:'Spending',read:'The total and the split by category for what you’ve chosen to show: the whole season, team costs, one race or one car.',means:'A car includes its own costs plus the costs of races it ran.',can:'Pick a race to see each person’s share of that weekend.',cant:'Amounts are in one currency (set the symbol in “How costs are split”).'},
+  money_rule:{t:'How costs are split',read:'Equally, by seat time (minutes in the car), or fixed shares (e.g. the car owner 50%, two renters 25% each).',means:'Most specific wins: an expense’s own choice, then the race’s rule, then the team rule, then equally.',can:'Set a team default, give one race its own rule (e.g. split this weekend by seat time), or choose per expense.',cant:'Seat time counts once the race is finished; until then those costs split equally.'},
   home_device:{t:'This device',read:'Checks this phone or iPad can run the race with no signal: the app saved for offline use, opened from the home-screen icon (iPhone), sound alerts on, and synced with the team.',means:'Amber items need fixing before you lose signal at the track. On iPhone the home-screen icon and Safari keep separate data, so always use the same one.',can:'Follow the hint under each amber item.'},
   home_prep:{t:'Prep checklist',read:'What to bring and know, worked out from this race’s plan: fuel for the day, the first driver and rotation, stops and minimum stop time.',means:'Fuel assumes a full tank at the start plus every planned fill.',can:'Tick items off; ticks are saved with the race.',cant:'It can’t know the event supplementals: read them, they override the rulebook.'},
   home_last:{t:'Last race',read:'Your most recent finished race: laps, stops and the fuel burn measured that day.',means:'',can:'Open its full debrief.',cant:''},
@@ -2798,7 +2813,7 @@ function mergeEvents(r,rows){   // rows from the server for race r: add what's n
   if(changed) r.events.sort((a,b)=>a.t-b.t); return changed; }
 // ---- status
 function setSync(st,err){ SYNC.status=st; if(err!==undefined) SYNC.err=err; renderSyncPill(); if($('tab-team').classList.contains('on')) renderSyncCard(); }
-function pendingCount(){ return teamOnline()?DB.races.reduce((a,r)=>a+((r.outbox||[]).length),0):0; }
+function pendingCount(){ return teamOnline()?DB.races.reduce((a,r)=>a+((r.outbox||[]).length),0)+((DB.ledger&&DB.ledger.outbox.length)||0):0; }
 function renderSyncPill(){ const p=$('syncPill'); if(!p) return; if(!teamOnline()){ p.style.display='none'; return; } p.style.display='';
   const n=pendingCount(), st=SYNC.status;
   const [cls,txt]=!SYNC.user?['warn','SIGNED OUT'+(n?' · '+n:'')]:st==='live'?(n?['warn','SYNC · '+n]:['ok','SYNC ✓']):st==='offline'?['warn','OFFLINE'+(n?' · '+n:'')]:st==='error'?['bad','SYNC ERROR'+(n?' · '+n:'')]:st==='paused'?['warn','SYNC PAUSED']:['warn','SYNCING'];
@@ -2837,6 +2852,7 @@ async function putTeamOnline(){ const sb=sbClient(); if(!sb||!SYNC.user||!DB) re
   // a new team: every race and entry gets a fresh id (ids left over from an earlier team would collide on the server)
   DB.races.filter(r=>!r.sim).forEach(r=>{ r.sid=uuid(); r.settingsHash=null; r.isNew=true; r.voids=[];
     r.events.forEach(e=>{ e.id=uuid(); }); r.outbox=r.events.map(e=>({op:'ins',id:e.id})); });
+  { const L=ensureLedger(); L.items.forEach(i=>{ i.id=uuid(); delete i.u; }); L.voids=[]; L.outbox=L.items.map(i=>({op:'ins',id:i.id})); }
   if(S) hydrate(); dbSave(); await pushAll(); startSync(); toast2('Team is online. Share the join code with your crew.'); }
 async function joinTeam(code){ const sb=sbClient(); if(!sb||!SYNC.user) return; code=String(code||'').trim().toUpperCase(); if(!/^[A-Z0-9]{8}$/.test(code)){ toast2('A join code is 8 letters and numbers.'); return; }
   setSync('syncing'); const {data:tid,error}=await sb.rpc('join_team',{p_code:code,p_device:DEVICE});
@@ -2845,14 +2861,14 @@ async function joinTeam(code){ const sb=sbClient(); if(!sb||!SYNC.user) return; 
   if(DB&&DB.team.sid===tid){ await pull(false); startSync(); toast2('Back in '+DB.team.name+'.'); return; }   // same team: keep everything on this device
   if(DB&&DB.races.some(r=>r.events.length&&!r.sim)&&!confirm('Joining replaces the team on this device with the shared team. A backup of this device is kept (Team → Data on this device). Continue?')){ setSync('off'); return; }
   if(DB){ dbSave(); backupDB('before joining a team'); }
-  DB={v:2,team:{id:uid(),sid:tid,name:'Team',series:'luckydog',members:[],cars:[clone(Object.assign({id:uid(),name:'Car 1',measured:{}},DEFAULT.car))]},races:[],activeRaceId:null};
+  DB={v:2,team:{id:uid(),sid:tid,name:'Team',series:'luckydog',members:[],cars:[clone(Object.assign({id:uid(),name:'Car 1',measured:{}},DEFAULT.car))]},races:[],activeRaceId:null,ledger:{items:[],voids:[],outbox:[]}};
   await pull(true); startSync(); toast2('Joined '+DB.team.name+'.'); }
 async function leaveTeam(){ if(!teamOnline()) return; const n=pendingCount();
   if(!confirm('Stop syncing on this device? The team stays online for everyone else; this device keeps its copy.'+(n?`\n\n${n} entr${n===1?'y hasn’t':'ies haven’t'} reached the team yet and will stay only on this device.`:''))) return;
   const sb=sbClient();
   try{ const {data,error}=await sb.from('memberships').delete().eq('team_id',DB.team.sid).eq('user_id',SYNC.user.id).select();
     if(!error&&Array.isArray(data)&&!data.length&&DB.team.role==='owner'){ toast2('You’re the team’s only owner: make someone else owner first (Team → members), then leave.'); return; } }catch(e){}
-  stopSync(); delete DB.team.sid; delete DB.team.role; delete DB.team.joinCode; DB.races.forEach(r=>{ delete r.sid; delete r.outbox; delete r.voids; }); dbSave(); setSync('off'); update(); }
+  stopSync(); delete DB.team.sid; delete DB.team.role; delete DB.team.joinCode; DB.races.forEach(r=>{ delete r.sid; delete r.outbox; delete r.voids; }); if(DB.ledger){ DB.ledger.outbox=[]; DB.ledger.voids=[]; } dbSave(); setSync('off'); update(); }
 // ---- push / pull
 // races created on this device after the team went online (Race now, Plan a race) join the shared team on the next push
 function shareNewRaces(){ if(!teamOnline()||!canPlan()) return; let act=false;
@@ -2877,18 +2893,20 @@ async function pushAll(){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline()
           if(rows.length){ const {error}=await sb.from('events').upsert(rows,{onConflict:'id',ignoreDuplicates:true}); if(error) throw error; }
           syncSToDB(); const sent=new Set(sending.map(o=>o.id)); r.outbox=(r.outbox||[]).filter(o=>!sent.has(o.id)); }
         finally{ sending.forEach(o=>SYNC.inflight.delete(o.id)); } } }
+    await pushLedger(sb);
     store.set('pitdog_db',JSON.stringify(DB)); setSync('live','');
   }catch(e){ setSync(navigator.onLine===false||/fetch|network/i.test(e.message||'')?'offline':'error',e.message||String(e)); }
   finally{ SYNC.busy=false; renderSyncPill(); } }
 async function pull(full){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline()) return;
   try{ const tid=DB.team.sid;
-    const [{data:t,error:e1},{data:me,error:e2},{data:races,error:e3},{data:evs,error:e4}]=await Promise.all([
+    const [{data:t,error:e1},{data:me,error:e2},{data:races,error:e3},{data:evs,error:e4},{data:led,error:e5}]=await Promise.all([
       sb.from('teams').select('id,name,doc,doc_updated_at').eq('id',tid).single(),
       sb.from('memberships').select('role').eq('team_id',tid).eq('user_id',SYNC.user.id),
       sb.from('races').select('id,settings,updated_at').eq('team_id',tid),
-      sb.from('events').select('id,race_id,t,type,payload').eq('team_id',tid)]);
+      sb.from('events').select('id,race_id,t,type,payload').eq('team_id',tid),
+      sb.from('ledger').select('id,t,kind,payload,created_by').eq('team_id',tid)]);
     const gone=e1&&/PGRST116|0 rows|coerce/i.test((e1.code||'')+' '+(e1.message||''));
-    const err=(gone?null:e1)||e2||e3||e4; if(err) throw err;
+    const err=(gone?null:e1)||e2||e3||e4||(e5&&!/ledger|relation|schema cache|does not exist/i.test(e5.message||'')?e5:null); if(err) throw err;
     if(gone||!me||!me.length){
       // not visible any more: either our session died (e.g. signed out elsewhere) or we were removed. Never drop data either way.
       let valid=false; try{ const {data:u,error:ue}=await sb.auth.getUser(); valid=!ue&&u&&u.user&&u.user.id===SYNC.user.id; }catch(e){}
@@ -2908,6 +2926,7 @@ async function pull(full){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline(
       // else: our unsent plan edits stay dirty and go up on the next push
       r.isNew=false; });
     DB.races.filter(r=>r.sid).forEach(r=>mergeEvents(r,evs.filter(x=>x.race_id===r.sid)));
+    if(Array.isArray(led)) mergeLedger(led);
     const n=normalizeDB(DB); if(n) DB=n;
     if(!activeRace()) DB.activeRaceId=(DB.races.find(r=>r.status!=='done')||DB.races[DB.races.length-1]||{}).id;
     if(!activeRace()&&DB.team.members.length){ const r=newRaceObj({series:DB.team.series,rules:Object.assign(clone(DEFAULT.race),SERIES[DB.team.series].race||{}),carId:DB.team.cars[0].id,drivers:DB.team.members.filter(m=>isDriverRole(m.role)).map(m=>({mid:m.id,max:m.maxStint}))}); DB.races.push(r); DB.activeRaceId=r.id; }
@@ -2930,6 +2949,7 @@ function startSync(){ const sb=sbClient(); if(!sb||!SYNC.user||!teamOnline()) re
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'events',filter:'team_id=eq.'+DB.team.sid},p=>applyRemoteEvent(p.new))
     .on('postgres_changes',{event:'*',schema:'public',table:'races',filter:'team_id=eq.'+DB.team.sid},p=>applyRemoteRace(p.new))
     .on('postgres_changes',{event:'UPDATE',schema:'public',table:'teams',filter:'id=eq.'+DB.team.sid},p=>applyRemoteTeam(p.new))
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'ledger',filter:'team_id=eq.'+DB.team.sid},p=>applyRemoteLedger(p.new))
     .subscribe(); }catch(e){}
   SYNC.timer=setInterval(()=>{ if(pendingCount()||Date.now()-SYNC.pulledAt>120000) pushAll().then(()=>{ if(Date.now()-SYNC.pulledAt>120000) pull(false); }); },15000); }
 function stopSync(){ SYNC.members=null; SYNC.membersAt=0; clearInterval(SYNC.timer); SYNC.timer=null; try{ if(SYNC.ch&&SYNC.sb) SYNC.sb.removeChannel(SYNC.ch); }catch(e){} SYNC.ch=null; }
@@ -3061,6 +3081,196 @@ try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(
 window.addEventListener('storage',e=>{ if(e.key==='pitdog_db'&&!SIM.on){ OTHER_TAB=true; update(); } });
 if(!DB) startOnboarding(); else if(PENDING_SHARE) shareSheet();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+/* ================= TEAM MONEY ================= */
+// Who paid what (parts, fuel, repairs, entry fees, accommodation…), for which race or car, and how it's shared.
+// Entries are append-only like the race log: an edit is a void of the old entry plus a new one, so they merge across
+// devices and work offline. Amounts are whole cents. How a cost is shared, most specific first: the expense's own
+// choice › the race's rule › the team's default rule › equally among everyone.
+const CATS={parts:'Parts',fuel:'Fuel',tyres:'Tyres',repairs:'Repairs',entry:'Entry fees',stay:'Accommodation',travel:'Travel',food:'Food',gear:'Safety gear',other:'Other'};
+const SPLITS={equal:'Equally',seat:'By seat time',shares:'Fixed shares'};
+const isMid=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,40}$/.test(v);
+function cleanShares(o){ const out={}; if(o&&typeof o==='object') Object.entries(o).slice(0,40).forEach(([k,v])=>{ const x=+v; if(isMid(k)&&isFinite(x)&&x>0) out[k]=Math.min(1e6,x); }); return out; }
+function cleanMoneyItem(x){ if(!x||typeof x!=='object'||!isMid(x.id)||!['exp','pay','rule'].includes(x.k)) return null;
+  const o={id:x.id,k:x.k,t:isFinite(+x.t)?+x.t:0}; if(isMid(x.u)) o.u=x.u;
+  const amt=Math.round(+x.amt), date=/^\d{4}-\d{2}-\d{2}$/.test(x.date)?x.date:'';
+  if(x.k==='exp'){ if(!(amt>0&&amt<1e10)||!isMid(x.by)) return null;
+    Object.assign(o,{date,amt,by:x.by,cat:own(CATS,String(x.cat))?x.cat:'other',race:isMid(x.race)?x.race:null,car:isMid(x.car)?x.car:null,note:str(x.note,200)});
+    const sp=x.split&&typeof x.split==='object'?x.split:{}; const who=Array.isArray(sp.who)?sp.who.filter(isMid).slice(0,40):[];
+    o.split={m:['auto','equal','seat','shares'].includes(sp.m)?sp.m:'auto',who:who.length?who:null,sh:cleanShares(sp.sh)}; }
+  else if(x.k==='pay'){ if(!(amt>0&&amt<1e10)||!isMid(x.from)||!isMid(x.to)||x.from===x.to) return null; Object.assign(o,{date,amt,from:x.from,to:x.to,note:str(x.note,200)}); }
+  else { if(!(x.scope==='team'||isMid(x.scope))||!(own(SPLITS,String(x.m))||(x.m==='inherit'&&x.scope!=='team'))) return null;
+    Object.assign(o,{scope:x.scope,m:x.m,sh:cleanShares(x.sh)}); if(x.cur!==undefined&&str(x.cur,4)) o.cur=str(x.cur,4); }
+  return o; }
+function cleanLedger(L){ L=L&&typeof L==='object'?L:{};
+  const voids=(Array.isArray(L.voids)?L.voids:[]).filter(isMid).slice(-5000);
+  const items=(Array.isArray(L.items)?L.items:[]).map(cleanMoneyItem).filter(i=>i&&!voids.includes(i.id)).slice(-5000);
+  const outbox=(Array.isArray(L.outbox)?L.outbox:[]).filter(o=>o&&(o.op==='ins'||o.op==='void')&&isMid(o.id)).map(o=>o.op==='void'?{op:'void',id:o.id,target:String(o.target||''),t:+o.t||0}:{op:'ins',id:o.id});
+  return {items,voids,outbox}; }
+const ensureLedger=()=>{ if(DB&&!DB.ledger) DB.ledger=cleanLedger(null); return DB?DB.ledger:null; };
+const moneyItems=()=>DB?ensureLedger().items:[];
+function ruleFor(scope){ let best=null; moneyItems().forEach(i=>{ if(i.k==='rule'&&i.scope===scope&&(!best||i.t>=best.t)) best=i; }); return best; }
+const curSym=()=>{ const r=ruleFor('team'); return r&&r.cur?r.cur:'$'; };
+function money(c,sign){ const s=(Math.abs(c)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); return (c<0?'−':sign&&c>0?'+':'')+curSym()+s; }
+const dateLbl=d=>d?new Date(d+'T12:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:d.slice(0,4)===todayISO().slice(0,4)?undefined:'numeric'}):'';
+const nameOf=mid=>{ const m=member(mid); return m?m.name:'Former member'; };
+const raceById=id=>DB.races.find(r=>r.id===id);
+const moneyRaces=()=>DB.races.filter(r=>!r.sim&&!r.abandoned).sort((a,b)=>((b.rules.date||'')>(a.rules.date||'')?1:(b.rules.date||'')<(a.rules.date||'')?-1:(b.created||0)-(a.created||0)));
+const raceLabel=r=>(r.rules.name||'Race')+(r.rules.date?' · '+new Date(r.rules.date+'T12:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}):'');
+function raceSeat(id){ const r=raceById(id); return r&&r.summary&&r.summary.seat?r.summary.seat:null; }
+// the rule an expense follows when it's left on "default"
+function defaultRule(raceId){ const r=raceId&&ruleFor(raceId); if(r&&r.m!=='inherit') return r; return ruleFor('team'); }
+function effSplit(e){ const sp=e.split||{m:'auto'}; if(sp.m!=='auto') return {m:sp.m,sh:sp.sh,who:sp.who,src:'own'};
+  const r=defaultRule(e.race); return r?{m:r.m,sh:r.sh,who:sp.who,src:r.scope==='team'?'team':'race'}:{m:'equal',who:sp.who,src:'none'}; }
+// cents split by weight, rounding so the parts always add up to the total (largest remainder; ties by id, so every device agrees)
+function alloc(total,w){ const ids=Object.keys(w).filter(k=>w[k]>0).sort(), sum=ids.reduce((a,k)=>a+w[k],0), out={}; if(!sum) return out; let given=0;
+  const rem=ids.map(k=>{ const ex=total*w[k]/sum, f=Math.floor(ex); out[k]=f; given+=f; return [k,ex-f]; }); rem.sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:1));
+  for(let i=0;given<total;i=(i+1)%rem.length){ out[rem[i][0]]++; given++; } return out; }
+function splitOf(e){ const sp=effSplit(e), who=sp.who&&sp.who.length?sp.who:DB.team.members.map(m=>m.id), w={}; let note='';
+  const even=()=>who.forEach(id=>{ w[id]=1; });
+  if(sp.m==='seat'){ const seat=(e.race?raceSeat(e.race):seatByMember())||{}, tot=who.reduce((a,id)=>a+(seat[id]||0),0);
+    if(tot>0) who.forEach(id=>{ w[id]=seat[id]||0; }); else { note=e.race?'seat time counts once the race is finished; split equally until then':'no seat time yet, so split equally'; even(); } }
+  else if(sp.m==='shares'){ const sh=sp.sh||{}, tot=who.reduce((a,id)=>a+(sh[id]||0),0); if(tot>0) who.forEach(id=>{ w[id]=sh[id]||0; }); else { note='no shares set, so split equally'; even(); } }
+  else even();
+  return {parts:alloc(e.amt,w),m:sp.m,src:sp.src,note}; }
+// + = the team owes them, − = they owe the team
+function balances(){ const b={}, add=(id,v)=>{ b[id]=(b[id]||0)+v; };
+  moneyItems().forEach(e=>{ if(e.k==='exp'){ add(e.by,e.amt); Object.entries(splitOf(e).parts).forEach(([id,v])=>add(id,-v)); } else if(e.k==='pay'){ add(e.from,e.amt); add(e.to,-e.amt); } }); return b; }
+function settleUp(b){ const cr=[],dr=[]; Object.entries(b).forEach(([id,v])=>{ if(v>0) cr.push([id,v]); else if(v<0) dr.push([id,-v]); });
+  const by=(a,c)=>c[1]-a[1]||(a[0]<c[0]?-1:1); cr.sort(by); dr.sort(by); const out=[]; let i=0,j=0;
+  while(i<dr.length&&j<cr.length){ const x=Math.min(dr[i][1],cr[j][1]); out.push({from:dr[i][0],to:cr[j][0],amt:x}); dr[i][1]-=x; cr[j][1]-=x; if(!dr[i][1]) i++; if(!cr[j][1]) j++; } return out; }
+// ---- changes
+const canMoney=()=>!!DB&&!SIM.on;
+const canEditMoney=e=>canMoney()&&(!teamOnline()||canPlan()||!e.u||(SYNC.user&&e.u===SYNC.user.id));
+function moneyAdd(x){ if(!canMoney()) return null; ensureLedger(); const it=cleanMoneyItem(Object.assign({id:uuid(),t:Date.now()},x,SYNC.user?{u:SYNC.user.id}:{})); if(!it) return null;
+  DB.ledger.items.push(it); if(teamOnline()) DB.ledger.outbox.push({op:'ins',id:it.id}); dbSave(); pushSoon(); return it; }
+function moneyVoid(id){ const L=ensureLedger(), i=L.items.findIndex(x=>x.id===id); if(i<0) return; L.items.splice(i,1);
+  if(teamOnline()){ const q=L.outbox.findIndex(o=>o.op==='ins'&&o.id===id);
+    if(q>=0&&!SYNC.inflight.has(id)) L.outbox.splice(q,1);                                    // never left this device
+    else { L.voids.push(id); L.outbox.push({op:'void',id:uuid(),target:id,t:Date.now()}); } }
+  dbSave(); pushSoon(); }
+// ---- sync
+const ledgerPayload=it=>{ const p=Object.assign({},it); ['id','t','k','u'].forEach(k=>delete p[k]); return p; };
+const fromLedgerRow=row=>cleanMoneyItem(Object.assign({},row.payload||{},{id:row.id,t:+row.t,k:row.kind,u:row.created_by}));
+function mergeLedger(rows){ DB.ledger=DB.ledger||cleanLedger(null); const L=DB.ledger, have=new Set(L.items.map(i=>i.id)); let ch=false;
+  rows.forEach(r=>{ if(r.kind==='void'){ const tg=r.payload&&r.payload.target; if(tg&&!L.voids.includes(tg)){ L.voids.push(tg); ch=true; } } });
+  rows.forEach(r=>{ if(r.kind!=='void'&&!have.has(r.id)&&!L.voids.includes(r.id)){ const it=fromLedgerRow(r); if(it){ L.items.push(it); have.add(it.id); ch=true; } } });
+  const n=L.items.length; L.items=L.items.filter(i=>!L.voids.includes(i.id)); if(L.items.length!==n) ch=true; if(ch) L.items.sort((a,b)=>a.t-b.t); return ch; }
+const ledgerRow=o=>{ const L=DB.ledger; if(o.op==='void') return {id:o.id,team_id:DB.team.sid,t:Math.round(o.t),kind:'void',payload:{target:o.target},device:DEVICE};
+  const it=L.items.find(x=>x.id===o.id); if(!it) return null; if(SYNC.user&&!it.u) it.u=SYNC.user.id; return {id:it.id,team_id:DB.team.sid,t:Math.round(it.t),kind:it.k,payload:ledgerPayload(it),device:DEVICE}; };
+async function pushLedger(sb){ const L=ensureLedger(); if(!L||!L.outbox.length) return; const sending=L.outbox.slice(); sending.forEach(o=>{ if(o.op==='ins') SYNC.inflight.add(o.id); });
+  const done=new Set();
+  try{ const rows=sending.map(o=>[o,ledgerRow(o)]);
+    rows.filter(([,r])=>!r).forEach(([o])=>done.add(o.id));
+    const live=rows.filter(([,r])=>r);
+    if(live.length){ const {error}=await sb.from('ledger').upsert(live.map(x=>x[1]),{onConflict:'id',ignoreDuplicates:true});
+      if(!error) live.forEach(([o])=>done.add(o.id));
+      else if(/security|only the|nothing to remove|violates/i.test(error.message||'')){       // the team refused one: find it, drop it, keep the rest
+        for(const [o,r] of live){ const {error:e1}=await sb.from('ledger').upsert([r],{onConflict:'id',ignoreDuplicates:true});
+          if(!e1){ done.add(o.id); continue; } if(!/security|only the|nothing to remove|violates/i.test(e1.message||'')) throw e1;
+          done.add(o.id); if(o.op==='void') L.voids=L.voids.filter(v=>v!==o.target); else L.items=L.items.filter(x=>x.id!==o.id);
+          toast2('The team didn’t accept a money change: '+(e1.message||'not allowed')); } }
+      else throw error; } }
+  finally{ sending.forEach(o=>SYNC.inflight.delete(o.id)); L.outbox=L.outbox.filter(o=>!done.has(o.id)); } }
+function applyRemoteLedger(row){ if(!teamOnline()||SIM.on||!row) return; if(mergeLedger([row])){ store.set('pitdog_db',JSON.stringify(DB)); if($('tab-money').classList.contains('on')) renderMoney(); if($('tab-team').classList.contains('on')) renderTeamTab(); } }
+// ---- screens
+let MONEY_F='all';
+function moneyScope(f){ const ex=moneyItems().filter(i=>i.k==='exp'); if(f==='all') return ex; if(f==='team') return ex.filter(e=>!e.race&&!e.car);
+  const [k,id]=f.split(':'); if(k==='race') return ex.filter(e=>e.race===id); if(k==='car') return ex.filter(e=>e.car===id||(e.race&&(raceById(e.race)||{}).carId===id)); return ex; }
+function moneyFor(e){ if(e.race){ const r=raceById(e.race); return r?raceLabel(r):'Deleted race'; } if(e.car){ const c=carById(e.car); return c?c.name:'Removed car'; } return 'Team'; }
+function splitLabel(e){ const s=splitOf(e), n=Object.keys(s.parts).length;
+  return (s.m==='seat'?'by seat time':s.m==='shares'?'fixed shares':'equally')+' · '+n+(n===1?' person':' people')+(s.src==='race'?' (race rule)':s.src==='team'?' (team rule)':'')+(s.note?' · '+s.note:''); }
+function moneySummaryHTML(){ const ex=moneyItems().filter(i=>i.k==='exp'); if(!ex.length) return '<div class="sub" style="margin:0 0 8px">Log who paid for parts, fuel, repairs, entry fees and hotels, per race or car. PitDog works out each person’s share and who owes whom.</div>';
+  const tot=ex.reduce((a,e)=>a+e.amt,0), st=settleUp(balances());
+  return `<div class="sub" style="margin:0 0 8px">${money(tot)} logged · ${ex.length} expense${ex.length===1?'':'s'} · ${st.length?st.slice(0,2).map(s=>`${esc(nameOf(s.from))} owes ${esc(nameOf(s.to))} ${money(s.amt)}`).join(' · ')+(st.length>2?' · …':''):'everyone is square'}</div>`; }
+function bars(rows,total){ return rows.map(([lbl,v])=>`<div class="mbar"><div class="mbl"><span>${lbl}</span><b>${money(v)}</b></div><i style="width:${total?Math.max(2,Math.round(v/total*100)):0}%"></i></div>`).join(''); }
+function renderMoney(){ const box=$('moneyBody'); if(!box||!DB) return; const L=DB.ledger, M=DB.team.members;
+  if(!['all','team'].includes(MONEY_F)&&!(MONEY_F.startsWith('race:')&&raceById(MONEY_F.slice(5)))&&!(MONEY_F.startsWith('car:')&&carById(MONEY_F.slice(4)))) MONEY_F='all';
+  const bal=balances(), st=settleUp(bal), ex=moneyScope(MONEY_F), tot=ex.reduce((a,e)=>a+e.amt,0);
+  let h=`<div class="card"><div class="row" style="gap:10px"><button class="btn pri" id="mAdd" style="flex:2" ${canMoney()?'':'disabled'}>+ Expense</button><button class="btn" id="mPay" style="flex:1" ${canMoney()&&M.length>1?'':'disabled'}>Record a payment</button></div></div>`;
+  // balances: across everything, whatever the filter
+  const act=M.filter(m=>bal[m.id]!==undefined), paid={}, share={};
+  moneyItems().forEach(e=>{ if(e.k!=='exp') return; paid[e.by]=(paid[e.by]||0)+e.amt; Object.entries(splitOf(e).parts).forEach(([id,v])=>{ share[id]=(share[id]||0)+v; }); });
+  h+=`<div class="card" id="moneyBal" data-help="money_bal"><h2><span>Balances</span><span class="sub" style="margin:0">${st.length?'settle up below':'square'}</span></h2>`+
+    (act.length?act.map(m=>{ const v=bal[m.id]||0; return `<div class="lrow" style="cursor:default"><span class="dot" style="background:${m.color}"></span><div class="lmain"><b>${esc(m.name)}</b><small>paid ${money(paid[m.id]||0)} · share ${money(share[m.id]||0)}</small></div><div class="mnet"><b>${v?money(v,true):'square'}</b><small>${v>0?'is owed':v<0?'owes':''}</small></div></div>`; }).join(''):'<div class="sub" style="margin:0">No expenses yet.</div>')+
+    (st.length?`<div class="sub" style="margin:12px 0 6px">Settle up (fewest payments)</div>`+st.map((s,i)=>`<div class="lrow" style="cursor:default"><div class="lmain"><b>${esc(nameOf(s.from))} pays ${esc(nameOf(s.to))}</b><small>${money(s.amt)}</small></div>${canMoney()?`<button class="mini" data-settle="${i}">Paid</button>`:''}</div>`).join(''):'')+'</div>';
+  // filter + totals
+  const races=moneyRaces(), opt=(v,l)=>`<option value="${v}" ${MONEY_F===v?'selected':''}>${esc(l)}</option>`;
+  h+=`<div class="card" data-help="money_totals"><h2><span>Spending</span><b>${money(tot)}</b></h2>`+fld('Show',`<select id="mFilter" style="min-width:62%">${opt('all','Whole season')}${opt('team','Team (no race or car)')}${races.length?`<optgroup label="Races">${races.map(r=>opt('race:'+r.id,raceLabel(r))).join('')}</optgroup>`:''}<optgroup label="Cars (their races included)">${DB.team.cars.map(c=>opt('car:'+c.id,c.name)).join('')}</optgroup></select>`);
+  const byCat={}; ex.forEach(e=>{ byCat[e.cat]=(byCat[e.cat]||0)+e.amt; });
+  h+=ex.length?`<div class="sub" style="margin:12px 0 6px">By category</div>`+bars(Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[CATS[k],v]),tot):'<div class="sub" style="margin:10px 0 0">Nothing logged here yet.</div>';
+  if(MONEY_F==='all'&&ex.length){ const byR={}; ex.forEach(e=>{ const k=e.race?(raceById(e.race)?raceLabel(raceById(e.race)):'Deleted race'):e.car?'Car: '+moneyFor(e):'Team (no race or car)'; byR[k]=(byR[k]||0)+e.amt; });
+    h+=`<div class="sub" style="margin:12px 0 6px">By race / car</div>`+bars(Object.entries(byR).sort((a,b)=>b[1]-a[1]).map(([k,v])=>[esc(k),v]),tot); }
+  if(MONEY_F.startsWith('race:')){ const seat=raceSeat(MONEY_F.slice(5)); const per={}; ex.forEach(e=>Object.entries(splitOf(e).parts).forEach(([id,v])=>{ per[id]=(per[id]||0)+v; }));
+    if(Object.keys(per).length) h+=`<div class="sub" style="margin:12px 0 6px">Each person’s share of this race${seat?'':' (seat time counts once it’s finished)'}</div>`+bars(Object.entries(per).sort((a,b)=>b[1]-a[1]).map(([id,v])=>[esc(nameOf(id))+(seat&&seat[id]?' · '+fmt(seat[id])+' driven':''),v]),tot); }
+  h+='</div>';
+  // split rule: the team default, or this race's
+  const scope=MONEY_F.startsWith('race:')?MONEY_F.slice(5):(MONEY_F==='all'||MONEY_F==='team')?'team':null;
+  if(scope){ const r=ruleFor(scope), cur=r?r.m:(scope==='team'?'equal':'inherit'), team=ruleFor('team'), tl=SPLITS[team?team.m:'equal'];
+    const opts=(scope==='team'?[]:[['inherit','Team default ('+tl.toLowerCase()+')']]).concat(Object.entries(SPLITS));
+    h+=`<div class="card" id="moneyRule" data-help="money_rule"><h2>${scope==='team'?'How costs are split':'How this race’s costs are split'}</h2><div class="sub" style="margin:0 0 8px">${scope==='team'?'The team default for every expense left on “default”. Races can have their own rule, and any expense can choose its own split.':'For this race’s expenses left on “default”. Any expense can still choose its own split.'}</div>`+
+      `<div class="chips" id="mRuleChips">${opts.map(([k,l])=>`<button class="chipbtn ${cur===k?'sel':''}" data-rule="${k}" ${canPlan()&&canMoney()?'':'disabled'}>${esc(l)}</button>`).join('')}</div>`+
+      (cur==='shares'?`<div class="sub" style="margin:10px 0 6px">Shares (any numbers: 2 / 1 / 1 or 50 / 25 / 25)</div>`+M.map(m=>`<div class="lrow" style="cursor:default"><span class="dot" style="background:${m.color}"></span><div class="lmain"><b>${esc(m.name)}</b></div><input class="mshare" data-rsh="${m.id}" type="number" inputmode="decimal" min="0" step="any" value="${(r&&r.sh&&r.sh[m.id])||''}" ${canPlan()?'':'disabled'}></div>`).join('')+(canPlan()?`<button class="btn full" id="mRuleSave">Save shares</button>`:''):'')+
+      (cur==='seat'?`<div class="hint">Shared by minutes in the car${scope==='team'?' over the season (race costs use that race’s seat time)':' in this race'}. People who didn’t drive pay nothing.</div>`:'')+
+      (scope==='team'?fld('Currency symbol',`<input id="mCur" type="text" maxlength="4" value="${esc(curSym())}" style="max-width:90px" ${canPlan()?'':'disabled'}>`):'')+
+      (!canPlan()?'<div class="hint">The owner or pit wall sets the rule.</div>':'')+'</div>'; }
+  // the list (payments too, in the season and team views)
+  const list=ex.concat(MONEY_F==='all'?moneyItems().filter(i=>i.k==='pay'):[]).sort((a,b)=>(b.date||'')>(a.date||'')?1:(b.date||'')<(a.date||'')?-1:b.t-a.t);
+  h+=`<div class="card" id="moneyList"><h2>Entries</h2>`+(list.length?list.map(e=>e.k==='pay'?
+      `<div class="lrow" data-pid="${e.id}"><div class="lmain"><b>${money(e.amt)} · ${esc(nameOf(e.from))} paid ${esc(nameOf(e.to))}</b><small>${dateLbl(e.date)} · settle-up payment${e.note?' · '+esc(e.note):''}</small></div><span class="chev">›</span></div>`:
+      `<div class="lrow" data-eid="${e.id}"><div class="lmain"><b>${money(e.amt)} · ${esc(CATS[e.cat])}${e.note?' · '+esc(e.note):''}</b><small>${dateLbl(e.date)} · ${esc(moneyFor(e))} · paid by ${esc(nameOf(e.by))}</small><small style="display:block">split ${esc(splitLabel(e))}</small></div><span class="chev">›</span></div>`).join(''):'<div class="sub" style="margin:0">Nothing yet. Tap + Expense.</div>')+'</div>';
+  box.innerHTML=h;
+  $('mAdd').onclick=()=>expenseSheet(null);
+  $('mPay').onclick=()=>paySheet(null,st[0]||null);
+  $('mFilter').onchange=()=>{ MONEY_F=val('mFilter'); renderMoney(); };
+  box.querySelectorAll('[data-settle]').forEach(b=>b.onclick=()=>{ const s=st[+b.dataset.settle]; if(!s||!confirm(`Record that ${nameOf(s.from)} paid ${nameOf(s.to)} ${money(s.amt)}?`)) return; moneyAdd({k:'pay',from:s.from,to:s.to,amt:s.amt,date:todayISO(),note:'settle up'}); renderMoney(); });
+  box.querySelectorAll('[data-eid]').forEach(r=>r.onclick=()=>expenseSheet(r.dataset.eid));
+  box.querySelectorAll('[data-pid]').forEach(r=>r.onclick=()=>paySheet(r.dataset.pid));
+  if(scope){ const saveRule=(m,sh)=>{ const prev=ruleFor(scope)||{}; const x={k:'rule',scope,m,sh:sh||{}}; if(scope==='team'){ const c=(prev.cur||'').trim(); if(c) x.cur=c; } moneyAdd(x); renderMoney(); };
+    box.querySelectorAll('[data-rule]').forEach(b=>b.onclick=()=>{ const m=b.dataset.rule, prev=ruleFor(scope); if((prev?prev.m:(scope==='team'?'equal':'inherit'))===m) return; saveRule(m,prev&&prev.sh); });
+    if($('mRuleSave')) $('mRuleSave').onclick=()=>{ const sh={}; box.querySelectorAll('[data-rsh]').forEach(i=>{ const v=parseFloat(i.value); if(v>0) sh[i.dataset.rsh]=v; }); if(!Object.keys(sh).length){ alert('Give at least one person a share.'); return; } saveRule('shares',sh); toast2('Shares saved'); };
+    if($('mCur')) $('mCur').onchange=()=>{ const c=str(val('mCur'),4); if(!c) return; const prev=ruleFor('team'); moneyAdd({k:'rule',scope:'team',m:prev?prev.m:'equal',sh:prev?prev.sh:{},cur:c}); renderMoney(); }; } }
+function expenseSheet(id,preset){ if(!canMoney()) return; dbSave(); const e=id?moneyItems().find(x=>x.id===id):null; if(id&&!e) return;
+  const M=DB.team.members, ro=!!e&&!canEditMoney(e); if(!M.length){ alert('Add people to the team first (Team → People).'); return; }
+  const d=e?clone(e):Object.assign({k:'exp',amt:0,date:todayISO(),cat:'parts',note:'',by:member(store.get('pitdog_paidby'))?store.get('pitdog_paidby'):M[0].id,race:MONEY_F.startsWith('race:')?MONEY_F.slice(5):null,car:MONEY_F.startsWith('car:')?MONEY_F.slice(4):null,split:{m:'auto',who:null,sh:{}}},preset||{});
+  let who=d.split.who&&d.split.who.length?d.split.who.filter(x=>member(x)):M.map(m=>m.id);
+  const forVal=d.race?'race:'+d.race:d.car?'car:'+d.car:'team', races=moneyRaces();
+  const dis=ro?'disabled':'';
+  openSheet(e?(ro?'Expense':'Edit expense'):'Add expense',
+    fld('Amount ('+esc(curSym())+')',`<input id="xAmt" type="number" inputmode="decimal" step="0.01" min="0" value="${d.amt?(d.amt/100).toFixed(2):''}" ${dis}>`)+
+    fld('What for',`<select id="xCat" ${dis}>${Object.entries(CATS).map(([k,v])=>`<option value="${k}" ${k===d.cat?'selected':''}>${v}</option>`).join('')}</select>`)+
+    fld('Note',`<input id="xNote" type="text" maxlength="200" placeholder="e.g. brake pads, hotel 2 nights" value="${esc(d.note)}" ${dis}>`)+
+    fld('Paid by',`<select id="xBy" ${dis}>${M.map(m=>`<option value="${m.id}" ${m.id===d.by?'selected':''}>${esc(m.name)}</option>`).join('')}${member(d.by)?'':`<option value="${esc(d.by)}" selected>Former member</option>`}</select>`)+
+    fld('For',`<select id="xFor" ${dis}><option value="team" ${forVal==='team'?'selected':''}>Team (general)</option>${races.length?`<optgroup label="Race">${races.map(r=>`<option value="race:${r.id}" ${forVal==='race:'+r.id?'selected':''}>${esc(raceLabel(r))}</option>`).join('')}</optgroup>`:''}<optgroup label="Car">${DB.team.cars.map(c=>`<option value="car:${c.id}" ${forVal==='car:'+c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</optgroup></select>`)+
+    fld('Date',`<input id="xDate" type="date" value="${d.date||todayISO()}" ${dis}>`)+
+    fld('Split',`<select id="xSplit" ${dis}></select>`)+
+    `<div class="sub" style="margin:12px 0 8px">Shared between</div><div class="pick" id="xWho"></div><div id="xShares"></div><div class="hint" id="xPrev"></div>`,
+    ro?[{label:'Close',cls:'pri',fn:closeSheet}]:[...(e?[{label:'Delete',cls:'dng',fn:()=>{ if(!confirm('Delete this expense?')) return; moneyVoid(e.id); closeSheet(); renderMoney(); }}]:[]),{label:'Cancel',fn:closeSheet},{label:'Save',cls:'pri',id:'xSave',fn:()=>{
+      const x=draft(); if(!(x.amt>0)){ alert('Enter the amount.'); return; } if(!x.split.who.length){ alert('Pick who shares it.'); return; }
+      if(x.split.m==='shares'&&!Object.values(x.split.sh).some(v=>v>0)){ alert('Give at least one person a share.'); return; }
+      store.set('pitdog_paidby',x.by); if(e) moneyVoid(e.id); moneyAdd(x); closeSheet(); renderMoney(); if($('tab-team').classList.contains('on')) renderTeamTab(); toast2(e?'Expense updated':'Expense added'); }}]);
+  const draft=()=>{ const f=val('xFor'), sh={}; document.querySelectorAll('#xShares [data-xsh]').forEach(i=>{ const v=parseFloat(i.value); if(v>0) sh[i.dataset.xsh]=v; });
+    return {k:'exp',amt:Math.round((parseFloat(val('xAmt'))||0)*100),cat:val('xCat'),note:val('xNote'),by:val('xBy'),race:f.startsWith('race:')?f.slice(5):null,car:f.startsWith('car:')?f.slice(4):null,date:val('xDate'),split:{m:val('xSplit')||'auto',who:who.slice(),sh}}; };
+  const fillSplit=()=>{ const f=val('xFor'), rid=f.startsWith('race:')?f.slice(5):null, r=defaultRule(rid), cur=$('xSplit').value||d.split.m;
+    $('xSplit').innerHTML=`<option value="auto">Default: ${(SPLITS[r?r.m:'equal']).toLowerCase()} (${r?(r.scope==='team'?'team rule':'race rule'):'team'})</option>`+Object.entries(SPLITS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+    $('xSplit').value=cur; };
+  const drawWho=()=>{ $('xWho').innerHTML=M.map(m=>`<button class="${who.includes(m.id)?'sel':''}" style="--c:${m.color}" data-w="${m.id}" ${dis}>${esc(m.name)}</button>`).join('');
+    $('xWho').querySelectorAll('[data-w]').forEach(b=>b.onclick=()=>{ const id=b.dataset.w; who=who.includes(id)?who.filter(x=>x!==id):[...who,id]; drawWho(); });
+    const sp=val('xSplit'), base=sp==='shares'?(d.split.m==='shares'?d.split.sh:((defaultRule(null)||{}).m==='shares'?(defaultRule(null)||{}).sh:{})):null;
+    const keep={}; document.querySelectorAll('#xShares [data-xsh]').forEach(i=>{ keep[i.dataset.xsh]=i.value; });
+    $('xShares').innerHTML=sp==='shares'?`<div class="sub" style="margin:10px 0 6px">Shares</div>`+who.map(id=>`<div class="lrow" style="cursor:default"><div class="lmain"><b>${esc(nameOf(id))}</b></div><input class="mshare" data-xsh="${id}" type="number" inputmode="decimal" min="0" step="any" value="${keep[id]!==undefined?keep[id]:((base||{})[id]||'')}" ${dis}></div>`).join(''):'';
+    $('xShares').querySelectorAll('input').forEach(i=>i.oninput=preview); preview(); };
+  const preview=()=>{ const x=draft(); if(!(x.amt>0)||!x.split.who.length){ $('xPrev').textContent=''; return; } const s=splitOf(x);
+    $('xPrev').textContent=Object.entries(s.parts).sort((a,b)=>b[1]-a[1]).map(([id,v])=>nameOf(id)+' '+money(v)).join(' · ')+(s.note?' ('+s.note+')':''); };
+  fillSplit(); $('xFor').onchange=()=>{ fillSplit(); preview(); }; $('xSplit').onchange=drawWho; $('xAmt').oninput=preview; drawWho(); }
+function paySheet(id,sug){ if(!canMoney()) return; const p=id?moneyItems().find(x=>x.id===id):null; if(id&&!p) return; const M=DB.team.members, ro=!!p&&!canEditMoney(p), dis=ro?'disabled':'';
+  const d=p||{from:sug?sug.from:M[0].id,to:sug?sug.to:(M[1]||M[0]).id,amt:sug?sug.amt:0,date:todayISO(),note:''};
+  const sel=(idf,v)=>`<select id="${idf}" ${dis}>${M.map(m=>`<option value="${m.id}" ${m.id===v?'selected':''}>${esc(m.name)}</option>`).join('')}${member(v)?'':`<option value="${esc(v)}" selected>Former member</option>`}</select>`;
+  openSheet(p?'Payment':'Record a payment',`<div class="sub" style="margin:0 0 8px">Money paid between teammates to settle up. It moves both balances.</div>`+fld('Who paid',sel('yFrom',d.from))+fld('To',sel('yTo',d.to))+
+    fld('Amount ('+esc(curSym())+')',`<input id="yAmt" type="number" inputmode="decimal" step="0.01" min="0" value="${d.amt?(d.amt/100).toFixed(2):''}" ${dis}>`)+fld('Date',`<input id="yDate" type="date" value="${d.date||todayISO()}" ${dis}>`)+fld('Note',`<input id="yNote" type="text" maxlength="200" value="${esc(d.note||'')}" ${dis}>`),
+    ro?[{label:'Close',cls:'pri',fn:closeSheet}]:[...(p?[{label:'Delete',cls:'dng',fn:()=>{ if(!confirm('Delete this payment?')) return; moneyVoid(p.id); closeSheet(); renderMoney(); }}]:[]),{label:'Cancel',fn:closeSheet},{label:'Save',cls:'pri',fn:()=>{
+      const x={k:'pay',from:val('yFrom'),to:val('yTo'),amt:Math.round((parseFloat(val('yAmt'))||0)*100),date:val('yDate'),note:val('yNote')};
+      if(x.from===x.to){ alert('Pick two different people.'); return; } if(!(x.amt>0)){ alert('Enter the amount.'); return; }
+      if(p) moneyVoid(p.id); moneyAdd(x); closeSheet(); renderMoney(); toast2('Payment recorded'); }}]); }
 /* ================= APP UPDATES ================= */
 // A deploy reaches an open app quietly: the new service worker installs in the background and takes over, but the page
 // keeps running the old code until it reloads. Say so, but never mid-race (the race screen must not move under a tap):

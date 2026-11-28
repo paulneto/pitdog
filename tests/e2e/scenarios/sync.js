@@ -2,7 +2,7 @@
 // @budget 15000
 // Team sync against an in-memory fake Supabase server shared by two "devices" (A = owner iPad, B = crew phone),
 // which take turns in this page by swapping their local state. RLS itself is tested for real in supabase/tests.
-const SRV = { teams: [], team_codes: [], memberships: [], history: [], races: [], events: [], down: false, user: null, subs: [], delay: 0, dead: false };
+const SRV = { teams: [], team_codes: [], memberships: [], history: [], races: [], events: [], ledger: [], down: false, user: null, subs: [], delay: 0, dead: false };
 // like Postgres jsonb: objects come back with their keys in a different order than they were written
 const jsonb = v => Array.isArray(v) ? v.map(jsonb) : v && typeof v === 'object' ? Object.keys(v).sort().reverse().reduce((o, k) => (o[k] = jsonb(v[k]), o), {}) : v;
 const out = r => { const o = JSON.parse(JSON.stringify(r)); ['settings', 'doc', 'payload'].forEach(k => { if (o[k]) o[k] = jsonb(o[k]); }); return o; };
@@ -27,6 +27,8 @@ function run(st) {
   if (st.op === 'insert' || st.op === 'upsert') {
     for (const r of st.rows) {
       if (st.table === 'events' && !['owner', 'pitwall', 'crew'].includes(roleOf(r.team_id))) return { data: null, error: { message: 'new row violates row-level security policy for table "events"' } };
+      if (st.table === 'ledger') { const role = roleOf(r.team_id), plan = ['owner', 'pitwall'].includes(role), tg = r.kind === 'void' && SRV.ledger.find(x => x.id === (r.payload || {}).target);
+        if (!role || (r.kind === 'rule' && !plan) || (r.kind === 'void' && (!tg || (tg.created_by !== SRV.user.id && !plan)))) return { data: null, error: { message: 'new row violates row-level security policy for table "ledger"' } }; }
       if (st.table === 'races' && !['owner', 'pitwall'].includes(roleOf(r.team_id))) return { data: null, error: { message: 'new row violates row-level security policy for table "races"' } };
       if (T.some(x => x.id === r.id)) { if (st.op === 'upsert') continue; return { data: null, error: { message: 'duplicate key value' } }; }
       const row = Object.assign({ created_by: SRV.user.id }, r, st.table === 'races' ? { updated_at: new Date().toISOString() } : {}); T.push(row); broadcast(st.table, row);
@@ -216,6 +218,25 @@ setTimeout(async () => {
     expect(DB.races.length === nRaces && !(/Race now/.test(txt('sheetT')) && $('sheetBg').classList.contains('on')), 'crew can’t create a private race with Race now');
     closeSheet(); click('menuBtn'); const its = [...document.querySelectorAll('#sheetB .mrow b')].map(x => x.textContent);
     expect(!its.includes('End the race now') && !its.includes('Abandon this race') && !its.includes('Race now'), 'crew menu: no end / abandon / race now: ' + its.join(', '));
+    // --- team money: crew (B) adds expenses; they reach the owner; crew can't touch the owner's; deletions sync as voids
+    closeSheet(); const mids = DB.team.members.map(m => m.id);
+    const bx = moneyAdd({ k: 'exp', amt: 3000, by: mids[1], cat: 'food', date: todayISO(), note: 'pizza', split: { m: 'auto' } }); await pushAll();
+    expect(SRV.ledger.some(r => r.id === bx.id && r.kind === 'exp' && r.payload.amt === 3000 && r.created_by === U.B.id), 'crew adds an expense; it reaches the server as theirs');
+    const by = moneyAdd({ k: 'exp', amt: 1000, by: mids[1], cat: 'other', date: todayISO(), split: { m: 'auto' } }); await pushAll();
+    SRV.down = true; moneyVoid(by.id); await pushAll(); expect(pendingCount() >= 1, 'deleting an expense with no signal waits in the outbox');
+    SRV.down = false; await pushAll(); expect(SRV.ledger.some(r => r.kind === 'void' && r.payload.target === by.id) && pendingCount() === 0, '…and goes up as a void when signal is back');
+    moneyAdd({ k: 'rule', scope: 'team', m: 'seat' }); await pushAll();   // the UI doesn't offer this to crew; the server refuses it anyway
+    expect(!SRV.ledger.some(r => r.kind === 'rule') && !ruleFor('team'), 'a crew member’s split rule is refused by the team and dropped on this device');
+    park('B'); become('A'); await pull(false);
+    expect(moneyItems().some(i => i.id === bx.id && i.u === U.B.id) && !moneyItems().some(i => i.id === by.id), 'the owner gets the crew expense, and not the deleted one');
+    const ax = moneyAdd({ k: 'exp', amt: 12000, by: mids[0], cat: 'fuel', date: todayISO(), split: { m: 'auto' } });
+    moneyAdd({ k: 'rule', scope: 'team', m: 'shares', sh: { [mids[0]]: 2, [mids[1]]: 1, [mids[2]]: 1 } }); await pushAll();
+    expect(canEditMoney(moneyItems().find(i => i.id === bx.id)), 'the owner can fix anyone’s expense');
+    const bA = balances(); park('A'); become('B'); await pull(false);
+    expect(!canEditMoney(moneyItems().find(i => i.id === ax.id)) && canEditMoney(moneyItems().find(i => i.id === bx.id)), 'crew can edit their own expenses, not the owner’s');
+    const bB = balances(); expect(mids.every(id => bA[id] === bB[id]) && bB[mids[0]] === 12000 - 7500 && bB[mids[1]] === 3000 - 3750, 'both devices agree on the balances under the team’s fixed shares (2/1/1)');
+    applyRemoteLedger({ id: uuid(), t: Date.now(), kind: 'void', payload: { target: ax.id }, created_by: U.A.id });
+    expect(!moneyItems().some(i => i.id === ax.id), 'a live void from the owner removes the expense on the crew phone');
     closeSheet(); park('B'); become('A'); await pull(false);
     DB.activeRaceId = DB.races.find(r => r.sid === newSid).id; reloadActive();
     abandonRace(); closeSheet(); await pushAll();
