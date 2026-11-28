@@ -31,7 +31,7 @@
   .pill.track{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}
   .pill.pit{background:color-mix(in srgb,var(--amber) 15%,transparent);color:var(--amber)}
   .pill.done{background:var(--text);color:var(--bg)}
-  main{max-width:720px;margin:0 auto;padding:14px 14px calc(var(--tab) + 130px + env(safe-area-inset-bottom))}
+  main{max-width:720px;margin:0 auto;padding:14px 14px calc(var(--tab) + 156px + env(safe-area-inset-bottom))}
   .tab{display:none}.tab.on{display:block}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-card);padding:16px;margin-bottom:12px}
   .card h2{font-family:var(--font-head);margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:600;display:flex;justify-content:space-between}
@@ -57,7 +57,7 @@
   .chipbtn small{display:block;font-weight:500;font-size:11px;color:var(--muted)}
   .action{position:fixed;left:0;right:0;bottom:calc(var(--tab) + env(safe-area-inset-bottom));padding:10px 14px;background:linear-gradient(transparent,var(--bg) 30%);z-index:6}
   .action .inner{max-width:720px;margin:0 auto;display:flex;gap:10px;align-items:stretch}
-  .big{flex:1;height:110px;border:0;border-radius:calc(var(--r-card) + 4px);font:inherit;font-size:30px;font-weight:900;letter-spacing:1.5px;color:var(--on-fill);cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:transform .08s}
+  .big{flex:1;height:136px;border:0;border-radius:calc(var(--r-card) + 4px);font:inherit;font-size:30px;font-weight:900;letter-spacing:1.5px;color:var(--on-fill);cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:transform .08s}
   .big:active{transform:scale(.97)}
   .big small{display:block;font-size:13px;font-weight:600;letter-spacing:.3px;opacity:.85;margin-top:2px}
   .big.green{background:var(--green);color:var(--go-ink)}
@@ -82,7 +82,7 @@
   body.land #pitCard .timer{font-size:clamp(44px,8vw,64px)}
   body.land #pitCard .chips,body.land #pitCard .stepper{margin-bottom:8px}
   body.land #pitCard h2{margin-bottom:6px}
-  body.land #pitCard .chipbtn{padding:7px 6px;min-width:56px}
+  body.land #pitCard .chipbtn{padding:7px 6px;min-width:56px;min-height:44px}
   body.land .pitR{display:flex;flex-direction:column}
   body.land .pitR>#fuelBox{order:1}
   body.land .pitR>h2:nth-of-type(2){order:2}
@@ -95,7 +95,7 @@
   body.land #pitCard .stepper .sv{min-width:0}
   body.land #pitCard .stepper .sv b{font-size:20px;white-space:nowrap}
   body.land #pitCard .stepper .sv small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-  body.land #pitCard #fullTgl .chipbtn{padding:6px}
+  body.land #pitCard #fullTgl .chipbtn{padding:6px;min-height:44px}
   .big.racenow{display:block;width:100%;height:auto;padding:22px 16px;margin:0 0 14px}
   #tab-race.fin #upNextCard,#tab-race.fin #fuelCard,.action.fin .side{display:none}
   body.nodb main,body.nodb .action,body.nodb .tabbar,body.nodb #statusPill,body.nodb .aclock{visibility:hidden}
@@ -103,7 +103,7 @@
   .side{width:92px;display:flex;flex-direction:column;gap:6px}
   .side button{flex:2;border-radius:14px;border:1px solid var(--line);background:var(--btn);color:var(--text);font:inherit;font-weight:800;font-size:12px;cursor:pointer;letter-spacing:.5px}
   .side button.yon{background:var(--yellow);color:var(--on-yellow);border-color:var(--yellow)}
-  .side #undoBtn{flex:1;margin-top:8px;font-size:11px;color:var(--muted)}
+  .side button{min-height:44px}.side #undoBtn{flex:none;min-height:30px;height:30px;margin-top:6px;font-size:11px;color:var(--muted)}
   .side button.ron{background:var(--red);color:var(--on-fill);border-color:var(--red)}
   .tabbar{position:fixed;left:0;right:0;bottom:0;height:calc(var(--tab) + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);background:var(--bar);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;z-index:7}
   .tabbar button{flex:1;background:none;border:0;color:var(--muted);font:inherit;font-size:11px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
@@ -135,9 +135,9 @@
   #tab-debrief .kpis .v{font-size:19px}
   .syncpill{font-size:11px;font-weight:800;letter-spacing:.5px;padding:5px 9px;border-radius:20px;white-space:nowrap;background:var(--btn);color:var(--muted)}
   .syncpill.ok{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}.syncpill.warn{background:color-mix(in srgb,var(--amber) 15%,transparent);color:var(--amber)}.syncpill.bad{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
-  .updbar{position:fixed;left:50%;bottom:calc(var(--tab) + 14px + env(safe-area-inset-bottom));transform:translateX(-50%);display:none;align-items:center;gap:12px;background:var(--panel);color:var(--text);border:1.5px solid var(--line);padding:8px 8px 8px 16px;border-radius:14px;font-weight:700;z-index:90;max-width:92vw;box-shadow:0 6px 24px rgba(0,0,0,.35)}.updbar.on{display:flex}.updbar span{white-space:nowrap}.updbar button{min-height:44px;padding:0 18px;border-radius:10px;border:0;background:var(--text);color:var(--bg);font:inherit;font-weight:800;cursor:pointer}
+  .updbar{position:fixed;left:50%;bottom:calc(var(--tab) + 14px + env(safe-area-inset-bottom));transform:translateX(-50%);display:none;align-items:center;gap:12px;background:var(--panel);color:var(--text);border:1.5px solid var(--line);padding:8px 8px 8px 16px;border-radius:14px;font-weight:700;z-index:90;max-width:92vw;box-shadow:0 6px 24px rgba(0,0,0,.35)}.updbar.on{display:flex}body[data-tab="race"]:not(.land) .updbar{bottom:calc(var(--tab) + 170px + env(safe-area-inset-bottom))}body.land[data-tab="race"] .updbar{left:calc((100% - var(--landw)) / 2)}.updbar span{white-space:nowrap}.updbar button{min-height:44px;padding:0 18px;border-radius:10px;border:0;background:var(--text);color:var(--bg);font:inherit;font-weight:800;cursor:pointer}
   .mver{text-align:center;color:var(--muted);font-size:12px;margin-top:10px}
-  .toast2{position:fixed;left:50%;bottom:calc(var(--tab) + 150px);transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;z-index:95;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}.toast2.on{opacity:1}
+  .toast2{position:fixed;left:50%;bottom:calc(var(--tab) + 176px);transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;z-index:95;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}.toast2.on{opacity:1}
   .btn.pri2{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:800}
   .code{font-family:var(--font-num);letter-spacing:3px}
   .radarbox{position:relative;border-radius:var(--r-card);overflow:hidden;border:1px solid var(--line);background:var(--panel2)}
@@ -146,7 +146,8 @@
   .rdkey{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:8px}.rdkey i{flex:1;height:8px;border-radius:4px;background:linear-gradient(90deg,#88ddee,#0099cc,#0077aa,#ffee00,#ffaa00,#ff4400,#c10000,#ff77ff)}
   .rdkey b{width:22px;height:8px;border-radius:4px;background:linear-gradient(90deg,#d8cfb4,#9b8a62);margin-left:10px}
   .rdattr a,.helpcard a,.hint a{color:inherit;text-decoration:underline}
-  .rdbtn{background:var(--btn);color:var(--text);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .rdbtn::after{content:'';position:absolute;inset:-8px -2px}
+  .rdbtn{position:relative;background:var(--btn);color:var(--text);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
   #cc .rdbtn{background:var(--cc-deep);color:var(--cc-text);border-color:var(--cc-line2)}
   .strip{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:800;padding:14px 16px;min-height:58px;letter-spacing:.2px}
   .strip .i{width:26px;height:26px}
@@ -274,7 +275,7 @@
   .cc-flag.f span{background:#fff;color:#000;padding:2px 12px;border-radius:4px}
   @keyframes ccpulse{50%{opacity:.6}}
   .cc-wall{font-size:22px;font-weight:700;color:var(--cc-accl)}
-  .cc-tbtn{background:transparent;color:var(--cc-mid);border:1px solid var(--cc-line2);border-radius:8px;padding:7px 12px;font:inherit;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer}
+  .cc-tbtn{min-height:42px;background:transparent;color:var(--cc-mid);border:1px solid var(--cc-line2);border-radius:8px;padding:7px 12px;font:inherit;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer}
   .cc-grid{flex:1;display:grid;grid-template-columns:1.05fr 1.35fr 1fr;grid-template-rows:1fr 1fr 122px;gap:8px;min-height:0}
   .cc-p{position:relative;background:var(--cc-panel);border:1px solid var(--cc-line);border-radius:var(--cc-r);padding:12px 14px;min-height:0;overflow:hidden;display:flex;flex-direction:column}
   .cc-p::before,.cc-p::after{content:"";position:absolute;width:14px;height:14px;border-color:var(--cc-acc);opacity:.7}
@@ -311,21 +312,21 @@
   #ccTrackView,#ccPitView{min-height:0;overflow:hidden;flex:0 1 auto}
   @media (max-height:760px){ .cc-brief small{display:none} .cc-brief .cc-kv{padding:4px 7px} }
   @media (max-height:700px){ #ccDrvSub,.cc-brief .cc-lbl .yl{display:none} .cc-state{margin-bottom:2px} }
-  .cc-ctl .cc-go{flex:1;height:88px;border:0;border-radius:14px;font:inherit;font-size:28px;font-weight:900;letter-spacing:2px;cursor:pointer;color:var(--on-fill)}
+  .cc-ctl .cc-go{flex:1;height:96px;border:0;border-radius:14px;font:inherit;font-size:28px;font-weight:900;letter-spacing:2px;cursor:pointer;color:var(--on-fill)}
   .cc-ctl .cc-go small{display:block;font-size:12px;font-weight:600;letter-spacing:.5px;opacity:.85}
   .cc-go.green{background:var(--green);color:var(--go-ink);box-shadow:0 0 30px color-mix(in srgb,var(--green) 35%,transparent)}
   .cc-go.red{background:var(--red);box-shadow:0 0 30px color-mix(in srgb,var(--red) 35%,transparent)}
   .cc-go.amber{background:color-mix(in srgb,var(--amber) 14%,var(--cc-bg));color:var(--amber);box-shadow:inset 0 0 0 2px var(--amber)}
   .cc-go.grey{background:var(--cc-deep);color:var(--cc-dim)}
-  .cc-side{display:flex;flex-direction:column;gap:6px;width:110px}
+  .cc-side{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr auto;gap:6px;width:190px}
   .cc-side button{flex:2;border-radius:10px;border:1px solid var(--cc-line2);background:var(--cc-deep);color:var(--cc-text);font:inherit;font-weight:800;font-size:12px;letter-spacing:1px;cursor:pointer}
-  .cc-side #ccU{flex:1;margin-top:10px;font-size:11px;color:var(--cc-dim)}
+  .cc-side #ccU{grid-column:1/3;height:34px;margin-top:2px;font-size:11px;color:var(--cc-dim)}
   .cc-side button.yon{background:var(--yellow);color:var(--on-yellow)}.cc-side button.ron{background:var(--red);color:var(--on-fill)}
   .cc-ring{position:relative;width:min(25vh,210px);height:min(25vh,210px);margin:2px auto}
   .cc-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
   .cc-ring .t{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
   .cc-chips{display:flex;gap:6px;margin:6px 0}
-  .cc-chips button{flex:1;min-width:0;padding:7px 4px;border-radius:8px;border:1px solid var(--cc-line2);background:var(--cc-deep);color:var(--cc-text);font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cc-chips button{flex:1;min-width:0;min-height:44px;padding:7px 4px;border-radius:8px;border:1px solid var(--cc-line2);background:var(--cc-deep);color:var(--cc-text);font:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .cc-chips button.sel{border-color:var(--c,var(--cc-acc));background:color-mix(in srgb,var(--c,var(--cc-acc)) 22%,transparent);color:var(--cc-hi)}
   .cc-chips button.dim{opacity:.4}
   .cc-roster{display:flex;flex-direction:column;gap:5px;overflow:auto;flex:1;min-height:0}
@@ -372,6 +373,16 @@
   .cc-tl .tk.end{color:var(--cc-mid);font-weight:700}
   .cc-tl .tkl{position:absolute;bottom:0;top:0;border-left:1px solid var(--cc-line2);opacity:.6}
   .cc-span3{grid-column:1/4}
+  /* iPad in landscape, in the pits: the stop type across the top, then the ring timer beside fuel and the next driver,
+     so the whole stop (and its glove-sized chips) fits a short screen (1358x717) without clipping the driver row */
+  @media (orientation:landscape){
+    #ccPitView[style*="block"]{display:grid!important;grid-template-columns:auto 1fr;column-gap:16px;align-content:start}
+    #ccPitView>*{grid-column:2}
+    #ccPitView>#ccKindL,#ccPitView>#ccKinds{grid-column:1/3}
+    #ccPitView>.cc-ring{grid-column:1;grid-row:3/7;align-self:center;width:min(23vh,190px,13vw);height:min(23vh,190px,13vw);margin:0}
+    #ccPitView .stepper .stp{width:clamp(48px,5vw,76px)}
+    #ccPitView .stepper .sv{min-width:0}#ccPitView .stepper .sv b,#ccPitView .stepper .sv small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  }
   /* iPad in portrait: clock and crew on top, the car panel full width, fuel and next stops, then the timeline */
   @media (orientation:portrait){
     .cc-grid{grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,.85fr) minmax(0,1.45fr) minmax(0,.9fr) 122px}
@@ -563,7 +574,7 @@
   .mrow .i,.mrow svg{width:24px;height:24px;flex:none}
   .mrow b{display:block;font-size:16px}.mrow small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
   .mrow.dng b{color:var(--red)}
-  .helpbtn{width:34px;height:34px;flex:none;border-radius:50%;border:1.5px solid var(--line);background:var(--btn);color:var(--text);font:inherit;font-weight:900;font-size:16px;cursor:pointer}
+  .helpbtn::after{content:'';position:absolute;inset:-6px}.helpbtn{position:relative;width:34px;height:34px;flex:none;border-radius:50%;border:1.5px solid var(--line);background:var(--btn);color:var(--text);font:inherit;font-weight:900;font-size:16px;cursor:pointer}
   body.help-on .helpbtn,body.help-on #ccHelp{background:var(--text);color:var(--bg);border-color:var(--text)}
   .helpbar{display:none;position:fixed;left:0;right:0;top:0;z-index:90;padding:calc(env(safe-area-inset-top) + 8px) 14px 8px;background:var(--text);color:var(--bg);font-weight:700;font-size:14px;align-items:center;gap:10px}
   .helpbar button{margin-left:auto;flex:none;background:var(--bg);color:var(--text);border:0;border-radius:999px;padding:6px 14px;font:inherit;font-weight:800;cursor:pointer}
@@ -648,7 +659,7 @@
       <div id="ccPitView" style="display:none">
         <div class="cc-ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" style="stroke:var(--cc-line2)" stroke-width="8"/><circle id="ccRingArc" cx="50" cy="50" r="44" fill="none" style="stroke:var(--red)" stroke-width="8" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="276.5"/></svg>
           <div class="t"><div class="cc-mid mono" id="ccPitT">0:00</div><div class="cc-lbl" id="ccPitMin"></div></div></div>
-        <div class="cc-lbl">Stop type</div><div class="cc-chips" id="ccKinds"></div>
+        <div class="cc-lbl" id="ccKindL">Stop type</div><div class="cc-chips" id="ccKinds"></div>
         <div id="ccJugBox"><div class="cc-lbl">Fuel added <span id="ccJugPlan" style="color:var(--amber)"></span></div><div class="stepper" id="ccJugs"></div><div class="cc-chips" id="ccFull"></div></div>
         <div class="cc-lbl">Next driver</div><div class="cc-chips" id="ccDrvs"></div>
       </div>

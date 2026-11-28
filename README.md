@@ -50,7 +50,7 @@ app/                 the app: deployed as-is, no build step
 tests/e2e/           headless-Chrome scenarios with a fake race clock
   run.sh             run all scenarios (or: run.sh <name-filter>)
   harness.js         fake clock + helpers injected into the app
-  scenarios/*.js     35 scenarios: app updates, race day, sync (fake Supabase), race now, menu, records, presets,
+  scenarios/*.js     39 scenarios: glove-sized tap targets (phone, phone on its side, two iPad sizes), app updates, race day, sync (fake Supabase), race now, menu, records, presets,
                      sound, landscape, command center, simulator, sim-sweep (25 races), series-sweep, …
                      (no network: every scenario uses fakes; the suite runs in ~30 s)
 docs/
