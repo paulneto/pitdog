@@ -165,6 +165,12 @@
   .fact.warn small,.fact.bad small{color:inherit;opacity:.85}
   .tmap{display:block;width:76px;height:52px;flex:0 0 auto !important;color:var(--text)}
   .msel{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:8px;font:inherit;font-size:14px;flex:0 0 auto}
+  .pdet{border-top:1px solid var(--line);margin-top:4px}
+  .pdet>summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;cursor:pointer;font-weight:700;min-height:44px}
+  .pdet>summary::-webkit-details-marker{display:none}
+  .pdet>summary small{color:var(--muted);font-weight:500;font-size:13px;text-align:right;flex:1;min-width:0}
+  .pdet>summary::after{content:'›';color:var(--muted);font-size:20px;transition:transform .2s}
+  .pdet[open]>summary::after{transform:rotate(90deg)}
   .tmap.lg{width:118px;height:82px}
   .tmap .tl{fill:none;stroke:currentColor;stroke-width:3px;stroke-linejoin:round;stroke-linecap:round;opacity:.9}
   .tmap .tp{fill:none;stroke:var(--muted);stroke-width:2px;stroke-dasharray:4 3;stroke-linecap:round}
@@ -816,6 +822,13 @@
     <div style="overflow-x:auto"><table id="plan"></table></div>
   </div>
   <div class="card">
+    <h2>Drivers this race</h2>
+    <div id="drivers"></div>
+    <div class="hint" id="drvHint"></div>
+    <div class="sub" style="margin:12px 0 6px">Add from team</div>
+    <div class="chips" id="addFromTeam"></div>
+  </div>
+  <div class="card">
     <h2>Race</h2>
     <label class="f">Series rules
       <select id="series"></select></label>
@@ -828,6 +841,7 @@
     <label class="f sched">End time <input id="end" type="time"></label>
     <label class="f nosched">Race length (min) <input id="len" type="number" inputmode="numeric" min="10" step="5"></label>
     <label class="f nosched">Scheduled green <input id="startG" type="time"></label>
+    <details class="pdet" id="raceRulesDet"><summary><span>Series rules</span><small id="raceRulesSum"></small></summary>
     <label class="f">Max stint (min) <input id="maxStint" type="number" inputmode="numeric" min="0"></label>
     <label class="f">Driver rest between stints (min) <input id="rest" type="number" inputmode="numeric" min="0"></label>
     <label class="f">Min fuel stop (min) <input id="minStop" type="number" inputmode="decimal" min="0" step="0.5"></label>
@@ -841,10 +855,12 @@
     <label class="f">Stint lengths <select id="weighting"><option value="even">Even</option><option value="pace">Favour faster drivers</option></select></label>
     <label class="f">Yellow pit window (min early) <input id="yellowWindow" type="number" inputmode="numeric" min="0"></label>
     <label class="f">"On deck" warning (min before) <input id="onDeck" type="number" inputmode="numeric" min="0"></label>
+    </details>
   </div>
   <div class="card">
     <h2>Car</h2>
     <label class="f">Car <select id="carSel"></select></label>
+    <details class="pdet" id="carDet"><summary><span>Fuel and pit numbers</span><small id="carSum"></small></summary>
     <label class="f">Fuel unit <select id="unit"><option value="gal">US gal</option><option value="L">litres</option></select></label>
     <label class="f">Usable fuel (tank) <input id="cap" type="number" inputmode="decimal" min="1" step="0.1"></label>
     <label class="f">Burn per lap <input id="burn" type="number" inputmode="decimal" min="0.01" step="0.01"></label>
@@ -857,13 +873,7 @@
     <label class="f">Fuel stops <select id="fill"><option value="full">Fill to full</option><option value="need">Only what's needed</option></select></label>
     <label class="f">Safety margin on your burn (%) <input id="margin" type="number" inputmode="numeric" min="0" max="50" step="1"></label>
     <div class="hint">Pit-lane loss is the time lost driving through the pit lane compared with a racing lap. Edits here change this car for every race.</div>
-  </div>
-  <div class="card">
-    <h2>Drivers this race</h2>
-    <div id="drivers"></div>
-    <div class="hint" id="drvHint"></div>
-    <div class="sub" style="margin:12px 0 6px">Add from team</div>
-    <div class="chips" id="addFromTeam"></div>
+    </details>
   </div>
   <div class="card">
     <h2 id="rulesTitle">Rules</h2>
@@ -1229,7 +1239,10 @@ function renderDrivers(){
   $('addFromTeam').querySelectorAll('[data-mid]').forEach(b=>b.onclick=()=>{ const m=member(b.dataset.mid); S.drivers.push({mid:m.id,name:m.name,color:m.color,max:Math.min(m.maxStint||120,S.race.maxStint||999)}); buzz(10); renderDrivers(); update(); });
   $('drvHint').textContent=started?'Race has started: the order is locked, but you can still add a late driver or change max stints.':'Order = rotation. Max stint is for this race only (minutes).';
 }
-function renderPlan(P,lv){
+function planSummaries(){ const R=S.race, C=S.car, rs=$('raceRulesSum'), cs=$('carSum'); if(!rs||!cs) return;
+  rs.textContent=[R.maxStint?'max stint '+fmt(R.maxStint):'',R.rest?'rest '+R.rest+' min':'',R.minStop?'min stop '+fmt(R.minStop):'',R.mandEvery?'5-min stop every '+fmt(R.mandEvery):'',R.pitsUnderYellow?'pits open under yellow':'pits closed under yellow'].filter(Boolean).join(' · ');
+  cs.textContent=`${C.cap} ${C.unit} tank · ${C.burn}/lap · ${C.lap} laps · ${C.fill==='need'?'only what’s needed':'fill to full'} · +${C.margin||0}% margin`; }
+function renderPlan(P,lv){ planSummaries();
   if(P.err){ $('warnings').innerHTML=`<div class="w w-bad">${P.err}</div>`; $('plan').innerHTML=''; $('timeline').innerHTML=''; $('kpis').innerHTML=''; return; }
   const {stints,W,L,laps,stopDur,refuel,fuelRangeMin}=P;
   const add=stints.reduce((a,s)=>a+(s.stop?s.stop.add:0),0);
