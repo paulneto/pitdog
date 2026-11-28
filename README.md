@@ -34,7 +34,7 @@
 ## Platform notes
 - **Vibration** on button presses works on **Android only**. iPhone Safari doesn't support it, so the buttons just work without the buzz.
 - **Race state is saved per device** in the browser. It survives reloads and closing the app (tested), but **clearing website data or using a private tab loses it**.
-- **Offline:** open the app once with signal (on iPhone, from the home-screen icon) so it's saved for offline use. Updates arrive the next time it's opened with signal.
+- **Offline:** open the app once with signal (on iPhone, from the home-screen icon) so it's saved for offline use. Updates download in the background when there's signal; an open app then shows **New version of PitDog · Reload** (never while a race is running; the menu always offers the reload, and its foot shows the version).
 - **Weather** needs signal; without it the command center shows the last reading.
 
 ## Screenshots
@@ -50,7 +50,7 @@ app/                 the app: deployed as-is, no build step
 tests/e2e/           headless-Chrome scenarios with a fake race clock
   run.sh             run all scenarios (or: run.sh <name-filter>)
   harness.js         fake clock + helpers injected into the app
-  scenarios/*.js     34 scenarios: race day, sync (fake Supabase), race now, menu, records, presets,
+  scenarios/*.js     35 scenarios: app updates, race day, sync (fake Supabase), race now, menu, records, presets,
                      sound, landscape, command center, simulator, sim-sweep (25 races), series-sweep, …
                      (no network: every scenario uses fakes; the suite runs in ~30 s)
 docs/

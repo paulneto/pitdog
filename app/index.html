@@ -135,6 +135,8 @@
   #tab-debrief .kpis .v{font-size:19px}
   .syncpill{font-size:11px;font-weight:800;letter-spacing:.5px;padding:5px 9px;border-radius:20px;white-space:nowrap;background:var(--btn);color:var(--muted)}
   .syncpill.ok{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}.syncpill.warn{background:color-mix(in srgb,var(--amber) 15%,transparent);color:var(--amber)}.syncpill.bad{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
+  .updbar{position:fixed;left:50%;bottom:calc(var(--tab) + 14px + env(safe-area-inset-bottom));transform:translateX(-50%);display:none;align-items:center;gap:12px;background:var(--panel);color:var(--text);border:1.5px solid var(--line);padding:8px 8px 8px 16px;border-radius:14px;font-weight:700;z-index:90;max-width:92vw;box-shadow:0 6px 24px rgba(0,0,0,.35)}.updbar.on{display:flex}.updbar span{white-space:nowrap}.updbar button{min-height:44px;padding:0 18px;border-radius:10px;border:0;background:var(--text);color:var(--bg);font:inherit;font-weight:800;cursor:pointer}
+  .mver{text-align:center;color:var(--muted);font-size:12px;margin-top:10px}
   .toast2{position:fixed;left:50%;bottom:calc(var(--tab) + 150px);transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;z-index:95;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}.toast2.on{opacity:1}
   .btn.pri2{background:var(--text);color:var(--bg);border-color:var(--text);font-weight:800}
   .code{font-family:var(--font-num);letter-spacing:3px}
@@ -2179,9 +2181,10 @@ function menuSheet(){
   if(DB) items.push(['home','Home','Next race, last race, your team'+(cc?' (leaves the command center; ⊞ COMMAND CENTER brings it back)':''),()=>leaveCC('home')]);
   if(cc) items.push(['user','Phone view','The race screen in the phone layout',()=>leaveCC('race')]);
   items.push([SND.on?'bolt':'clock',SND.on?'Sound alerts: on':'Sound alerts: off',SND.on?'Tap to mute the gear-up, box and stop-served tones on this device':'Tap to hear gear-up, box and stop-served tones on this device',()=>setSound(!SND.on)]);
+  if(UPD.ready) items.push(['check','Reload for the new version',liveR?'Safe mid-race: everything is saved. Takes a few seconds':'A newer PitDog has downloaded; reload to use it',()=>updReload(liveR)]);
   items.push(['alert','Start over on this device','Delete the team and races here (a backup is kept)',()=>$('reset').click()]);
   SHEET_LOCK=false;
-  openSheet('Menu',items.map((it,i)=>`<button class="mrow${['userx','alert'].includes(it[0])?' dng':''}" data-i="${i}">${ic(it[0])}<span><b>${it[1]}</b><small>${it[2]}</small></span></button>`).join(''),[{label:'Close',cls:'pri',fn:closeSheet}]);
+  openSheet('Menu',items.map((it,i)=>`<button class="mrow${['userx','alert'].includes(it[0])?' dng':''}" data-i="${i}">${ic(it[0])}<span><b>${it[1]}</b><small>${it[2]}</small></span></button>`).join('')+`<div class="mver">PitDog ${esc(UPD.ver||'(not installed)')}</div>`,[{label:'Close',cls:'pri',fn:closeSheet}]);
   $('sheetB').querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{ closeSheet(); items[+b.dataset.i][3](); }); }
 function leaveCC(tab){ if(document.body.classList.contains('cc-on')){ store.set('pitdog_view','phone'); applyView(); } go(tab); }
 $('menuBtn').onclick=menuSheet; $('ccMenu').onclick=menuSheet; $('ccHome').onclick=()=>leaveCC('home');
@@ -3047,6 +3050,20 @@ try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist(
 window.addEventListener('storage',e=>{ if(e.key==='pitdog_db'&&!SIM.on){ OTHER_TAB=true; update(); } });
 if(!DB) startOnboarding(); else if(PENDING_SHARE) shareSheet();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+/* ================= APP UPDATES ================= */
+// A deploy reaches an open app quietly: the new service worker installs in the background and takes over, but the page
+// keeps running the old code until it reloads. Say so, but never mid-race (the race screen must not move under a tap):
+// the bar shows only when no race is running; the menu always offers the reload.
+const UPD={ready:false,ver:'',ctl:!!(navigator.serviceWorker&&navigator.serviceWorker.controller)};
+function updAskVer(){ try{ const c=navigator.serviceWorker&&navigator.serviceWorker.controller; if(c) c.postMessage('version'); }catch(e){} }
+function onSwChange(){ if(UPD.ctl) UPD.ready=true; UPD.ctl=true; updAskVer(); updBar(); }
+function updCheck(){ try{ if(navigator.serviceWorker&&location.protocol.startsWith('http')) navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{}); }catch(e){} }
+function updReload(liveR){ if(liveR&&!confirm('Reload PitDog now? The race keeps running and nothing is lost.')) return; dbSave(); location.reload(); }
+function updBar(){ let b=$('updBar'); const lv=DB&&activeRace()?live():null, racing=!!(lv&&lv.started&&!lv.finished)||SIM.on;
+  const on=UPD.ready&&!racing&&!HELP_ON; if(!b){ if(!on) return; b=document.createElement('div'); b.id='updBar'; b.className='updbar'; b.innerHTML='<span>New version of PitDog</span><button id="updGo">Reload</button>'; document.body.appendChild(b); $('updGo').onclick=()=>updReload(false); }
+  b.classList.toggle('on',on); }
+if(navigator.serviceWorker){ navigator.serviceWorker.addEventListener('controllerchange',onSwChange); navigator.serviceWorker.addEventListener('message',e=>{ if(e.data&&e.data.version){ UPD.ver=e.data.version.replace(/^pitdog-/,''); } }); updAskVer(); }
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') updCheck(); }); setInterval(updCheck,30*60000);
 /* ================= SOUND ALERTS ================= */
 // Short tones for the moments that matter, so the pit wall hears them over the noise: gear up, box in 3 min, box now,
 // minimum stop served, and the cheap stop under yellow. Each fires once; on (re)opening, alerts already passed stay quiet.
@@ -3092,7 +3109,7 @@ function devCardHTML(){ const it=devReady(); if(!it.length) return ''; const bad
   return `<div class="card" id="devCard" data-help="home_device"><h2><span>This device</span><span class="${bad.length?'dv-warn':'dv-ok'}">${bad.length?bad.length+' to fix':'ready'}</span></h2>`+
     (bad.length?it.map(([t,ok,tip])=>`<div class="dvrow ${ok?'ok':'no'}">${ic(ok?'check':'alert')}<div><b>${t}</b>${ok?'':`<small>${tip}</small>`}</div></div>`).join(''):`<div class="dvrow ok">${ic('check')}<div><b>Ready for race day</b><small>${it.map(x=>x[0]).join(' · ')}</small></div></div>`)+'</div>'; }
 function setSound(on){ SND.on=on; store.set('pitdog_sound',on?'1':'0'); if(on){ sndUnlock(); tone('served'); } else silentLoop(false); toast2(on?'Sound alerts on'+(IOS?' (they play even with the silent switch on)':''):'Sound alerts off'); }
-setInterval(()=>{ try{ const lv=live(); P=plan(lv); renderRace(); soundTick(lv,P); if($('tab-race').classList.contains('on')) renderTeam(lv); if($('tab-plan').classList.contains('on')) renderPlan(P,lv); }catch(e){} },500);
+setInterval(()=>{ try{ const lv=live(); P=plan(lv); renderRace(); soundTick(lv,P); updBar(); if($('tab-race').classList.contains('on')) renderTeam(lv); if($('tab-plan').classList.contains('on')) renderPlan(P,lv); }catch(e){} },500);
 show(SYNC.joinCode&&DB?'team':startTab()); if(SYNC.joinCode) setTimeout(()=>{ const sc=$('syncCard'); if(sc) sc.scrollIntoView({block:'start'}); },60); if($('tab-home').classList.contains('on')) renderHome(); if($('tab-team').classList.contains('on')) renderTeamTab();
 restoreSession();
 applyView();
