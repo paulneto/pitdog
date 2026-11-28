@@ -74,11 +74,16 @@
      The race screen keeps its own layouts (phone, phone on its side, command center). */
   @media (min-width:1000px){
     body:not(.land) main{max-width:min(1360px,100%)}
-    #homeBody,#moneyBody,#recordsBody,#debriefBody,#tab-team,#tab-plan{columns:3 380px;column-gap:16px}
-    #homeBody>*,#moneyBody>*,#recordsBody>*,#debriefBody>*,#tab-team>*,#tab-plan>*{break-inside:avoid;-webkit-column-break-inside:avoid}
-    #homeBody>.racenow,#tab-plan>#kpis,#tab-plan>#warnings,#tab-plan>.card:has(#timeline),#tab-plan>.card:has(#plan),#recordsBody>.wide,#debriefBody>.wide{column-span:all;-webkit-column-span:all}
-    #homeBody>.racenow{max-width:720px;margin-left:auto;margin-right:auto}
+    /* a grid, not CSS columns: card tops line up in rows in every browser (Safari offsets column tops) */
+    #homeBody,#moneyBody,#recordsBody,#debriefBody,#tab-team,#tab-plan{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px;align-items:stretch}
+    #tab-team:not(.on),#tab-plan:not(.on){display:none}
+    #homeBody>*,#moneyBody>*,#recordsBody>*,#debriefBody>*,#tab-team>*,#tab-plan>*{margin:0;min-width:0}
+    #homeBody>.racenow,#tab-plan>#kpis,#tab-plan>#warnings,#tab-plan>.card:has(#timeline),#tab-plan>.card:has(#plan),#recordsBody>.wide,#debriefBody>.wide{grid-column:1/-1}
+    #homeBody>.racenow{width:100%;max-width:720px;justify-self:center}
+    #tab-plan>#warnings:empty{display:none}
     #tab-plan>#kpis{grid-template-columns:repeat(6,1fr)}
+    #tab-team{grid-auto-flow:row dense}#tab-team>.card:first-child{grid-column:1/-1}#tab-team>.card:has(#skinTiles){grid-row:span 2}
+    #tab-plan>#kpis,#tab-plan>#warnings,#homeBody>.racenow{align-self:start}
   }
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-card);padding:16px;margin-bottom:12px}
   .card h2{font-family:var(--font-head);margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);font-weight:600;display:flex;justify-content:space-between}
