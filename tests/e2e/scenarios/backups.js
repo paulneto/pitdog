@@ -17,8 +17,13 @@ __run(() => {
   expect(activeRace() && !document.querySelector('#sheetBg.on'), 'a usable race after restoring');
   // storage full: race data wins over old backups
   const real = Storage.prototype.setItem; let limit = true;
-  Storage.prototype.setItem = function (key, val) { if (limit && key === 'pitdog_db' && localStorage.getItem('pitdog_backups')) throw new Error('QuotaExceededError'); return real.call(this, key, val); };
+  Storage.prototype.setItem = function (key, val) { if (limit && key === 'pitdog_db' && (JSON.parse(localStorage.getItem('pitdog_backups') || '[]')).length > 1) throw new Error('QuotaExceededError'); return real.call(this, key, val); };
   DB.team.name = 'Saved under pressure'; dbSave();
   Storage.prototype.setItem = real;
   expect(JSON.parse(localStorage.getItem('pitdog_db')).team.name === 'Saved under pressure' && !SAVE_FAIL, 'storage full: old backups are dropped so the race data still saves');
+  expect(backups().length >= 1 && !localStorage.getItem('pitdog_backup'), 'the newest backup is never dropped, and there’s no duplicate copy');
+  Storage.prototype.setItem = function (key, val) { if (key === 'pitdog_db') throw new Error('QuotaExceededError'); return real.call(this, key, val); };
+  const nb = backups().length; DB.team.name = 'Too big'; dbSave(); Storage.prototype.setItem = real;
+  expect(SAVE_FAIL && backups().length >= 1 && backups().length <= nb, 'when nothing helps: NOT SAVING, and the newest backup survives');
+  SAVE_FAIL = false; dbSave();
 });

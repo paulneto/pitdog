@@ -22,7 +22,7 @@ __run(() => {
   const nBefore = DB.races.length, abandoned = activeRace().id;
   click('menuBtn'); item('Abandon this race').click();
   expect(!DB.races.some(x => x.id === abandoned) && DB.races.length === nBefore && txt('sheetT') === 'Race now', 'Abandon throws the race away and offers Race now');
-  expect(JSON.parse(localStorage.getItem('pitdog_backup')).why.startsWith('before abandoning'), 'a backup is kept');
+  expect(backups()[0].why.startsWith('before abandoning'), 'a backup is kept');
   closeSheet(); update();
   expect(activeRace() && !live().started && /GREEN FLAG/.test(txt('bigBtn')), 'cancelling Race now still leaves a usable race screen');
   // help mode: the menu still opens and gets you out

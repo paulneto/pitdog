@@ -226,6 +226,16 @@ setTimeout(async () => {
     park('B'); become('A');
     closeSheet(); raceNow(); sheetBtn('RACE NOW'); adv(1); TAP_AT = 0; click('bigBtn'); await pushAll();     // A back on a live shared race
 
+    // --- restoring a backup on a synced device: unsent entries carry over and still go up
+    await pushAll(); backupDB('test: before the yellow');
+    SRV.down = true; adv(0.5); click('yBtn'); const unsent = S.events[S.events.length - 1]; await pushAll();
+    expect(pendingCount() >= 1, 'an entry is waiting (offline)');
+    show('team'); renderTeamTab(); click('restoreBk');
+    [...document.querySelectorAll('#sheetB [data-bk]')].find(x => /before the yellow/.test(x.textContent)).click();
+    expect(S.events.some(e => e.id === unsent.id) && pendingCount() >= 1, 'restoring an older backup keeps the unsent entry');
+    SRV.down = false; await wait(60); await pushAll(); await wait(60); await pushAll();
+    expect(SRV.events.some(e => e.id === unsent.id), '…and it reaches the server');
+
     // --- session died elsewhere: keep everything, say signed out (finding #2)
     SRV.dead = true; click('yBtn'); await pull(false);
     expect(teamOnline() && DB.team.sid && pendingCount() >= 1 && !SYNC.user && /SIGNED OUT/.test(txt('syncPill')), 'a dead session keeps the team and its unsent entries, and says SIGNED OUT');

@@ -15,4 +15,12 @@ __run(() => {
   expect($('pitBoardFS').querySelector('b').textContent === 'TYRES OK', 'your own message, in capitals');
   $('pitBoardFS').click(); click('menuBtn');
   expect([...document.querySelectorAll('#sheetB .mrow b')].some(x => x.textContent === 'Pit board'), 'also in the menu');
+  closeSheet();
+  // help mode can't trap the board
+  setHelp(true); click('menuBtn'); [...document.querySelectorAll('#sheetB .mrow')].find(x => /Pit board/.test(x.textContent)).click();
+  document.querySelector('#sheetB [data-pb]').click();
+  expect($('pitBoardFS').classList.contains('on') && !HELP_ON, 'showing the board leaves help mode');
+  $('pitBoardFS').click(); expect(!$('pitBoardFS').classList.contains('on'), '…and a tap closes it');
+  showBoard('STAY OUT'); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+  expect(!$('pitBoardFS').classList.contains('on'), 'Esc closes the board');
 });
