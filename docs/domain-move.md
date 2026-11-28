@@ -2,6 +2,8 @@
 *28 Nov 2026. The domain is bought (Porkbun, DNS on Porkbun). The setup is planned for the week of 30 Nov.
 Nobody relies on the old github.io address yet, so this is a straight switch with no data migration.*
 
+*Hosting stays on GitHub Pages (decided 28 Nov 2026). Move to Vercel only when PitDog needs server code (for example the Race Monitor relay), with GitHub Actions deploying after the tests pass so the test gate stays.*
+
 1. **DNS at Porkbun.** Delete the parking records. Add an ALIAS record `@` → `paulneto.github.io` (or GitHub's
    four A records `185.199.108.153`, `.109`, `.110`, `.111`, plus the AAAA records), and a CNAME record `www` → `paulneto.github.io`.
 2. **GitHub.** Verify the domain under account Settings → Pages, so no one else can claim it. Then set the
