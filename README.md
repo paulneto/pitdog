@@ -2,7 +2,7 @@
 
 **Pit-wall app for endurance race teams.** Rule sets for **Lucky Dog, ChampCar, WRL, AER, 24 Hours of Lemons and PCA Club Racing**, chosen per race (see `docs/rules-comparison.md`). Stint and fuel planning, a one-button race-day pit wall on phones, and an iPad **command center** in landscape. Works offline.
 
-**Live:** https://paulneto.github.io/pitdog/ (moving to https://pitdogracecontrol.com: see `docs/domain-move.md`)
+**Live:** https://paulneto.github.io/pitdog/
 
 ## What it does
 - **Race now:** one sheet from nothing to the grid: who's driving (tap in order), how many hours, which car. It asks for the team name and car numbers only when they're missing, remembers the last race, and offers your **presets** as one-tap chips. On scheduled series the clock starts at the green flag. "Change" before the green edits the race in place
@@ -29,7 +29,6 @@
 - **Team sync (optional):** Team tab → sign in with Google (in-page button) → put your team online (you're the owner) or join with an 8-character code / invite link. Every device keeps the whole team and works offline; race-log entries get ids and go up from an outbox when there's signal (append-only: UNDO and Fix send a *void*, nothing is overwritten), other devices' entries arrive live. Roles: owner and pit wall change the plan, crew log stops and flags, viewers watch. The top bar shows SYNC ✓ / OFFLINE · n / SIGNED OUT
 - **Track maps:** a small outline of the circuit (pit lane dashed) on the race screen, the iPad clock panel and Home, for the built-in tracks. Drawn from [OpenStreetMap](https://www.openstreetmap.org/copyright) (© OpenStreetMap contributors) by `tools/trackmaps.py` and baked into the app, so they work offline. No live car position yet.
 - **Weather radar:** the Radar button (race screen, iPad weather panel, Home on race day) animates the last ~2 h of rain around the track ([RainViewer](https://www.rainviewer.com), free for personal use, over OpenStreetMap tiles), with a 50 km ring. Needs signal. Admins can switch it off (`features.radar`)
-- **Moving house:** once pitdogracecontrol.com serves PitDog, the old address shows *Move this device*, which carries the team, races and settings over inside the link (nothing goes to a server). A copy-and-paste link covers iPhone home-screen icons
 - **Offline-first:** installs to the home screen and runs with no signal (service worker); race state survives reloads
 
 ## Platform notes
@@ -51,7 +50,7 @@ app/                 the app: deployed as-is, no build step
 tests/e2e/           headless-Chrome scenarios with a fake race clock
   run.sh             run all scenarios (or: run.sh <name-filter>)
   harness.js         fake clock + helpers injected into the app
-  scenarios/*.js     35 scenarios: race day, sync (fake Supabase), race now, menu, records, presets,
+  scenarios/*.js     34 scenarios: race day, sync (fake Supabase), race now, menu, records, presets,
                      sound, landscape, command center, simulator, sim-sweep (25 races), series-sweep, …
                      (no network: every scenario uses fakes; the suite runs in ~30 s)
 docs/
