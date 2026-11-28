@@ -766,7 +766,6 @@
 
 <!-- ================= TEAM ================= -->
 <section class="tab" id="tab-team">
-  <div class="card" data-help="sync"><h2>Team sync</h2><div id="syncBody"></div></div>
   <div class="card">
     <h2><span id="teamTitle">Team</span><button class="mini" id="teamEdit">Edit</button></h2>
     <div class="sub" id="teamSub" style="margin:0"></div>
@@ -787,6 +786,7 @@
     <h2>Race presets</h2>
     <div id="presetList"></div>
   </div>
+  <div class="card" id="syncCard" data-help="sync"><h2>Team sync</h2><div id="syncBody"></div></div>
   <div class="card">
     <h2>Simulator</h2>
     <div class="sub" style="margin:0 0 8px">Run a whole race at up to 200× speed with your team, car and rules. Race control throws yellows and reds, and an auto-crew can run the stops. Nothing is saved to your real races.</div>
@@ -1549,6 +1549,7 @@ function go(tab){ show(tab); if(tab==='records') renderRecords(); if(tab==='lab'
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); go(b.dataset.tab); });
 document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>go(b.dataset.back));
 $('openLog').onclick=()=>go('log'); $('openLab').onclick=()=>go('lab');
+$('syncPill').style.cursor='pointer'; $('syncPill').onclick=()=>{ if(HELP_ON) return; go('team'); setTimeout(()=>{ const sc=$('syncCard'); if(sc) sc.scrollIntoView({block:'start',behavior:'smooth'}); },30); };
 $('savePreset').onclick=()=>{ if(!DB||SIM.on) return; if(teamOnline()&&!canPlan()){ toast2('Only the owner or pit wall can save presets.'); return; } const r=activeRace(); if(!r) return;
   const nm=(prompt('Name this preset (e.g. “Calabogie 8 h”)', r.rules.name||'')||'').trim(); if(!nm) return; dbSave();
   const x={id:uid(),name:nm.slice(0,40),series:r.series,hours:Math.round(raceLen()/30)/2,track:r.rules.track||'none',carId:r.carId,drivers:r.drivers.map(d=>d.mid),rules:clone(r.rules)};
@@ -3005,7 +3006,7 @@ function soundTick(lv,P){ const r=activeRace(); if(!r||SIM.on||!P||P.err||!lv.st
   if(pitNow(lv,tt)) fire('pitnow'+lv.flags.length,'pitnow'); }
 function setSound(on){ SND.on=on; store.set('pitdog_sound',on?'1':'0'); if(on){ sndUnlock(); tone('served'); } else silentLoop(false); toast2(on?'Sound alerts on'+(IOS?' (they play even with the silent switch on)':''):'Sound alerts off'); }
 setInterval(()=>{ try{ const lv=live(); P=plan(lv); renderRace(); soundTick(lv,P); if($('tab-race').classList.contains('on')) renderTeam(lv); if($('tab-plan').classList.contains('on')) renderPlan(P,lv); }catch(e){} },500);
-show(SYNC.joinCode&&DB?'team':startTab()); if($('tab-home').classList.contains('on')) renderHome(); if($('tab-team').classList.contains('on')) renderTeamTab();
+show(SYNC.joinCode&&DB?'team':startTab()); if(SYNC.joinCode) setTimeout(()=>{ const sc=$('syncCard'); if(sc) sc.scrollIntoView({block:'start'}); },60); if($('tab-home').classList.contains('on')) renderHome(); if($('tab-team').classList.contains('on')) renderTeamTab();
 restoreSession();
 applyView();
 </script>
