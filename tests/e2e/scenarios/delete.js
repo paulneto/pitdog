@@ -21,6 +21,6 @@ __run(() => {
   const nb = backups().length; click('teamEdit');
   expect(sheetBtn('Delete team'), 'the team sheet has Delete team');
   sheetBtn('Delete team').click();
-  expect(!DB && txt('sheetT') === 'Welcome to PitDog' && backups().length === nb + 1, 'deleting a local team starts over (backup kept)');
+  expect(!DB && welcomeOn() && backups().length === nb + 1, 'deleting a local team starts over (backup kept)');
   window.confirm = () => true;
 });

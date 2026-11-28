@@ -33,6 +33,43 @@
   .pill.done{background:var(--text);color:var(--bg)}
   main{max-width:720px;margin:0 auto;padding:14px 14px calc(var(--tab) + 156px + env(safe-area-inset-bottom))}
   .tab{display:none}.tab.on{display:block}
+  /* ---- welcome (new device): a page, not a dialog */
+  .welcome{position:fixed;inset:0;z-index:75;display:none;overflow-y:auto;background:radial-gradient(1200px 600px at 85% -10%,color-mix(in srgb,var(--brand) 16%,transparent),transparent 60%),var(--bg);color:var(--text);-webkit-overflow-scrolling:touch}
+  .welcome.on{display:block}
+  .wl-in{max-width:1180px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 28px) 20px calc(env(safe-area-inset-bottom) + 28px);display:grid;gap:28px}
+  .wl-mark{font-weight:900;font-size:22px;letter-spacing:1px}.wl-mark b{color:var(--brand);font-weight:900}
+  .wl-h{font-size:clamp(38px,9vw,64px);line-height:1;font-weight:900;letter-spacing:-1.5px;margin:22px 0 12px}
+  .wl-p{color:var(--muted);font-size:17px;line-height:1.45;margin:0 0 16px;max-width:520px}
+  .wl-series{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 22px}.wl-series span{font-size:12px;font-weight:700;letter-spacing:.3px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+  .wl-go{display:block;width:100%;border:0;border-radius:18px;padding:20px 18px;background:var(--green);color:var(--go-ink);font:inherit;font-size:28px;font-weight:900;letter-spacing:1.5px;cursor:pointer;box-shadow:0 10px 30px color-mix(in srgb,var(--green) 30%,transparent)}
+  .wl-go small{display:block;font-size:13px;font-weight:600;letter-spacing:0;opacity:.85;margin-top:4px}
+  .wl-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .wl-b{display:flex;align-items:center;gap:12px;text-align:left;min-height:68px;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;cursor:pointer}
+  .wl-b>svg{flex:none;width:24px;height:24px;color:var(--muted)}.wl-b b{display:block;font-size:15px}.wl-b small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .wl-links{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;margin-top:14px}
+  .wl-links button{background:none;border:0;color:var(--text);font:inherit;font-size:15px;font-weight:700;padding:12px 2px;min-height:44px;cursor:pointer;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:4px}
+  .wl-show{display:grid;gap:14px;align-content:start}
+  .wl-phone,.wl-plan{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px}
+  .wl-top{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:800;letter-spacing:1px;color:var(--muted)}
+  .wl-pill{color:var(--green);border:1px solid color-mix(in srgb,var(--green) 40%,transparent);background:color-mix(in srgb,var(--green) 12%,transparent);border-radius:999px;padding:3px 10px}
+  .wl-lbl{font-size:11px;font-weight:800;letter-spacing:1.2px;color:var(--muted);margin-top:14px}
+  .wl-big{font-size:clamp(64px,16vw,96px);font-weight:900;line-height:1;letter-spacing:-2px;font-variant-numeric:tabular-nums}
+  .wl-sub{color:var(--muted);font-size:16px;margin-top:6px}.wl-sub b{color:var(--text)}
+  .wl-bar{height:6px;border-radius:3px;background:var(--panel2);margin:14px 0}.wl-bar i{display:block;height:100%;border-radius:3px;background:var(--green)}
+  .wl-drv{display:flex;align-items:center;gap:10px}.wl-drv span{width:6px;height:30px;border-radius:3px}.wl-drv b{font-size:22px}.wl-drv small{color:var(--muted)}
+  .wl-chips{display:flex;gap:8px;margin:12px 0 14px}.wl-chips svg{width:16px;height:16px}.wl-chips span{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;font-size:14px}
+  .wl-btn{background:var(--red);color:var(--on-fill);border-radius:16px;text-align:center;font-size:26px;font-weight:900;letter-spacing:1.5px;padding:18px}
+  .wl-tl{display:flex;height:34px;border-radius:8px;overflow:hidden;margin-top:10px}.wl-tl i{display:flex;align-items:center;justify-content:center;font-style:normal;font-size:11px;font-weight:800;color:var(--on-fill);min-width:0;overflow:hidden}
+  .wl-tl u{flex:0 0 6px;background:repeating-linear-gradient(45deg,var(--text) 0 2px,var(--bg) 2px 4px);opacity:.7}
+  .wl-ax{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px}
+  .wl-feat{display:grid;gap:10px}.wl-feat div{display:grid;grid-template-columns:28px 1fr;column-gap:10px;align-items:start}.wl-feat svg{grid-row:1/3;width:22px;height:22px;color:var(--brand);margin-top:2px}.wl-feat b{font-size:15px}.wl-feat small{color:var(--muted);font-size:13px}
+  @media (min-width:900px){
+    .wl-in{grid-template-columns:minmax(0,1fr) minmax(0,440px);column-gap:56px;align-items:center;min-height:100%;padding-top:48px;padding-bottom:48px}
+    .wl-h{font-size:72px}
+  }
+  @media (max-width:699px){ .wl-feat{display:none} .wl-plan{display:none} }
+  @media (max-width:420px){ .wl-two{grid-template-columns:1fr} }
+  body.welcome-on .tabbar,body.welcome-on .appbar{visibility:hidden}
   /* wide screens (laptop, iPad in landscape away from the race screen): the cards flow into columns instead of a phone-width strip.
      The race screen keeps its own layouts (phone, phone on its side, command center). */
   @media (min-width:1000px){
@@ -1633,7 +1670,7 @@ $('savePreset').onclick=()=>{ if(!DB||SIM.on) return; if(teamOnline()&&!canPlan(
   DB.team.presets=(DB.team.presets||[]).filter(q=>!gone.includes(q.id)).concat(x); dbSave(); pushSoon(); toast2('Preset saved: '+x.name+'. It’s in Race now.'); };
 
 /* ================= loop ================= */
-function update(){ document.body.classList.toggle('nodb',!DB&&!SIM.on);
+function update(){ document.body.classList.toggle('nodb',!DB&&!SIM.on); if((DB||SIM.on)&&welcomeOn()) closeWelcome();
   try{ save(); if(teamOnline()&&canPlan()&&SYNC.user) pushSoon(); const lv=live(); P=plan(lv); renderPlan(P,lv); renderRace(); renderTeam(lv); renderLog(); if(typeof renderTeamTab==='function') renderTeamTab(); if(typeof renderCC==='function') renderCC(); }
   catch(e){ console.error(e); $('banners').innerHTML=`<div class="banner box">Something went wrong: ${e.message}</div>`; }
 }
@@ -1961,18 +1998,56 @@ const fld=(label,inner)=>`<label class="f">${label} ${inner}</label>`;
 
 /* ================= onboarding ================= */
 let ONB=null;
+// The welcome: a page of its own on a new device (no team yet), not a dialog over a blank screen. It shows what PitDog is
+// (a live-looking race screen and plan), then the ways in: Race now, set up the team, try the simulator, join a team, or skip.
 function startOnboarding(){
-  SHEET_LOCK=true;
-  openSheet('Welcome to PitDog',`<div class="sub" style="margin:0 0 14px">The pit wall for endurance race teams: stints, fuel, drivers and race-day pit stops, on your phone and an iPad command center.</div>`+
-    `<div class="wgrid"><button class="btn pri2" id="wNow">RACE NOW<small>Drivers, hours, go</small></button><button class="btn" id="wSetup">Full team setup<small>Team, car, people</small></button><button class="btn" id="wSim">Try a simulated race<small>Nothing is saved</small></button><button class="btn" id="wHome">Skip: go to Home<small>Set things up later, or join your team</small></button></div>`,[]);
+  SHEET_LOCK=false; closeSheet(); let w=$('welcome'); if(!w){ w=document.createElement('div'); w.id='welcome'; w.className='welcome'; document.body.appendChild(w); }
+  const C=COLORS, st=[['Paul',C[0],19],['Luc',C[1],19],['Marco',C[2],19],['Sam',C[3],19],['Paul',C[0],16]];
+  w.innerHTML=`<div class="wl-in">
+    <div class="wl-copy">
+      <div class="wl-mark">PIT<b>DOG</b></div>
+      <h1 class="wl-h">Run the pit wall.</h1>
+      <p class="wl-p">Stints, fuel and driver changes for endurance racing: planned to your series’ rulebook, then logged on race day with one big button. Works with no signal.</p>
+      <div class="wl-series">${['Lucky Dog','ChampCar','WRL','AER','24 Hours of Lemons','PCA'].map(x=>`<span>${x}</span>`).join('')}</div>
+      <button class="wl-go" id="wNow">RACE NOW<small>Pick drivers and hours. On track in a minute.</small></button>
+      <div class="wl-two"><button class="wl-b" id="wSetup">${ic('team')}<span><b>Set up my team</b><small>Team, car, people</small></span></button><button class="wl-b" id="wSim">${ic('play')}<span><b>Try a simulated race</b><small>A whole race in minutes</small></span></button></div>
+      <div class="wl-links"><button id="wJoin">Have a join code? Join your team</button><button id="wHome">Skip, go to Home</button></div>
+    </div>
+    <div class="wl-show" aria-hidden="true">
+      <div class="wl-phone">
+        <div class="wl-top"><span>STINT 2 OF 5</span><span class="wl-pill">ON TRACK</span></div>
+        <div class="wl-lbl">NEXT STOP IN</div>
+        <div class="wl-big">23:41</div>
+        <div class="wl-sub">box 12:44 · then <b>Marco</b></div>
+        <div class="wl-bar"><i style="width:62%"></i></div>
+        <div class="wl-drv"><span style="background:${C[1]}"></span><b>Luc</b><small>56:19 in the seat</small></div>
+        <div class="wl-chips"><span>${ic('fuel')} 8.2 gal</span><span>${ic('flag')} 21 laps</span></div>
+        <div class="wl-btn">PIT IN</div>
+      </div>
+      <div class="wl-plan">
+        <div class="wl-lbl">TODAY’S PLAN · 7 H · 4 STOPS</div>
+        <div class="wl-tl">${st.map(([n,c,f])=>`<i style="flex:${f};background:${c}">${n}</i>`).join('<u></u>')}</div>
+        <div class="wl-ax"><span>10:00</span><span>13:30</span><span>17:00</span></div>
+      </div>
+      <div class="wl-feat">
+        <div>${ic('plan')}<b>Planned to the rules</b><small>Max stints, minimum stops, fuel range and jugs</small></div>
+        <div>${ic('pitin')}<b>One button on race day</b><small>Phone in the pit lane, iPad command center on the wall</small></div>
+        <div>${ic('team')}<b>The whole team in sync</b><small>Live on every device, plus who paid for what</small></div>
+      </div>
+    </div>
+  </div>`;
+  w.classList.add('on'); document.body.classList.add('welcome-on');
   $('wNow').onclick=()=>raceNow();
   $('wSetup').onclick=()=>{ ONB={step:1,name:'',series:'luckydog',car:{name:'',unit:'gal',cap:16.4,burn:0.38,lap:'2:20'},people:[]}; onbStep(); };
-  $('wSim').onclick=()=>{ SHEET_LOCK=false; closeSheet(); startSim({demo:true}); };
+  $('wSim').onclick=()=>{ closeWelcome(); startSim({demo:true}); };
   $('wHome').onclick=()=>skipToHome();
+  $('wJoin').onclick=()=>{ skipToHome(); go('team'); setTimeout(()=>{ const sc=$('syncCard'); if(sc) sc.scrollIntoView({block:'start'}); },60); toast2('Sign in, then enter the join code from your team’s owner.'); };
 }
+const welcomeOn=()=>!!($('welcome')&&$('welcome').classList.contains('on'));
+function closeWelcome(){ const w=$('welcome'); if(w) w.classList.remove('on'); document.body.classList.remove('welcome-on'); }
 // Skip the welcome: an empty team (one default car, no people yet), straight to Home. Everything else (sign in and join a
 // team, Race now, add people) is reachable from there.
-function skipToHome(){ SHEET_LOCK=false; closeSheet();
+function skipToHome(){ SHEET_LOCK=false; closeSheet(); closeWelcome();
   DB={v:2,team:{id:uid(),name:'My team',series:'luckydog',members:[],cars:[Object.assign({id:uid(),name:'Car 1',measured:{}},clone(DEFAULT.car))]},races:[],activeRaceId:null,ledger:{items:[],voids:[],outbox:[]}};
   ensureActiveRace(); reloadActive(); if(typeof applyView==='function') applyView(); go('home'); }
 function onbStep(){

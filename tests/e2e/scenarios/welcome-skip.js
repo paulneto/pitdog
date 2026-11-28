@@ -1,9 +1,9 @@
 // @window 500,900
 // The welcome on a new device has a way straight to Home: an empty team, nothing to fill in, and every screen still works.
 __run(() => {
-  expect(txt('sheetT') === 'Welcome to PitDog' && $('wHome'), 'a new device shows the welcome, with Skip: go to Home');
+  expect(welcomeOn() && $('wHome') && $('wJoin') && /Run the pit wall/.test(txt('welcome')), 'a new device shows the welcome page, with Skip and Join');
   click('wHome');
-  expect(DB && !$('sheetBg').classList.contains('on') && $('tab-home').classList.contains('on') && !document.body.classList.contains('nodb'), 'Skip lands on Home with the welcome closed');
+  expect(DB && !welcomeOn() && !$('sheetBg').classList.contains('on') && $('tab-home').classList.contains('on') && !document.body.classList.contains('nodb'), 'Skip lands on Home with the welcome closed');
   expect(DB.team.members.length === 0 && DB.team.cars.length === 1 && activeRace(), 'an empty team: one default car, no people, a blank race');
   const H = txt('homeBody'); expect(/race now/i.test(H), 'Home offers Race now: ' + H.slice(0, 80));
   let err = null; try { go('race'); const lv = live(); P = plan(lv); renderRace(); go('team'); renderTeamTab(); go('plan'); go('money'); renderMoney(); go('home'); } catch (e) { err = e.message; }

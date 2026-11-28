@@ -271,7 +271,7 @@ setTimeout(async () => {
     // --- the owner deletes the team for everyone (typed name); a wrong name deletes nothing
     window.prompt = () => 'nope'; await deleteTeam(); expect(SRV.teams.length === 2 && teamOnline(), 'a mistyped name deletes nothing');
     window.prompt = () => DB.team.name; await deleteTeam();
-    expect(SRV.teams.length === 1 && !DB && txt('sheetT') === 'Welcome to PitDog', 'the owner deletes the shared team; this device starts over');
+    expect(SRV.teams.length === 1 && !DB && welcomeOn(), 'the owner deletes the shared team; this device starts over');
     window.prompt = (m, d) => d;
   } catch (e) { R.fails.push('EXCEPTION ' + e.message + ' @ ' + (e.stack || '').split('\n')[1]); }
   const p = document.createElement('pre'); p.id = 'RESULT'; p.textContent = JSON.stringify(R); document.body.appendChild(p);

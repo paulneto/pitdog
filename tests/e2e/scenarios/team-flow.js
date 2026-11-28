@@ -1,8 +1,8 @@
 // @window 500,900
 // First launch → onboarding → team with people + car → pick drivers for a race → race → finish & save → day 2.
 __run(() => {
-  expect(document.getElementById('sheetBg').classList.contains('on'), 'onboarding sheet shows on first launch');
-  expect(txt('sheetT') === 'Welcome to PitDog', 'welcome title: ' + txt('sheetT'));
+  expect(welcomeOn() && !$('sheetBg').classList.contains('on'), 'the welcome page shows on first launch');
+  expect(/Run the pit wall/.test(txt('welcome')), 'welcome headline: ' + txt('welcome').slice(0, 40));
   const btn = l => [...document.querySelectorAll('#sheetF button')].find(b => b.textContent.includes(l)).click();
   const setv = (id, v) => { document.getElementById(id).value = v; };
   click('wSetup'); setv('oName', 'Dawg Days'); setv('oSeries', 'luckydog'); btn('Next');
