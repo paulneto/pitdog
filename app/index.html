@@ -1005,7 +1005,12 @@ let S;
 /* storage never fails silently: a failed save raises a red banner until a save works again */
 let SAVE_FAIL=false, OTHER_TAB=false;
 const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},
-  set(k,v){ try{ localStorage.setItem(k,v); if(k==='pitdog_db') SAVE_FAIL=false; return true; }catch(e){ if(k==='pitdog_db') SAVE_FAIL=true; return false; } }};
+  set(k,v){ try{ localStorage.setItem(k,v); if(k==='pitdog_db') SAVE_FAIL=false; return true; }catch(e){
+    // storage full: the race data matters more than old backups or the forecast cache: free those and try again
+    if(k==='pitdog_db'){ try{ localStorage.removeItem('pitdog_fc'); let b=JSON.parse(localStorage.getItem('pitdog_backups')||'[]');
+        while(true){ try{ localStorage.setItem(k,v); SAVE_FAIL=false; return true; }catch(e2){} if(!b.length) break; b.pop(); if(b.length) localStorage.setItem('pitdog_backups',JSON.stringify(b)); else localStorage.removeItem('pitdog_backups'); }
+        localStorage.removeItem('pitdog_backup'); localStorage.setItem(k,v); SAVE_FAIL=false; return true; }catch(e3){} SAVE_FAIL=true; }
+    return false; } }};
 /* a copy of the whole database before anything destructive (clear log, reset, import), restorable from the Log tab */
 // the last five copies of this device's data, taken before anything risky (join, abandon, reset, import, restore)
 function backups(){ try{ const a=JSON.parse(localStorage.getItem('pitdog_backups')||'null'); if(Array.isArray(a)) return a.filter(b=>b&&b.db); }catch(e){}
@@ -1285,7 +1290,7 @@ function computeAlerts(lv,P){
   const ab=appBanner(); if(ab) A.push([ab.level==='bad'?'box':ab.level==='warn'?'warn':'info',esc(ab.text.slice(0,200)),'user']);
   const so=(SERIES[S.series]||{}).overridden; if(so&&so.length&&!lv.started) A.push(['info',`${esc(SERIES[S.series].label)} rules updated by your admin: ${so.map(esc).join(', ')}. New races use them; check this race in Plan.`]);
   if(teamOnline()&&!canLog()) A.push(['info','View only: your role in this team can’t log pit stops or flags','user']);
-  if(SAVE_FAIL) A.push(['box','NOT SAVING · device storage is full or blocked (private tab?). Export from the Log tab now.','stop']);
+  if(SAVE_FAIL) A.push(['box','NOT SAVING · device storage is full or blocked (private tab?). Export it now: Team → Data on this device.','stop']);
   if(OTHER_TAB) A.push(['warn','PitDog is open in another tab or window · close one, or their logs will overwrite each other']);
   if(lv.red) A.push(['redf','RED FLAG · stop work, cap fuel, step back']);
   if(lv.yellow&&!lv.red) A.push(['yellow',`FULL COURSE YELLOW${R.pitsUnderYellow?'':' · pits closed'}`]);

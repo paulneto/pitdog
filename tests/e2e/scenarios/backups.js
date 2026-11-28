@@ -15,4 +15,10 @@ __run(() => {
   expect(DB.team.name === 'Version 5', 'restoring the third one brings back Version 5');
   expect(backups()[0].why === 'before restoring' && backups()[0].db.team.name === 'Current', 'what was on the device is kept as the newest backup');
   expect(activeRace() && !document.querySelector('#sheetBg.on'), 'a usable race after restoring');
+  // storage full: race data wins over old backups
+  const real = Storage.prototype.setItem; let limit = true;
+  Storage.prototype.setItem = function (key, val) { if (limit && key === 'pitdog_db' && localStorage.getItem('pitdog_backups')) throw new Error('QuotaExceededError'); return real.call(this, key, val); };
+  DB.team.name = 'Saved under pressure'; dbSave();
+  Storage.prototype.setItem = real;
+  expect(JSON.parse(localStorage.getItem('pitdog_db')).team.name === 'Saved under pressure' && !SAVE_FAIL, 'storage full: old backups are dropped so the race data still saves');
 });
