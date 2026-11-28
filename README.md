@@ -2,7 +2,7 @@
 
 **Pit-wall app for endurance race teams.** Rule sets for **Lucky Dog, ChampCar, WRL, AER, 24 Hours of Lemons and PCA Club Racing**, chosen per race (see `docs/rules-comparison.md`). Stint and fuel planning, a one-button race-day pit wall on phones, and an iPad **command center** in landscape. Works offline.
 
-**Live:** https://paulneto.github.io/pitdog/
+**Live:** https://paulneto.github.io/pitdog/ (moving to https://pitdogracecontrol.com: see `docs/domain-move.md`)
 
 ## What it does
 - **Race now:** one sheet from nothing to the grid: who's driving (tap in order), how many hours, which car. It asks for the team name and car numbers only when they're missing, remembers the last race, and offers your **presets** as one-tap chips. On scheduled series the clock starts at the green flag. "Change" before the green edits the race in place
