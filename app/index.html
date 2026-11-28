@@ -171,6 +171,10 @@
   .pdet>summary small{color:var(--muted);font-weight:500;font-size:13px;text-align:right;flex:1;min-width:0}
   .pdet>summary::after{content:'›';color:var(--muted);font-size:20px;transition:transform .2s}
   .pdet[open]>summary::after{transform:rotate(90deg)}
+  .pboard{position:fixed;inset:0;z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;background:var(--text);color:var(--bg);padding:3vh 3vw;cursor:pointer;text-align:center}
+  .pboard.on{display:flex}
+  .pboard b{font-family:var(--font-head);font-weight:900;line-height:.95;letter-spacing:-.02em;word-break:break-word}
+  .pboard small{margin-top:2vh;font-size:13px;opacity:.6}
   .tmap.lg{width:118px;height:82px}
   .tmap .tl{fill:none;stroke:currentColor;stroke-width:3px;stroke-linejoin:round;stroke-linecap:round;opacity:.9}
   .tmap .tp{fill:none;stroke:var(--muted);stroke-width:2px;stroke-dasharray:4 3;stroke-linecap:round}
@@ -739,7 +743,7 @@
 
   <div class="card rstrip">
     <h2><span id="clockLabel">Race clock</span><span id="clockWall"></span></h2>
-    <div class="row" style="justify-content:space-between;align-items:center;gap:8px"><div class="rs" id="serName" style="flex:1;min-width:0"></div><span id="raceMap" style="flex:0 0 auto"></span><button class="rdbtn" id="raceRadar" data-radar="1" style="display:none;flex:0 0 auto"></button></div>
+    <div class="row" style="justify-content:space-between;align-items:center;gap:8px"><div class="rs" id="serName" style="flex:1;min-width:0"></div><span id="raceMap" style="flex:0 0 auto"></span><button class="rdbtn" id="pbOpen" style="flex:0 0 auto">PIT BOARD</button><button class="rdbtn" id="raceRadar" data-radar="1" style="display:none;flex:0 0 auto"></button></div>
     <div class="sub" id="raceSub" style="margin-top:2px"></div>
     <div class="bar" style="margin-top:10px"><i id="raceBar" style="width:0;background:var(--blue)"></i></div>
   </div>
@@ -1563,7 +1567,7 @@ function show(tab){ const par=TAB_PARENT[tab]||tab; document.body.dataset.tab=ta
 function go(tab){ show(tab); if(tab==='records') renderRecords(); if(tab==='lab') renderLab(); if(tab==='home') renderHome(); if(tab==='log') renderLog(); if(tab==='team') renderTeamTab(); }
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>{ buzz(8); go(b.dataset.tab); });
 document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>go(b.dataset.back));
-$('openLog').onclick=()=>go('log'); $('openLab').onclick=()=>go('lab');
+$('openLog').onclick=()=>go('log'); $('openLab').onclick=()=>go('lab'); $('pbOpen').onclick=()=>pitBoard();
 $('syncPill').style.cursor='pointer'; $('syncPill').onclick=()=>{ if(HELP_ON) return; go('team'); setTimeout(()=>{ const sc=$('syncCard'); if(sc) sc.scrollIntoView({block:'start',behavior:'smooth'}); },30); };
 $('savePreset').onclick=()=>{ if(!DB||SIM.on) return; if(teamOnline()&&!canPlan()){ toast2('Only the owner or pit wall can save presets.'); return; } const r=activeRace(); if(!r) return;
   const nm=(prompt('Name this preset (e.g. “Calabogie 8 h”)', r.rules.name||'')||'').trim(); if(!nm) return; dbSave();
@@ -2104,6 +2108,24 @@ function finishRace(sure){
 }
 $('teamEdit').onclick=()=>DB&&teamSheet(); $('addMember').onclick=()=>DB&&memberSheet(null); $('addCar').onclick=()=>DB&&carSheet(null); $('newRaceBtn').onclick=()=>DB&&newRaceSheet(null);
 
+/* ================= PIT BOARD ================= */
+// A giant, high-contrast message to hold over the pit wall for the driver. Suggestions come from the plan.
+function pitBoard(){ const lv=live(), P2=plan(lv), out=[];
+  if(!P2.err&&lv.started&&!lv.finished){ const ci=curIdx(P2), cur=P2.stints[ci], nx=P2.stints[ci+1];
+    if(cur&&nx&&!lv.inPit){ const laps=Math.max(0,Math.floor((cur.end-lv.now)/P2.lapOf(cur.driver))); out.push(laps>0?'BOX +'+laps:'BOX NOW'); out.push(((S.drivers[nx.driver]||{}).name||'').toUpperCase()+' NEXT'); }
+    if(pitNow(lv,cur?cur.end-lv.now:0)) out.unshift('BOX · YELLOW'); }
+  ['BOX NOW','BOX NEXT LAP','STAY OUT','FUEL OK','PUSH','SAVE FUEL','SLOW DOWN','PIT WINDOW OPEN','LAST LAP'].forEach(m=>{ if(!out.includes(m)) out.push(m); });
+  openSheet('Pit board',`<div class="sub" style="margin:0 0 10px">Tap a message to show it full screen. Tap the board to close it.</div>
+    <div class="chips">${out.map((m,i)=>`<button class="chipbtn${i<2&&lv.started?' sel':''}" style="flex:0 0 auto" data-pb="${esc(m)}">${esc(m)}</button>`).join('')}</div>
+    <div class="row" style="gap:8px"><input id="pbText" maxlength="24" placeholder="Your own message" style="flex:1;min-width:0;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;font-size:16px;text-transform:uppercase"><button class="btn" id="pbShow" style="flex:0 0 auto">Show</button></div>`,
+    [{label:'Close',cls:'pri',fn:closeSheet}]);
+  $('sheetB').querySelectorAll('[data-pb]').forEach(b=>b.onclick=()=>{ closeSheet(); showBoard(b.dataset.pb); });
+  $('pbShow').onclick=()=>{ const t=val('pbText').trim(); if(t){ closeSheet(); showBoard(t.toUpperCase()); } }; }
+function showBoard(text){ let el=$('pitBoardFS'); if(!el){ el=document.createElement('div'); el.id='pitBoardFS'; el.className='pboard'; el.setAttribute('role','dialog'); el.onclick=()=>el.classList.remove('on'); document.body.appendChild(el); }
+  el.innerHTML=`<b>${esc(text)}</b><small>tap to close</small>`; el.classList.add('on'); keepAwake();
+  const b=el.querySelector('b'); let f=Math.min(innerHeight*0.6,innerWidth*0.5); b.style.fontSize=f+'px';
+  for(let i=0;i<40&&(b.scrollWidth>innerWidth*0.94||b.scrollHeight>innerHeight*0.8)&&f>18;i++){ f*=0.9; b.style.fontSize=f+'px'; } }
+
 /* ================= MENU: a way out of any state ================= */
 function ensureActiveRace(){ if(!DB||activeRace()) return;
   DB.activeRaceId=(DB.races.find(r=>!r.sim&&r.status!=='done')||{}).id;
@@ -2122,6 +2144,7 @@ function menuSheet(){
   if(liveR&&canPlan()) items.push(['finish','End the race now','Checkered flag now: saves the race and opens the debrief',()=>{ if(!confirm(`End ${r.rules.name||'the race'} now and save it?`)) return; addEvent({type:'end'}); finishRace(true); }]);
   if(r&&!SIM.on&&r.status!=='done'&&started&&canPlan()) items.push(['userx','Abandon this race','Throw it away: no debrief, not in the history',()=>abandonRace()]);
   if(DB&&!SIM.on&&!liveR&&canPlan()) items.push(['race','Race now','Set up and start a new race',()=>raceNow()]);
+  if(DB&&!SIM.on) items.push(['flag','Pit board','A giant message for the driver: BOX +3, STAY OUT, who’s next',()=>pitBoard()]);
   if(DB) items.push(['home','Home','Next race, last race, your team'+(cc?' (leaves the command center; ⊞ COMMAND CENTER brings it back)':''),()=>leaveCC('home')]);
   if(cc) items.push(['user','Phone view','The race screen in the phone layout',()=>leaveCC('race')]);
   items.push([SND.on?'bolt':'clock',SND.on?'Sound alerts: on':'Sound alerts: off',SND.on?'Tap to mute the gear-up, box and stop-served tones on this device':'Tap to hear gear-up, box and stop-served tones on this device',()=>setSound(!SND.on)]);
@@ -2579,6 +2602,7 @@ const HELP={
   rec_pits:{t:'Pit stops',read:'Fuel stops from every log: best and average time in the pits, and time spent beyond the minimum hold.',means:'Time over the minimum is time given away on track.',can:'',cant:''},
   rec_fuel:{t:'Measured fuel burn',read:'What each car really burned per lap at each track, measured between full tanks.',means:'The next plan at that track starts from this number.',can:'',cant:''},
   rec_races:{t:'Races',read:'Every finished race, newest first.',means:'',can:'Open a race’s debrief.',cant:''},
+  pitboard:{t:'Pit board',read:'A full-screen message to hold over the wall: BOX +laps (worked out from the plan), who’s next, stay out, fuel OK, or your own words.',means:'High contrast in every skin so the driver can read it at speed.',can:'Tap the board to close it.',cant:''},
   menu:{t:'Menu',read:'The way out of anything: end or abandon the race, end the simulator, leave help mode, start a new race, go home, sound alerts on or off, start over.',means:'What’s offered depends on where you are and your role.',can:'Open it any time; Esc also closes sheets and help.',cant:'Crew and viewers on a shared team can’t end, abandon or create races.'},
   cchome:{t:'Home',read:'Leaves the command center for the Home screen on this device.',means:'',can:'Come back with ⊞ COMMAND CENTER in the top bar.',cant:''},
   brief:{t:'Stop brief',read:'The next stop at a glance: type, fuel to add (in jugs), the minimum hold, the next driver and when they should gear up.',means:'Gets the crew ready before the car arrives. With pits open under yellow it says from when a yellow makes the stop cheaper.',can:'',cant:''},
@@ -2616,7 +2640,7 @@ const HELP={
   radar:{t:'Weather radar',read:'Rain over the last ~2 hours around your track, animated every 10 minutes. The dot is the track; the dashed ring is 50 km. Light blue = light rain, yellow/red = heavy, pink = hail or very heavy.',means:'Storms usually move 30–60 km/h: something at the ring can reach you in about an hour.',can:'Pause and scrub through the frames.',cant:'It needs signal, and radar lags 10–20 minutes. It doesn’t forecast: check the hourly rain chance too.'},
   cc_tl:{t:'Race timeline',read:'Every stint as a coloured bar, stops hatched, yellows and reds marked on top, and a white line for now.',means:'Faded bars are stints already driven.',can:'',cant:''},
 };
-const HELP_AT={'#menuBtn':'menu','#ccMenu':'menu','#ccHome':'cchome','#ccBrief':'brief','#openLog':'openlog','#hNow':'racenow','#hRecords':'records','#rsNew':'change','#savePreset':'presets','#bigBtn':'bigbtn','#ccGo':'bigbtn','#yBtn':'yellow','#ccY':'yellow','#rBtn':'red','#ccR':'red','#undoBtn':'undo','#ccU':'undo','#banners':'strip',
+const HELP_AT={'#pbOpen':'pitboard','#menuBtn':'menu','#ccMenu':'menu','#ccHome':'cchome','#ccBrief':'brief','#openLog':'openlog','#hNow':'racenow','#hRecords':'records','#rsNew':'change','#savePreset':'presets','#bigBtn':'bigbtn','#ccGo':'bigbtn','#yBtn':'yellow','#ccY':'yellow','#rBtn':'red','#ccR':'red','#undoBtn':'undo','#ccU':'undo','#banners':'strip',
   '#trackCard':'hero','#nextStop':'hero','#stintBar':'stint','#trackCard .driver':'stint','#fuelFact':'fuel','#lapsDone':'laps','#trackCard .fact:nth-child(2)':'laps',
   '#pitTimer':'pittimer','#pitTarget':'pittimer','#kindChips':'pittimer','#jugChips':'jugs','#fullTgl':'full','#nextDrv':'nextdrv','.rstrip':'racestrip',
   '#upNextBody':'upnext','#teamList':'crew','#fuelUsed':'fuelcard','#burnMeas':'fuelcard','#fuelNeed':'fuelcard','#raceClock':'clock','#statusPill':'pill','.tabbar':'tabs',
